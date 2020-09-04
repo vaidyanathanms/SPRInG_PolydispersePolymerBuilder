@@ -19,7 +19,8 @@ def psfgen_headers(fin,topname,outname):
     fin.write('%s\t %s\n' %('set outputname', outname))
               
     
-def monomer_ratios(opt):
+def monomer_ratios(opt,gsrat,pfrat,num_php,num_gua,num_syr,num_pca,num_fa):
+
 
     if opt == 'A' || opt == 'a':
 
