@@ -49,9 +49,13 @@ pdbpsf_fname = biomas_typ + str(casenum)  #prefix for pdb/psf files
 # Define empty arrays and default values
 
 struct_arr = []
-gsrat = 0
-num_guamons = 0
-num_
+gsrat   = 0 # G:S
+pfrat   = 0 # PCA:FA
+num_php = 0 # num of PHP (H) monomers
+num_gua = 0 # num of GUA (G) monomers
+num_syr = 0 # num of SYR (S) monomers
+num_pca = 0 # num of PCA monomers
+num_fa  = 0 # num of FA monomers
 
 
 # Throw exceptions
