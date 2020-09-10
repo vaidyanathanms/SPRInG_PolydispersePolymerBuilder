@@ -24,6 +24,7 @@ import numpy
 import re
 import shutil
 import glob
+import math
 
 # Function definitions
 from make_genpsf import gencpy
@@ -34,7 +35,6 @@ from make_genpsf import linker_ratios
 from make_genpsf import init_logwrite
 from make_genpsf import cumul_probdist
 from make_genpsf import create_segments
-from make_genpsf import check_distribution
 from make_genpsf import make_segments
 
 # Input data
@@ -51,7 +51,7 @@ maxatt = 500 # maximum attempts to obtain avg configuration
 
 # Output file names (will be generated automatically)
 tcl_fname  = biomas_typ + str(casenum) + '.tcl' # outfile for tcl
-pdbpsf_fname = biomas_typ + str(casenum)  #prefix for pdb/psf files
+pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
 alllist_fname = 'alllist_' + str(casenum) + '.tcl' #all seg/link list
 log_fname = 'log_' + str(casenum) + '.txt' #log file
 
@@ -70,13 +70,6 @@ linkperc = linker_ratios(swit_opt) # linker % dictionary mode
 if not bool(linkperc):
     exit('ERROR: Unknown option for linker parameters \n')
 
-#! check ordering
-for key, value in resperc_dict.items():
-    print(key,value)
-
-for key, value in resperc_dict.items():
-    print(key,value)
-    
 # Get directory info
 srcdir = os.getcwd()
 outdir = srcdir + str('/casenum_') + str(casenum) # out directory
@@ -85,8 +78,8 @@ outdir = srcdir + str('/casenum_') + str(casenum) # out directory
 if not os.path.isdir(outdir):
     os.mkdir(outdir)
 
-gencpy(srcdir,destdir,input_top)
-gencpy(srcdir,destdir,input_pdb)
+gencpy(srcdir,outdir,input_top)
+gencpy(srcdir,outdir,input_pdb)
 
 # Open file and write headers
 fmain = open(outdir + '/' + tcl_fname,'w')
@@ -94,12 +87,12 @@ psfgen_headers(fmain,input_top,pdbpsf_name)
 flist = open(outdir + '/' + alllist_fname,'w')
 flist.write('; Contains all segments and linkers for NAMD files.\n')
 flog = open(outdir + '/' + alllist_fname,'w')
-init_logwrite(flog,casenum,biomass_typ,deg_poly,swit_opt,input_top\
+init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains)
-print('Begin analysis for ',biomass_typ,', case_num: ', casenum)
+print('Begin analysis for ',biomas_typ,', case_num: ', casenum)
             
 # Number of iterations needed per chain
-niter = int(log(deg_poly)/log(2)) #closest power of 2
+niter = int(math.log(deg_poly)/math.log(2)) #closest power of 2
 flog.write('Number of iterations per chain: %d\n ' %(niter))
 
 # Create cumulative probability distribution of segments
@@ -109,25 +102,20 @@ print(cumul_monarr)
     
 # Set 2D default list and generate segments/linkers
 res_list = [[] for i in range(num_chains)]
-link_list = [[] for i in range(num_chains)-1]
-
+link_list = [[] for i in range(num_chains-1)]
+print(link_list)
 # Create segments/links and check for avg probability 
 flog.write('Creating residue list..\n')
-res_list = create_segments(flist,nmons,num_chains,segname,\ 
-                                     resperc_dict,tol,maxatt,flog)
+res_list = create_segments(flist,nmons,num_chains,segname,\
+                           resperc_dict,tol,maxatt,flog)
 
 
 # Write segments according to iteration number
 for iterval in range(niter):
-    
     iter_num  = itreval + 1
     nmonsthisiter = pow(2,iter_num)
     write_segments(fmain,iter_num,nmonsthisiter,segname,res_cumulprob_list)
               
-        
-    
-    
-
 # Generate patches
 
 
