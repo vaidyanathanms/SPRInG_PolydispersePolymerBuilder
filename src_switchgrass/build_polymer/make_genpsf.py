@@ -351,24 +351,27 @@ def write_segments_onego(fin,nmons,nch,segname,res_list,link_list):
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
     
+    #Residues
     for chcnt in range(nch):
 
         for segcnt in range(nmons):
 
             fin.write('  residue  %d  %s\n' \
                       %(segcnt+1,res_list[chcnt][segcnt]))
-        
+
+    fin.write('}')        
     fin.write('\n')
 
+    #Patches
     for chcnt in range(nch):
 
-        for segcnt in range(nmons):
+        for segcnt in range(nmons-1):
 
-            fin.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+            fin.write('patch  %d  %s  %s:%d  %s:%d\n' \
                         %(segcnt+1,link_list[chcnt][segcnt],\
                           segname,segcnt+1,segname,segcnt+2))
 
-    
+    fin.write('\n')
 
 #---------------------------------------------------------------------
 
@@ -381,9 +384,26 @@ def write_multi_segments(fin,iter_num,nmonsthisiter,nch,segname,\
     fin.write('\n')
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
-    
-    for segcnt in range(nmonsthisiter):
-    
 
+    #Residues
+    for chcnt in range(nch):
+
+        for segcnt in range(nmonsthisiter):
+
+            fin.write('  residue  %d  %s\n' \
+                      %(segcnt+1,res_list[chcnt][segcnt]))
+
+    fin.write('}')        
+    fin.write('\n')
         
-                
+    #Patches
+    for chcnt in range(nch):
+
+        for segcnt in range(nmons-1):
+
+            fin.write('patch  %d  %s  %s:%d  %s:%d\n' \
+                        %(segcnt+1,link_list[chcnt][segcnt],\
+                          segname,segcnt+1,segname,segcnt+2))
+
+    fin.write('\n')
+#---------------------------------------------------------------------

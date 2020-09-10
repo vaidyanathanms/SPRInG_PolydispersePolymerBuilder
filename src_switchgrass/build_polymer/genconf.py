@@ -51,6 +51,7 @@ num_chains = 1 # number of chains
 tol = 0.1 # relative tolerance
 maxatt = 500 # maximum attempts to obtain avg configuration
 itertype  = 'single' # Op style: single-> one go. multi-> multi iter
+iterinc   = 4 # iteration increments (for multi itertype)
 
 # Output file names (will be generated automatically)
 tcl_fname  = biomas_typ + str(casenum) + '.tcl' # outfile for tcl
@@ -118,28 +119,33 @@ flog.write('Creating patches list..\n')
 link_list = create_patches(flinkin,deg_poly,num_chains,seg_name,\
                            linkperc_dict,cumul_linkarr,tol,maxatt,flog)
 
+flog.write('Writing data to files \n')
+flog.write('Output style %s\n' %(itertpe))
+
 if itertype == 'single':
     write_segments_onego(fmain,deg_poly,num_chains,seg_name,\
                          res_list,link_list)
     psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
 elif itertype == 'multi':
-    # Number of iterations needed per chain
-    niter = int(math.log(deg_poly)/math.log(2)) #closest power of 2
-    flog.write('Number of iterations per chain: %d\n ' %(niter))
+
+    flog.write('Iteration increment counter %d\n' %(iterinc))
 
     # Write segments according to iteration number
-    for iterval in range(niter):
-        iter_num  = iterval + 1
-        nmonsthisiter = pow(2,iter_num)
+    iter_num = 1
+    nmonsthisiter = iterinc
+    
+    while nmonsthisiter <= deg_poly:
         write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains\
                              ,seg_name,res_list,link_list)
         psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
         fmain.write('namd2 mini.conf > mini.out\n')
         fmain.write(';# exit')
+        iter_num  = iterval + 1
+        nmonsthisiter = nmonsthisiter + iterinc
 
     # Write the rest in one go
-    if deg_poly != pow(math.log(2),niter):
+    if deg_poly%iterinc != 0:
         iter_num = iter_num + 1
         write_multi_segments(fmain,iter_num,deg_poly,num_chains,seg_name,\
                              res_list,link_list)
