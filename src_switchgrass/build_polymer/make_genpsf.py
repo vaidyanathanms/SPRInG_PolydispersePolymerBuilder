@@ -28,7 +28,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 
     desfyl = dum_destdir + '/' + fylname
     shutil.copy2(srcfyl,desfyl)
-
+#---------------------------------------------------------------------
 
 # Define headers for psf files
 def psfgen_headers(fin,topname,outname):
@@ -36,7 +36,7 @@ def psfgen_headers(fin,topname,outname):
     fin.write('package require psfgen \n')
     fin.write('%s\t %s\n' %('topology',topname))
     fin.write('%s\t %s\n' %('set outputname', outname))
-              
+#---------------------------------------------------------------------              
 # Details for closing input files
 def psfgen_postprocess(fin,basic_pdb):
     # outname is already there. no need again
@@ -47,21 +47,21 @@ def psfgen_postprocess(fin,basic_pdb):
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepsf $outputnmae.psf \n')
     fin.write(';# exit')
-
+#---------------------------------------------------------------------
 
 # Define monomer ratios from literature    
 def residue_ratios(opt):
 # add monomer details
-    frac_mons = collections.OrderedDict()
+    frac_res = collections.OrderedDict()
     
     if opt == 'A' or opt == 'a':
 
         # H:G:S = 26:42:32 (B); pCA:FA = 1
-        frac_mons['PHP'] = 26/140 # % PHP (H) monomers
-        frac_mons['GUA'] = 42/140 # % GUA (G) monomers
-        frac_mons['SYR'] = 32/140 # % SYR (S) monomers
-        frac_mons['PCA'] = 20/140 # % PCA monomers
-        frac_mons['FEA'] = 20/140 # % FA monomers
+        frac_res['PHP'] = 26/140 # % PHP (H) monomers
+        frac_res['GUA'] = 42/140 # % GUA (G) monomers
+        frac_res['SYR'] = 32/140 # % SYR (S) monomers
+        frac_res['PCA'] = 20/140 # % PCA monomers
+        frac_res['FEA'] = 20/140 # % FA monomers
         
     elif opt == 'B' or opt == 'b':
 
@@ -69,23 +69,27 @@ def residue_ratios(opt):
 
         gmonrat = 0.27
 
-
-    return frac_mons
+    return frac_res
+#---------------------------------------------------------------------
 
 # Define linker ratios from literature
 def linker_ratios(opt):
 # add linker details
-    link_rat = dict()
+    frac_link = collections.Ordereddict()
 
     if opt == 'A' or opt == 'a':
 
-        link_rat['BO4'] = 0.4
+        frac_link['BO4'] = 0.4
+        frac_link['55']  = 0.2
+        frac_link['AO4'] = 0.2
+        frac_link['BB']  = 0.2
 
     elif opt == 'B' or opt == 'b':
 
-        link_rat['BO4'] = 0
+        frac_link['BO4'] = 0
 
-    return link_rat
+    return frac_link
+#---------------------------------------------------------------------
 
 # Initiate log file
 def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch):
@@ -99,9 +103,10 @@ def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch):
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
     flog.write('Segment name: %s\n' %(segname))
     flog.write('Analysis beginning ..\n')
+#---------------------------------------------------------------------
 
 # Create cumulative probability distribution from a dictionary
-def cumul_probdist(inpdict):
+def cumul_probdist(inpdict,flog):
 
     dummy_distarr = []
 
@@ -119,8 +124,12 @@ def cumul_probdist(inpdict):
         print('Warning: data not normalized (', \
               dummy_distarr[len(dummy_distarr)-1],\
               '). Forcing normalization \n')
+        flog.write('%s\t%g\t%s\n' %('Warning: data not normalized (', \
+                                    dummy_distarr[len(dummy_distarr)-1],\
+                                    '). Forcing normalization \n'))
         sumval = sum(dummy_distarr)
         
+        # force normalization
         for cnt in range(len(dummy_distarr)):
             dummy_distarr[cnt] = dummy_distarr[cnt]/sumval
             
@@ -128,6 +137,7 @@ def cumul_probdist(inpdict):
         print('Generated target cumulative distribution..')
 
     return dummy_distarr
+#---------------------------------------------------------------------
     
 # Create entire list in one go so that cumulative distribution holds true
 def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
@@ -222,16 +232,112 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                    %(normval))
 
     return out_list
+#---------------------------------------------------------------------
+
+# Generate patches
+def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
+                    ,tol,maxattmpt,flog):
+
+    # Write list to a separate file
+    flist.write('; Entire linker list\n')
+    flist.write('; num_links\t%d, num_chains\t%d\n' %(nmons-1,nch))
+    flog.write('Probabilities for each attempt\n')
+    flog.write('Attempt#\t')
+    for wout in range(len(inp_dict)):
+        flog.write('%s\t' %(list(inp_dict.keys())[wout]))
+    flog.write('L2norm \n')
+
+    flag_optimal = -1
+
+    for attnum in range(maxattmpt):
+
+        flog.write('%d\t' %(attnum+1))    
+        flist.write('; Attempt number \t%d\n' %(attnum+1))
+        flist.write(' resetpsf\n')
+
+        out_list = [[] for i in range(nch)] #reset every attempt
+   
+        for chcnt in range(nch):
+            flist.write('; chain number:\t%d\n' %(chcnt+1))
+            flist.write(' segment %s {\n' %(segname))
+
+            for segcnt in range(nmons):
+
+                ranval = random.random() #seed is current system time by default
+                findflag = 0
+
+                for arrcnt in range(len(cumulprobarr)):
+        
+                    #Only need to check the less than value because
+                    #the array is organized in increasing order.
+                    #Break the loop once the first point where the
+                    #condition is met.
+                    if ranval < cumulprobarr[arrcnt]:
+                
+                        flist.write(' residue\t%d\t%s\n' \
+                                    %(segcnt+1,list(inp_dict.keys())[arrcnt]))
+                        findflag = 1   
+                        out_list[chcnt].append(list(inp_dict.keys())[arrcnt])
+                        break
+
+                if findflag != 1:
+                    print('Random value/Probarr:', ranval,cumulprobarr)
+                    exit('Error in finding a random residue\n')
+            
+            flist.write(' }')
+        # After going through all the chains, count occurence of each res/patch
+        outdist = []
+        for key in inp_dict:
+            outdist.append(sum([i.count(key) for i in out_list]))
+
+        #normalize
+        sumval = sum(outdist)
+        if sumval != nch*nmons:
+            print('Sum from distn,nch*nmons:',sumval,nch*nmons)
+            exit('ERROR: Sum not equal to the total # of segments')
+        normlist = [x/sumval for x in outdist]
+
+        #extract target probabilities and compare
+        targ_probs = list(inp_dict.values())
+        normval = numpy.linalg.norm(numpy.array(normlist) \
+                                    - numpy.array(targ_probs))
     
+        if normval <= tol:
+            #write to log file
+            for wout in range(len(outdist)):
+                flog.write('%g\t' %(outdist[wout]))
+            flog.write('%g\n' %(normval))
+            flog.write('Found optimal configuration\n')
+            print('Found optimal configuration\n')
+            flag_optimal = 1
+            break
+
+        else:
+            flist.write('\n')
+            for wout in range(len(outdist)):
+                flog.write('%g\t' %(outdist[wout]))
+            flog.write('%g\n' %(normval))
+
+
+    if flag_optimal == -1:
+        print('Did not find optimal configuration\n')
+        print('Using last configuration with L2norm: ', normval)
+        flog.write('Did not find optimal configuration\n')
+        flog.write('Using last configuration with L2norm: %g'\
+                   %(normval))
+
+    return out_list
+#---------------------------------------------------------------------
+
 # Write segments iteration by iteration
-def make_segments(fin,iter_num,nmonsthisiter,segname,res_dict,distarr):
+def write_segments(fin,iter_num,nmonsthisiter,segname,res_dict,distarr):
 
     fin.write('; Iteration number: %d' %(iter_num))
     fin.write('set count %d' %(nmonsthister))
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
     
-#    for segcnt in range(nmonsthisiter):
+    for segcnt in range(nmonsthisiter):
     
         
                 
