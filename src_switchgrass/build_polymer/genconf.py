@@ -35,7 +35,9 @@ from make_genpsf import linker_ratios
 from make_genpsf import init_logwrite
 from make_genpsf import cumul_probdist
 from make_genpsf import create_segments
-from make_genpsf import make_segments
+from make_genpsf import create_patches
+from make_genpsf import write_multi_segments
+from make_genpsf import write_segments_onego
 
 # Input data
 casenum    = 1  # case number
@@ -48,6 +50,7 @@ seg_name = 'swli' #name of segment: switchgrass lignin
 num_chains = 1 # number of chains
 tol = 0.1 # relative tolerance
 maxatt = 500 # maximum attempts to obtain avg configuration
+iterflag  = 0 # Write output: 0-> one go. 1-> multiple iterations
 
 # Output file names (will be generated automatically)
 tcl_fname  = biomas_typ + str(casenum) + '.tcl' # outfile for tcl
@@ -112,26 +115,30 @@ flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,flog)
 flog.write('Creating patches list..\n')
-link_list = create_patches(fresin,deg_poly,num_chains,seg_name,\
-                           resperc_dict,cumul_resarr,tol,maxatt,flog)
+link_list = create_patches(flinkin,deg_poly,num_chains,seg_name,\
+                           linkperc_dict,cumul_linkarr,tol,maxatt,flog)
 
+if iterflag == 0:
+    write_segments_onego(fmain,deg_poly,num_chains,seg_name,\
+                         res_list,link_list)
+    psfgen_postprocess(fmain,input_pdb)
 
-# Number of iterations needed per chain
-niter = int(math.log(deg_poly)/math.log(2)) #closest power of 2
-flog.write('Number of iterations per chain: %d\n ' %(niter))
+else:
+    # Number of iterations needed per chain
+    niter = int(math.log(deg_poly)/math.log(2)) #closest power of 2
+    flog.write('Number of iterations per chain: %d\n ' %(niter))
 
-# Write segments according to iteration number
-for iterval in range(niter):
-    iter_num  = iterval + 1
-    nmonsthisiter = pow(2,iter_num)
-#    write_segments(fmain,iter_num,nmonsthisiter,seg_name,\
-#                   res_cumulprob_list)
-              
-# Generate patches
+    # Write segments according to iteration number
+    for iterval in range(niter):
+        iter_num  = iterval + 1
+        nmonsthisiter = pow(2,iter_num)
+        write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains\
+                             ,seg_name,res_list,link_list)
+        psfgen_postprocess(fmain,input_pdb)
+        
 
-
-# Run NAMD
-psfgen_postprocess(fmain,input_pdb)
+#Exit file
+fmain.write('exit')
 
 # Close files
 fclose(fresin)

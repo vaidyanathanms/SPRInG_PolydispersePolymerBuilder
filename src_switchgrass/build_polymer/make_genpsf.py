@@ -46,7 +46,7 @@ def psfgen_postprocess(fin,basic_pdb):
     fin.write('guesscoord ;# guesses rest of the coordinates \n')
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepsf $outputnmae.psf \n')
-    fin.write(';# exit')
+
 #---------------------------------------------------------------------
 
 # Define monomer ratios from literature    
@@ -235,7 +235,7 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 #---------------------------------------------------------------------
 
 # Generate patches
-def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
+def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     ,tol,maxattmpt,flog):
 
     # Write list to a separate file
@@ -253,15 +253,13 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 
         flog.write('%d\t' %(attnum+1))    
         flist.write('; Attempt number \t%d\n' %(attnum+1))
-        flist.write(' resetpsf\n')
-
         out_list = [[] for i in range(nch)] #reset every attempt
    
         for chcnt in range(nch):
             flist.write('; chain number:\t%d\n' %(chcnt+1))
             flist.write(' segment %s {\n' %(segname))
 
-            for segcnt in range(nmons):
+            for segcnt in range(nmons-1):
 
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
@@ -274,8 +272,9 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     #condition is met.
                     if ranval < cumulprobarr[arrcnt]:
                 
-                        flist.write(' residue\t%d\t%s\n' \
-                                    %(segcnt+1,list(inp_dict.keys())[arrcnt]))
+                        flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                    %(segcnt+1,list(inp_dict.keys())[arrcnt],\
+                                      segname,segcnt+1,segname,segcnt+2))
                         findflag = 1   
                         out_list[chcnt].append(list(inp_dict.keys())[arrcnt])
                         break
@@ -329,15 +328,47 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
     return out_list
 #---------------------------------------------------------------------
 
-# Write segments iteration by iteration
-def write_segments(fin,iter_num,nmonsthisiter,segname,res_dict,distarr):
+# Write residues/patches in one go
+def write_segments_onego(fin,nmons,nch,segname,res_list,link_list):
 
-    fin.write('; Iteration number: %d' %(iter_num))
+    fin.write('; Iteration number: %d\n' %(iter_num))
+    fin.write('\n')
+    fin.write(' resetpsf \n')
+    fin.write(' segment %s {\n' %(segname))
+    
+    for chcnt in range(nch):
+
+        for segcnt in range(nmons):
+
+            fin.write('  residue  %d  %s\n' \
+                      %(segcnt+1,res_list[chcnt][segcnt]))
+        
+    fin.write('\n')
+
+    for chcnt in range(nch):
+
+        for segcnt in range(nmons):
+
+            fin.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                        %(segcnt+1,link_list[chcnt][segcnt],\
+                          segname,segcnt+1,segname,segcnt+2))
+
+    
+
+#---------------------------------------------------------------------
+
+# Write residues/patches iteration by iteration
+def write_multi_segments(fin,iter_num,nmonsthisiter,nch,segname,\
+                         res_list,link_list):
+
+    fin.write('; Iteration number: %d\n' %(iter_num))
     fin.write('set count %d' %(nmonsthister))
+    fin.write('\n')
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
     
     for segcnt in range(nmonsthisiter):
     
+
         
                 
