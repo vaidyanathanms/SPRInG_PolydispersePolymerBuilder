@@ -128,36 +128,62 @@ def cumul_probdist(inpdict):
     return dummy_distarr
     
 # Create entire list in one go so that cumulative distribution holds true
-def create_segments(flist,nmons,segname,res_dict,cumul_monarr):
+def create_segments(flist,nmons,nch,segname,res_dict,cumul_monarr\
+                    ,tol,maxattmpt,flog):
 
+    # Write list to a separate file
     flist.write('; Entire segment list\n')
-    flist.write(' resetpsf\n')
-    flist.write(' segment %s {\n' %(segname))
+    flist.write('; num_segs\t%d, num_chains\t%d' %(nmons,nch))
+    
+    for attnum in range(maxattmpt):
 
-    for moncnt in range(nmons):
+        flist.write('; Attempt number \t%d' %(attnum))
+        flist.write(' resetpsf\n')
+        out_list = [[] for i in range(num_chains)]
+   
+        for chcnt in range(nch):
+            flist.write('; chain number:\t%d\n' %(chcnt+1))
+            flist.write(' segment %s {\n' %(segname))
 
-        ranval = random.random() #seed is current system time by default
-        findflag = 0
+            for moncnt in range(nmons):
 
-        for arrcnt in range(length(distarr)-1):
+                ranval = random.random() #seed is current system time by default
+                findflag = 0
+
+                for arrcnt in range(length(distarr)-1):
         
-            if ranval >= distarr[arrcnt] and ranval<distarr[arrcnt+1]:
+                    if ranval >= distarr[arrcnt] and ranval<distarr[arrcnt+1]:
                 
-                flist.write('\tresidue\t%d\t%s\n' %(segcnt+1,\
-                                                list(res_dict.key())[arrcnt]))
-                findflag = 1   
-                seglist.append(list(res_dict.key())[arrcnt]))
-
-            if findflag != 1:
+                        flist.write('\tresidue\t%d\t%s\n' \
+                                    %(segcnt+1,list(res_dict.key())[arrcnt]))
+                        findflag = 1   
+                        out_list[chcnt].append(list(res_dict.key())[arrcnt]))
+                    
+                if findflag != 1:
                 print(distarr)
                 exit('Error in finding a random residue\n')
-             
+            
+        
+        outdist = []
+        for key in inplist_dict:
+            outdist.append(sum([i.count(key) for i in cumprobs]))
 
-# check whether the distribution is within tolerance limit
-def check_distribution(inplist,cumprobs,tol,flog,attnum):
+        #normalize
+        sumval = sum(outdist)
+        normlist = [x/sumval for x in outdist]
+        normval = numpy.linalg.norm(numpy.array(normlist) \
+                                    - numpy.array(cumprobs))
+    
+        if normval <= tol:
+            #write to log file
+            flog.write('Attempt/avg prob: ')
+            break
 
+        else:
+            flog.write('Attempt/avg prob: ')
 
-
+    return out_list
+    
 # Write segments iteration by iteration
 def make_segments(fin,iter_num,nmonsthisiter,segname,res_dict,distarr):
 
