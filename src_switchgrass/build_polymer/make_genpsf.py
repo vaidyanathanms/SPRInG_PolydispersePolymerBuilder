@@ -15,6 +15,7 @@ import shutil
 import glob
 import random
 import collections
+import math
 
 # General copy script
 def gencpy(dum_maindir,dum_destdir,fylname):
@@ -55,9 +56,7 @@ def residue_ratios(opt):
     
     if opt == 'A' or opt == 'a':
 
-        print('here')
         # H:G:S = 26:42:32 (B); pCA:FA = 1
-
         frac_mons['PHP'] = 26/140 # % PHP (H) monomers
         frac_mons['GUA'] = 42/140 # % GUA (G) monomers
         frac_mons['SYR'] = 32/140 # % SYR (S) monomers
@@ -91,9 +90,9 @@ def linker_ratios(opt):
 # Initiate log file
 def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch):
     flog.write('Creating NAMD file for %s\n' %(bmtype))
-    if optv == 'A' | optv == 'a':
+    if optv == 'A' or optv == 'a':
         flog.write('Ref: Yan et al., Biomass & Bioener 34, 48-53, 2010\n')
-    elif optv == 'B' | optv == 'b':
+    elif optv == 'B' or optv == 'b':
         flog.write('Ref: Samuel et al., Front. Ener. Res., 1 (14) 2014\n')
     flog.write('Case number: %d\n' %(casenum))
     flog.write('Monomers/Chains: %d\t%d\n' %(M, nch))
@@ -105,26 +104,29 @@ def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch):
 def cumul_probdist(inpdict):
 
     dummy_distarr = []
-    
+
     # store first value
     val = list(inpdict.values())[0]
     dummy_distarr.append(val)
 
     # add rest of the values
-    for key in range(1,len(inpdict)-1):#iterate until n-1 elements
-        val = dummy_distarr(key) + inpdict[key+1]
+    for key in range(len(inpdict)-1):#iterate until n-1 elements
+        val = dummy_distarr[key] + list(inpdict.values())[key+1]
         dummy_distarr.append(val)
 
     # check normalization
-    if dummy_distarr[len(dummy_distarr)] != 1:
+    if dummy_distarr[len(dummy_distarr)-1] != 1:
         print('Warning: data not normalized (', \
-              dummy_distarr[len(dummy_distarr)],\
+              dummy_distarr[len(dummy_distarr)-1],\
               '). Forcing normalization \n')
         sumval = sum(dummy_distarr)
         
-        for cnt in range(len(dummy_distarr))
+        for cnt in range(len(dummy_distarr)):
             dummy_distarr[cnt] = dummy_distarr[cnt]/sumval
             
+    else:
+        print('Generated target cumulative distribution..')
+
     return dummy_distarr
     
 # Create entire list in one go so that cumulative distribution holds true
@@ -157,11 +159,11 @@ def create_segments(flist,nmons,nch,segname,res_dict,cumul_monarr\
                         flist.write('\tresidue\t%d\t%s\n' \
                                     %(segcnt+1,list(res_dict.key())[arrcnt]))
                         findflag = 1   
-                        out_list[chcnt].append(list(res_dict.key())[arrcnt]))
+                        out_list[chcnt].append(list(res_dict.key())[arrcnt])
                     
                 if findflag != 1:
-                print(distarr)
-                exit('Error in finding a random residue\n')
+                    print(distarr)
+                    exit('Error in finding a random residue\n')
             
         
         outdist = []
@@ -192,10 +194,7 @@ def make_segments(fin,iter_num,nmonsthisiter,segname,res_dict,distarr):
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
     
-    for segcnt in range(nmonsthisiter):
+#    for segcnt in range(nmonsthisiter):
     
         
                 
-
-                
-    
