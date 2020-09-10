@@ -86,7 +86,7 @@ fmain = open(outdir + '/' + tcl_fname,'w')
 psfgen_headers(fmain,input_top,pdbpsf_name)
 flist = open(outdir + '/' + alllist_fname,'w')
 flist.write('; Contains all segments and linkers for NAMD files.\n')
-flog = open(outdir + '/' + alllist_fname,'w')
+flog = open(outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains)
 print('Begin analysis for ',biomas_typ,', case_num: ', casenum)
@@ -97,28 +97,28 @@ flog.write('Number of iterations per chain: %d\n ' %(niter))
 
 # Create cumulative probability distribution of segments
 flog.write('Making cumulative distribution..\n')
-cumul_monarr = cumul_probdist(resperc_dict)
-print(cumul_monarr)
+cumul_resarr = cumul_probdist(resperc_dict)
+flog.write(str(cumul_resarr))
     
 # Set 2D default list and generate segments/linkers
 res_list = [[] for i in range(num_chains)]
 link_list = [[] for i in range(num_chains-1)]
-print(link_list)
+
 # Create segments/links and check for avg probability 
 flog.write('Creating residue list..\n')
-res_list = create_segments(flist,nmons,num_chains,segname,\
-                           resperc_dict,tol,maxatt,flog)
+res_list = create_segments(flist,deg_poly,num_chains,seg_name,\
+                           resperc_dict,cumul_resarr,tol,maxatt,flog)
 
 
 # Write segments according to iteration number
 for iterval in range(niter):
-    iter_num  = itreval + 1
+    iter_num  = iterval + 1
     nmonsthisiter = pow(2,iter_num)
-    write_segments(fmain,iter_num,nmonsthisiter,segname,res_cumulprob_list)
+#    write_segments(fmain,iter_num,nmonsthisiter,seg_name,\
+#                   res_cumulprob_list)
               
 # Generate patches
 
 
 # Run NAMD
 psfgen_postprocess(fmain,input_pdb)
-

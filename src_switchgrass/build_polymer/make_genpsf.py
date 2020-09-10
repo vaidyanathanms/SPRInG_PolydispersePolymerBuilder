@@ -42,7 +42,7 @@ def psfgen_postprocess(fin,basic_pdb):
     # outname is already there. no need again
     fin.write(';# Writing output \n')
     fin.write('regenerate angles dihedrals \n')
-    fin.write('coordpdb %s\t%\n' %(basic_pdb,';# dimer pdb for reference'))
+    fin.write('coordpdb %s\t%s\n' %(basic_pdb,';# dimer pdb for reference'))
     fin.write('guesscoord ;# guesses rest of the coordinates \n')
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepsf $outputnmae.psf \n')
@@ -130,59 +130,96 @@ def cumul_probdist(inpdict):
     return dummy_distarr
     
 # Create entire list in one go so that cumulative distribution holds true
-def create_segments(flist,nmons,nch,segname,res_dict,cumul_monarr\
+def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     ,tol,maxattmpt,flog):
 
     # Write list to a separate file
     flist.write('; Entire segment list\n')
-    flist.write('; num_segs\t%d, num_chains\t%d' %(nmons,nch))
-    
+    flist.write('; num_segs\t%d, num_chains\t%d\n' %(nmons,nch))
+    flog.write('Probabilities for each attempt\n')
+    flog.write('Attempt#\t')
+    for wout in range(len(inp_dict)):
+        flog.write('%s\t' %(list(inp_dict.keys())[wout]))
+    flog.write('L2norm \n')
+
+    flag_optimal = -1
+
     for attnum in range(maxattmpt):
 
-        flist.write('; Attempt number \t%d' %(attnum))
+        flog.write('%d\t' %(attnum+1))    
+        flist.write('; Attempt number \t%d\n' %(attnum+1))
         flist.write(' resetpsf\n')
-        out_list = [[] for i in range(num_chains)]
+
+        out_list = [[] for i in range(nch)] #reset every attempt
    
         for chcnt in range(nch):
             flist.write('; chain number:\t%d\n' %(chcnt+1))
             flist.write(' segment %s {\n' %(segname))
 
-            for moncnt in range(nmons):
+            for segcnt in range(nmons):
 
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
 
-                for arrcnt in range(length(distarr)-1):
+                for arrcnt in range(len(cumulprobarr)):
         
-                    if ranval >= distarr[arrcnt] and ranval<distarr[arrcnt+1]:
+                    #Only need to check the less than value because
+                    #the array is organized in increasing order.
+                    #Break the loop once the first point where the
+                    #condition is met.
+                    if ranval < cumulprobarr[arrcnt]:
                 
-                        flist.write('\tresidue\t%d\t%s\n' \
-                                    %(segcnt+1,list(res_dict.key())[arrcnt]))
+                        flist.write(' residue\t%d\t%s\n' \
+                                    %(segcnt+1,list(inp_dict.keys())[arrcnt]))
                         findflag = 1   
-                        out_list[chcnt].append(list(res_dict.key())[arrcnt])
-                    
+                        out_list[chcnt].append(list(inp_dict.keys())[arrcnt])
+                        break
+
                 if findflag != 1:
-                    print(distarr)
+                    print('Random value/Probarr:', ranval,cumulprobarr)
                     exit('Error in finding a random residue\n')
             
-        
+            flist.write(' }')
+        # After going through all the chains, count occurence of each res/patch
         outdist = []
-        for key in inplist_dict:
-            outdist.append(sum([i.count(key) for i in cumprobs]))
+        for key in inp_dict:
+            outdist.append(sum([i.count(key) for i in out_list]))
 
         #normalize
         sumval = sum(outdist)
+        if sumval != nch*nmons:
+            print('Sum from distn,nch*nmons:',sumval,nch*nmons)
+            exit('ERROR: Sum not equal to the total # of segments')
         normlist = [x/sumval for x in outdist]
+
+        #extract target probabilities and compare
+        targ_probs = list(inp_dict.values())
         normval = numpy.linalg.norm(numpy.array(normlist) \
-                                    - numpy.array(cumprobs))
+                                    - numpy.array(targ_probs))
     
         if normval <= tol:
             #write to log file
-            flog.write('Attempt/avg prob: ')
+            for wout in range(len(outdist)):
+                flog.write('%g\t' %(outdist[wout]))
+            flog.write('%g\n' %(normval))
+            flog.write('Found optimal configuration\n')
+            print('Found optimal configuration\n')
+            flag_optimal = 1
             break
 
         else:
-            flog.write('Attempt/avg prob: ')
+            flist.write('\n')
+            for wout in range(len(outdist)):
+                flog.write('%g\t' %(outdist[wout]))
+            flog.write('%g\n' %(normval))
+
+
+    if flag_optimal == -1:
+        print('Did not find optimal configuration\n')
+        print('Using last configuration with L2norm: ', normval)
+        flog.write('Did not find optimal configuration\n')
+        flog.write('Using last configuration with L2norm: %g'\
+                   %(normval))
 
     return out_list
     
