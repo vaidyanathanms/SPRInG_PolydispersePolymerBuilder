@@ -47,6 +47,7 @@ input_pdb  = 'G-bO4L-G.pdb' # file input - dimer
 seg_name = 'swli' #name of segment: switchgrass lignin
 num_chains = 1 # number of chains
 tol = 0.1 # relative tolerance
+maxatt = 500 # maximum attempts to obtain avg configuration
 
 # Output file names (will be generated automatically)
 tcl_fname  = biomas_typ + str(casenum) + '.tcl' # outfile for tcl
@@ -106,11 +107,15 @@ flog.write('Making cumulative distribution..\n')
 cumul_monarr = cumul_probdist(resperc_dict)
 print(cumul_monarr)
     
-# Set default list and generate segments/linkers
-res_cumulprob_list = [] # add onto this to know the % mons of (n-1)th iteration
-res_cumulprob_list = create_segments(flist,nmons,segname,\ 
-                                     resperc_dict,cumul_monarr)
-distflag = check_distribution(resperc_dict,res_cumulprob_list,tol,flog,1)
+# Set 2D default list and generate segments/linkers
+res_list = [[] for i in range(num_chains)]
+link_list = [[] for i in range(num_chains)-1]
+
+# Create segments/links and check for avg probability 
+flog.write('Creating residue list..\n')
+res_list = create_segments(flist,nmons,num_chains,segname,\ 
+                                     resperc_dict,tol,maxatt,flog)
+
 
 # Write segments according to iteration number
 for iterval in range(niter):
