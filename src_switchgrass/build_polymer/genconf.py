@@ -38,11 +38,12 @@ from make_genpsf import create_segments
 from make_genpsf import create_patches
 from make_genpsf import write_multi_segments
 from make_genpsf import write_segments_onego
+from make_genpsf import run_namd
 
 # Input data
 casenum    = 1  # case number
 biomas_typ  = 'switchgrass_' # type of biomass; end with _
-deg_poly   = 16 # degree of polymerization (final)
+deg_poly   = 17 # degree of polymerization (final)
 swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
 input_top = 'lignin.top' # topology file input
 input_pdb  = 'G-bO4L-G.pdb' # file input - dimer
@@ -50,7 +51,7 @@ seg_name = 'swli' #name of segment: switchgrass lignin
 num_chains = 1 # number of chains
 tol = 0.1 # relative tolerance
 maxatt = 500 # maximum attempts to obtain avg configuration
-itertype  = 'single' # Op style: single-> one go. multi-> multi iter
+itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
 iterinc   = 4 # iteration increments (for multi itertype)
 
 # Output file names (will be generated automatically)
@@ -102,12 +103,12 @@ print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
 flog.write('Making cumulative distribution for segments..\n')
 print('Making cumulative distribution for segments..')
 cumul_resarr = cumul_probdist(resperc_dict,flog)
-flog.write(str(cumul_resarr))
+flog.write(str(cumul_resarr)+'\n')
 
 flog.write('Making cumulative distribution for patches..\n')
 print('Making cumulative distribution for patches..')
 cumul_linkarr = cumul_probdist(linkperc_dict,flog)
-flog.write(str(cumul_linkarr))
+flog.write(str(cumul_linkarr)+'\n')
     
 # Set 2D default list and generate segments/linkers
 res_list = [[] for i in range(num_chains)]
@@ -142,27 +143,24 @@ elif itertype == 'multi':
     nmonsthisiter = iterinc
     
     while nmonsthisiter <= deg_poly:
-        flog.write('Writing config for %d n-segments\n' %(nmonsthisiter))
-        print('Writing config for n-segments', nmonsthisiter)
+        flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
+        print('Writing config for n-segments: ', nmonsthisiter)
         write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains\
                              ,seg_name,res_list,link_list)
         psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
-        fmain.write('namd2 mini.conf > mini.out\n')
-        fmain.write(';# exit')
-        iter_num  = iterval + 1
+        run_namd(fmain,'namd2', 'mini.conf', 'mini.out')
+        iter_num  = iter_num + 1
         nmonsthisiter = nmonsthisiter + iterinc
 
     # Write the rest in one go
     if deg_poly%iterinc != 0:
-        flog.write('Writing config for %d segments\n' %(deg_poly))
-        print('Writing config for segments', deg_poly)
+        flog.write('Writing config for n-segments: %d\n' %(deg_poly))
+        print('Writing config for n-segments: ', deg_poly)
         iter_num = iter_num + 1
         write_multi_segments(fmain,iter_num,deg_poly,num_chains,seg_name,\
                              res_list,link_list)
         psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
-        fmain.write('namd2 mini.conf > mini.out\n')
-        fmain.write(';# exit')        
-
+        run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
 else:
     exit('ERROR: Unknown output write style option: ' + itertype)
 
