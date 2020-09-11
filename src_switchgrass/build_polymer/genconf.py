@@ -96,14 +96,16 @@ flinkin.write(';# Contains all patches/links for NAMD files.\n')
 flog = open(outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains)
-print('Begin analysis for ',biomas_typ,', case_num: ', casenum)
+print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
             
 # Create cumulative probability distribution of segments/patches
 flog.write('Making cumulative distribution for segments..\n')
+print('Making cumulative distribution for segments..')
 cumul_resarr = cumul_probdist(resperc_dict,flog)
 flog.write(str(cumul_resarr))
 
 flog.write('Making cumulative distribution for patches..\n')
+print('Making cumulative distribution for patches..')
 cumul_linkarr = cumul_probdist(linkperc_dict,flog)
 flog.write(str(cumul_linkarr))
     
@@ -120,9 +122,13 @@ link_list = create_patches(flinkin,deg_poly,num_chains,seg_name,\
                            linkperc_dict,cumul_linkarr,tol,maxatt,flog)
 
 flog.write('Writing data to files \n')
-flog.write('Output style %s\n' %(itertpe))
+flog.write('Output style %s\n' %(itertype))
+print('Writing data to files..')
+print('Output style: ', itertype)
 
 if itertype == 'single':
+    flog.write('Writing config for n-segments: %d\n' %(deg_poly))
+    print('Writing config for n-segments: ', deg_poly)
     write_segments_onego(fmain,deg_poly,num_chains,seg_name,\
                          res_list,link_list)
     psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
@@ -136,6 +142,8 @@ elif itertype == 'multi':
     nmonsthisiter = iterinc
     
     while nmonsthisiter <= deg_poly:
+        flog.write('Writing config for %d n-segments\n' %(nmonsthisiter))
+        print('Writing config for n-segments', nmonsthisiter)
         write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains\
                              ,seg_name,res_list,link_list)
         psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
@@ -146,6 +154,8 @@ elif itertype == 'multi':
 
     # Write the rest in one go
     if deg_poly%iterinc != 0:
+        flog.write('Writing config for %d segments\n' %(deg_poly))
+        print('Writing config for segments', deg_poly)
         iter_num = iter_num + 1
         write_multi_segments(fmain,iter_num,deg_poly,num_chains,seg_name,\
                              res_list,link_list)
@@ -159,8 +169,11 @@ else:
 #Exit file
 fmain.write('exit')
 
+flog.write('Completed psf generation for casenum: %d\n' %(casenum))
+print('Completed psf generation for casenum: ', casenum)
+
 # Close files
-fclose(fresin)
-fclose(flinkin)
-fclose(flog)
-fcose(fmain)
+fresin.close()
+flinkin.close()
+flog.close()
+fmain.close()

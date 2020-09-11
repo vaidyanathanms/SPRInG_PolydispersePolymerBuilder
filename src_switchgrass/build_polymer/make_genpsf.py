@@ -2,6 +2,8 @@
 # Supporting scripts for making a general psf/pdb file
 # Switchgrass variety: Alamo switchgrass
 
+# 'None' is a keyword reserved - DONT USE IT for PDB/PSF filenames.
+
 # H:G:S = 26:42:32 (A); G:S = 0.75 - 0.78, H = 2 (B)
 # pCA:FA = 1 (A); pCA:FA = 6:32 (B)
 
@@ -90,7 +92,7 @@ def residue_ratios(opt):
 # Define linker ratios from literature
 def linker_ratios(opt):
 # add linker details
-    frac_link = collections.Ordereddict()
+    frac_link = collections.OrderedDict()
 
     if opt == 'A' or opt == 'a':
 
@@ -227,8 +229,8 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
             for wout in range(len(outdist)):
                 flog.write('%g\t' %(outdist[wout]))
             flog.write('%g\n' %(normval))
-            flog.write('Found optimal configuration\n')
-            print('Found optimal configuration\n')
+            flog.write('Found optimal residue configuration\n')
+            print('Found optimal residue configuration..')
             flag_optimal = 1
             break
 
@@ -240,10 +242,10 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 
 
     if flag_optimal == -1:
-        print('Did not find optimal configuration\n')
-        print('Using last configuration with L2norm: ', normval)
-        flog.write('Did not find optimal configuration\n')
-        flog.write('Using last configuration with L2norm: %g'\
+        print('Did not find optimal residue configuration')
+        print('Using last residue configuration with L2norm: ', normval)
+        flog.write('Did not find optimal residue configuration\n')
+        flog.write('Using last configuration with residue L2norm: %g'\
                    %(normval))
 
     return out_list
@@ -306,9 +308,9 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 
         #normalize
         sumval = sum(outdist)
-        if sumval != nch*nmons:
-            print('Sum from distn,nch*nmons:',sumval,nch*nmons)
-            exit('ERROR: Sum not equal to the total # of segments')
+        if sumval != nch*(nmons-1):
+            print('Sum from distn,nch*(nmons-1):',sumval,nch*(nmons-1))
+            exit('ERROR: Sum not equal to the total # of linkers')
         normlist = [x/sumval for x in outdist]
 
         #extract target probabilities and compare
@@ -321,8 +323,8 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
             for wout in range(len(outdist)):
                 flog.write('%g\t' %(outdist[wout]))
             flog.write('%g\n' %(normval))
-            flog.write('Found optimal configuration\n')
-            print('Found optimal configuration\n')
+            flog.write('Found optimal patch configuration\n')
+            print('Found optimal patch configuration..')
             flag_optimal = 1
             break
 
@@ -334,10 +336,10 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 
 
     if flag_optimal == -1:
-        print('Did not find optimal configuration\n')
-        print('Using last configuration with L2norm: ', normval)
-        flog.write('Did not find optimal configuration\n')
-        flog.write('Using last configuration with L2norm: %g'\
+        print('Did not find optimal patch configuration')
+        print('Using last patch configuration with L2norm: ', normval)
+        flog.write('Did not find patch optimal configuration\n')
+        flog.write('Using last patch configuration with L2norm: %g'\
                    %(normval))
 
     return out_list
@@ -346,8 +348,7 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 # Write residues/patches in one go
 def write_segments_onego(fin,nmons,nch,segname,res_list,link_list):
 
-    fin.write(';# Iteration number: %d\n' %(iter_num))
-    fin.write('\n')
+    fin.write(';# Writing % segments' %(nmons))
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
     
