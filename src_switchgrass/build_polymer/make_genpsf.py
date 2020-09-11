@@ -368,8 +368,8 @@ def write_segments_onego(fin,nmons,nch,segname,res_list,link_list):
 
         for segcnt in range(nmons-1):
 
-            fin.write('patch  %d  %s  %s:%d  %s:%d\n' \
-                        %(segcnt+1,link_list[chcnt][segcnt],\
+            fin.write('patch  %s  %s:%d  %s:%d\n' \
+                        %(link_list[chcnt][segcnt],\
                           segname,segcnt+1,segname,segcnt+2))
 
     fin.write('\n')
@@ -402,8 +402,8 @@ def write_multi_segments(fin,iter_num,nmonsthisiter,nch,segname,\
 
         for segcnt in range(nmons-1):
 
-            fin.write('patch  %d  %s  %s:%d  %s:%d\n' \
-                        %(segcnt+1,link_list[chcnt][segcnt],\
+            fin.write('patch  %s  %s:%d  %s:%d\n' \
+                        %(link_list[chcnt][segcnt],\
                           segname,segcnt+1,segname,segcnt+2))
 
     fin.write('\n')
