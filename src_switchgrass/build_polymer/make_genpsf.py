@@ -78,7 +78,7 @@ def residue_ratios(opt):
         frac_res['GUA'] = 42/140 # % GUA (G) monomers
         frac_res['SYR'] = 32/140 # % SYR (S) monomers
         frac_res['PCA'] = 20/140 # % PCA monomers
-        frac_res['FEA'] = 20/140 # % FA monomers
+        frac_res['FERU'] = 20/140 # % FA monomers
         
     elif opt == 'B' or opt == 'b':
 
@@ -96,9 +96,10 @@ def linker_ratios(opt):
 
     if opt == 'A' or opt == 'a':
 
-        frac_link['BO4'] = 0.4
+        frac_link['BO4R'] = 0.2
+        frac_link['BO4L'] = 0.2
         frac_link['55']  = 0.2
-        frac_link['AO4'] = 0.2
+        frac_link['405'] = 0.2
         frac_link['BB']  = 0.2
 
     elif opt == 'B' or opt == 'b':
@@ -255,13 +256,13 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 # to reading at once and copying to array. Need to think about it
 def check_constraints(inpfyle,patchname,resname1,resname2):
     bef_flag = 1; aft_flag = 1 # keep as true
-    with open(inpfyle) as fctr: 
-        all_lines = fctr.readlines() 
-        for line in all_lines: 
-            all_words = re.split('\W+')
+    with open(inpfyle,'r') as fctr: 
+        for line in fctr:
+            line = line.rstrip('\n')
+            all_words = re.split('\W+',line)
             if len(all_words) != 3:
                 print('ERR: Line in ctr file does not have 3 entries')
-                print(all_words)
+                print(len(all_words),all_words)
                 return -2
             if all_words[0] == patchname:
                 if all_words[1] == resname1:
@@ -270,7 +271,7 @@ def check_constraints(inpfyle,patchname,resname1,resname2):
                     aft_flag = 0
 
     # Return 0 if any flags are 0, else return 1
-    if bef_flag == 0 | aft_flag == 0:
+    if bef_flag == 0 or aft_flag == 0:
         return 0
     else:
         return 1
@@ -278,7 +279,7 @@ def check_constraints(inpfyle,patchname,resname1,resname2):
 
 # Generate patches
 def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,fctr,ctrfyle,residlist):
+                    ,tol,maxattmpt,flog,ctr_flag,ctrfyle,residlist):
 
     # Write list to a separate file
     flist.write(';# Entire linker list\n')
@@ -302,7 +303,7 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
             flist.write(' segment %s {\n' %(segname))
             segcnt = 0
 
-            while segcnt <= range(nmons-1): #for checking constraints
+            while segcnt <= nmons-2: #for checking constraints
 
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
@@ -316,24 +317,27 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     if ranval < cumulprobarr[arrcnt]:
                         patchname = list(inp_dict.keys())[arrcnt]
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                    %(segcnt+1,patchname\
+                                    %(segcnt+1,patchname,\
                                       segname,segcnt+1,segname,segcnt+2))
                         findflag = 1
                         appendflag = 1#default to 1 so that if
                         #constraints are not there, it will be appended.
-                        if flctr:
+                        if ctr_flag:
                             if segcnt == 0:
                                 resname1 = 'None'
                             else:
-                                resname1 = residlist[segcnt]
-                            resname2 = residlist[segcnt+1]
+                                resname1 = residlist[chcnt][segcnt]
+                            
+                            resname2 = residlist[chcnt][segcnt+1]
                             appendflag =check_constraints(ctrfyle,patchname,\
                                                           resname1,resname2)
 
-                        if appendflag: #update while loop if
+                        if appendflag == 1: #update while loop if
                             #constraints are met
                             out_list[chcnt].append(patchname)
                             segcnt += 1
+                        elif appendflag == -2:
+                            return 
 
                         break
 
@@ -342,6 +346,7 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     exit('Error in finding a random residue\n')
             
             flist.write(' }')
+
         # After going through all the chains, count occurence of each res/patch
         outdist = []
         for key in inp_dict:
