@@ -251,9 +251,34 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
     return out_list
 #---------------------------------------------------------------------
 
+# Read and check patch constraints -- May not be effective as opposed
+# to reading at once and copying to array. Need to think about it
+def check_constraints(inpfyle,patchname,resname1,resname2):
+    bef_flag = 1; aft_flag = 1 # keep as true
+    with open(inpfyle) as fctr: 
+        all_lines = fctr.readlines() 
+        for line in all_lines: 
+            all_words = re.split('\W+')
+            if len(all_words) != 3:
+                print('ERR: Line in ctr file does not have 3 entries')
+                print(all_words)
+                return -2
+            if all_words[0] == patchname:
+                if all_words[1] == resname1:
+                    bef_flag = 0
+                elif all_words[2] == resname2:
+                    aft_flag = 0
+
+    # Return 0 if any flags are 0, else return 1
+    if bef_flag == 0 | aft_flag == 0:
+        return 0
+    else:
+        return 1
+#---------------------------------------------------------------------
+
 # Generate patches
 def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog):
+                    ,tol,maxattmpt,flog,fctr,ctrfyle,residlist):
 
     # Write list to a separate file
     flist.write(';# Entire linker list\n')
@@ -275,8 +300,9 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
         for chcnt in range(nch):
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(' segment %s {\n' %(segname))
+            segcnt = 0
 
-            for segcnt in range(nmons-1):
+            while segcnt <= range(nmons-1): #for checking constraints
 
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
@@ -288,12 +314,27 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     #Break the loop once the first point where the
                     #condition is met.
                     if ranval < cumulprobarr[arrcnt]:
-                
+                        patchname = list(inp_dict.keys())[arrcnt]
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                    %(segcnt+1,list(inp_dict.keys())[arrcnt],\
+                                    %(segcnt+1,patchname\
                                       segname,segcnt+1,segname,segcnt+2))
-                        findflag = 1   
-                        out_list[chcnt].append(list(inp_dict.keys())[arrcnt])
+                        findflag = 1
+                        appendflag = 1#default to 1 so that if
+                        #constraints are not there, it will be appended.
+                        if flctr:
+                            if segcnt == 0:
+                                resname1 = 'None'
+                            else:
+                                resname1 = residlist[segcnt]
+                            resname2 = residlist[segcnt+1]
+                            appendflag =check_constraints(ctrfyle,patchname,\
+                                                          resname1,resname2)
+
+                        if appendflag: #update while loop if
+                            #constraints are met
+                            out_list[chcnt].append(patchname)
+                            segcnt += 1
+
                         break
 
                 if findflag != 1:

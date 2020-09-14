@@ -42,20 +42,24 @@ from make_genpsf import run_namd
 
 # Input data
 casenum    = 1  # case number
+fl_constraint = 1 # flag for reading constraints (constraints.inp)
 biomas_typ  = 'switchgrass_' # type of biomass; end with _
 deg_poly   = 17 # degree of polymerization (final)
 swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
-input_top = 'lignin.top' # topology file input
-input_pdb  = 'G-bO4L-G.pdb' # file input - dimer
 seg_name = 'swli' #name of segment: switchgrass lignin
 num_chains = 1 # number of chains
-tol = 0.1 # relative tolerance
+tol = 0.1 # relative tolerance for residue/patch generation
 maxatt = 500 # maximum attempts to obtain avg configuration
 itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
 iterinc   = 4 # iteration increments (for multi itertype)
 
+# Input file names
+input_ctr = 'constraints.inp' # patch constraint file input
+input_top = 'lignin.top' # topology file input
+input_pdb = 'G-bO4L-G.pdb' # file input - dimer
+
 # Output file names (will be generated automatically)
-tcl_fname  = biomas_typ + str(casenum) + '.tcl' # outfile for tcl
+tcl_fname  = biomas_typ + str(casenum) + '.tcl' #outfile for tcl
 pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
 reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all seg list
 links_fname = 'linklist_' + str(casenum)+ '.tcl' #all link list
@@ -67,6 +71,10 @@ if not os.path.exists(input_top):
 
 if not os.path.exists(input_pdb):
     exit('Dimer file not found \n')
+
+if fl_constraint:
+    if not os.path.exists(input_ctr):
+        exit('Constraint file not found \n')
 
 resperc_dict = residue_ratios(swit_opt) # residue % dictionary mode
 if not bool(resperc_dict):
@@ -86,6 +94,7 @@ if not os.path.isdir(outdir):
 
 gencpy(srcdir,outdir,input_top)
 gencpy(srcdir,outdir,input_pdb)
+gencpy(srcdir,outdir,input_ctr)
 
 # Open file and write headers
 fmain = open(outdir + '/' + tcl_fname,'w')
@@ -114,13 +123,18 @@ flog.write(str(cumul_linkarr)+'\n')
 res_list = [[] for i in range(num_chains)]
 link_list = [[] for i in range(num_chains-1)]
 
-# Create segments/links and check for avg probability 
+# Create segments and check for avg probability 
 flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,flog)
+
+# Create patches with constraints and check for avg probability 
 flog.write('Creating patches list..\n')
 link_list = create_patches(flinkin,deg_poly,num_chains,seg_name,\
-                           linkperc_dict,cumul_linkarr,tol,maxatt,flog)
+                           linkperc_dict,cumul_linkarr,tol,\
+                           maxatt,flog,fl_constraint,input_ctr,\
+                           res_list)
+
 
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
