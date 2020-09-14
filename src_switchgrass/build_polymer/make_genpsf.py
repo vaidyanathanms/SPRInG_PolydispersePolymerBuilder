@@ -419,12 +419,14 @@ def write_segments_onego(fin,nmons,nch,segname,res_list,link_list):
                           segname,segcnt+1,segname,segcnt+2))
 
     fin.write('\n')
-
 #---------------------------------------------------------------------
 
 # Write residues/patches iteration by iteration
-def write_multi_segments(fin,iter_num,nmonsthisiter,nch,segname,\
-                         res_list,link_list):
+def write_multi_segments(fin,iter_num,nmonsthisiter,nch,chnum,\
+                         segname,res_list,link_list):
+
+    if iter_num == 1:
+        fin.write(';# Chain number: %d of %d chains' %(nch,chnum))
 
     fin.write(';# Iteration number: %d\n' %(iter_num))
     fin.write('set count %d' %(nmonsthisiter))
@@ -432,25 +434,21 @@ def write_multi_segments(fin,iter_num,nmonsthisiter,nch,segname,\
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
 
-    #Residues
-    for chcnt in range(nch):
+    #Residues -- indices should have -1 for first dimension
+    for segcnt in range(nmonsthisiter):
 
-        for segcnt in range(nmonsthisiter):
-
-            fin.write('  residue  %d  %s\n' \
-                      %(segcnt+1,res_list[chcnt][segcnt]))
+        fin.write('  residue  %d  %s\n' %(segcnt+1,\
+                                          res_list[chnum-1][segcnt]))
 
     fin.write('}')        
     fin.write('\n')
         
-    #Patches
-    for chcnt in range(nch):
+    #Patches -- indices should have -1 for first dimension
+    for segcnt in range(nmonsthisiter-1):
 
-        for segcnt in range(nmonsthisiter-1):
-
-            fin.write('patch  %s  %s:%d  %s:%d\n' \
-                        %(link_list[chcnt][segcnt],\
-                          segname,segcnt+1,segname,segcnt+2))
+        fin.write('patch  %s  %s:%d  %s:%d\n' \
+                  %(link_list[chnum-1][segcnt],segname,segcnt+1,\
+                    segname,segcnt+2))
 
     fin.write('\n')
 #---------------------------------------------------------------------
@@ -462,4 +460,4 @@ def run_namd(fin,execfyle,inpfyle,outfyle):
     fin.write(';# exit \n')
     fin.write(';# -------------------------------------\n')
     fin.write('\n')
-
+#---------------------------------------------------------------------
