@@ -59,7 +59,7 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
         comnt2 = 'Can create steric clashes and hence the iterations.'
     else:
         exit('ERROR: Unknown option: ' + writetype)
-                                                
+        
     fin.write('guesscoord ;#  %s\n' %(comnt2))
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepsf $outputnmae.psf \n')
@@ -90,9 +90,23 @@ def residue_ratios(opt):
 #---------------------------------------------------------------------
 
 # Define linker ratios from literature
-def linker_ratios(opt):
+def linker_ratios(opt,opt_graft,resdict):
 # add linker details
     frac_link = collections.OrderedDict()
+
+    if opt_graft[0] == 1:
+        gr_resname = opt_graft[1]
+        gr_patname = opt_graft[2]
+        resflag = 0
+        for rescnt in len(resdict):
+            if list(resdict.keys())[rescnt] == gr_resname:
+                resflag = 1
+                graft_prob = list(resdict.values())[rescnt]
+            frac_link[gr_patname] = graft_prob
+
+        if resflag == 0:
+            print('ERROR: Could not find ', str(gr_resname))
+            return 0
 
     if opt == 'A' or opt == 'a':
 
@@ -105,6 +119,19 @@ def linker_ratios(opt):
     elif opt == 'B' or opt == 'b':
 
         frac_link['BO4'] = 0
+
+    # Renormalize if grafts are present
+    if graft_opt[0] == 1:
+        sumprob = 0
+        for patcnt in len(frac_link):
+            if list(frac_link.keys())[patcnt] != graft_opt[2]:
+                sumprob += graft_opt[2]
+
+        normval = sumprob/(1-graft_prob)
+        for patcnt in len(frac_link):
+            if list(frac_link.keys())[patcnt] != graft_opt[2]:
+                list(frac_link.values())[patcnt] /= sumprob
+            
 
     return frac_link
 #---------------------------------------------------------------------
@@ -159,7 +186,7 @@ def cumul_probdist(inpdict,flog):
     
 # Create entire list in one go so that cumulative distribution holds true
 def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog):
+                    ,tol,maxattmpt,flog,graftopt):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
@@ -167,7 +194,9 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
     for wout in range(len(inp_dict)):
-        flog.write('%s\t' %(list(inp_dict.keys())[wout]))
+        flog.write('%s (%g)\t' %(list(inp_dict.keys())[wout],\
+                                 list(inp_dict.values())[wout]))
+
     flog.write('L2norm \n')
 
     flag_optimal = -1
@@ -255,13 +284,15 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 # Read and check patch constraints -- May not be effective as opposed
 # to reading at once and copying to array. Need to think about it
 def check_constraints(inpfyle,patchname,resname1,resname2):
+
+# check special cases using files
     bef_flag = 1; aft_flag = 1 # keep as true
     with open(inpfyle,'r') as fctr: 
         for line in fctr:
             line = line.rstrip('\n')
             all_words = re.split('\W+',line)
             if len(all_words) != 3:
-                print('ERR: Line in ctr file does not have 3 entries')
+                print('ERR: Constraint file does not have 3 entries')
                 print(len(all_words),all_words)
                 return -2
             if all_words[0] == patchname:
@@ -270,12 +301,23 @@ def check_constraints(inpfyle,patchname,resname1,resname2):
                 elif all_words[2] == resname2:
                     aft_flag = 0
 
+
     # Return 0 if any flags are 0, else return 1
     if bef_flag == 0 or aft_flag == 0:
         return 0
     else:
         return 1
 #---------------------------------------------------------------------
+
+# check consecutive residues - cannot have graft residue in
+# consecutive positions
+def check_consec_residues(resname1,resname2,graftopt)
+
+# check consecutive patches
+def check_consec_patch(patchname1,patchname2):
+    #right patch of nth residue != left patch of (n+1)th residue
+    
+
 
 # Generate patches
 def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
@@ -287,24 +329,43 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
     for wout in range(len(inp_dict)):
-        flog.write('%s\t' %(list(inp_dict.keys())[wout]))
+        flog.write('%s (%g)\t' %(list(inp_dict.keys())[wout],\
+                                 list(inp_dict.values())[wout]))
     flog.write('L2norm \n')
 
     flag_optimal = -1
 
     for attnum in range(maxattmpt):
-
         flog.write('%d\t' %(attnum+1))    
         flist.write(';# Attempt number \t%d\n' %(attnum+1))
         out_list = [[] for i in range(nch)] #reset every attempt
    
         for chcnt in range(nch):
+
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
-            flist.write(' segment %s {\n' %(segname))
-            segcnt = 0
+            flist.write(';# -- Begin patches for %s ---\n' %(segname))
+            patcnt = 0
+            branched = 0
 
             while segcnt <= nmons-2: #for checking constraints
 
+                # If residue is a grafted one, then the patch is
+                # trivial. No need to check for probabilities. Append
+                # directly. However, need to reorder patches
+                # connecting the n-1 and n+1 residue
+                if residlist[segcnt] == graft_opt[1]:
+                    patchname = list(graft_opt[2])
+                    branched = 1
+                    flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                %(segcnt+1,patchname,\
+                                  segname,segcnt+1,segname,segcnt+2))
+                    out_list[chcnt].append(patchname)
+                    segcnt += 1
+
+                    continue
+
+                # If first condition is not met, generate a random
+                # number and do the following
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
 
@@ -316,36 +377,60 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     #condition is met.
                     if ranval < cumulprobarr[arrcnt]:
                         patchname = list(inp_dict.keys())[arrcnt]
-                        flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                    %(segcnt+1,patchname,\
-                                      segname,segcnt+1,segname,segcnt+2))
                         findflag = 1
-                        appendflag = 1#default to 1 so that if
-                        #constraints are not there, it will be appended.
+
+                        # Add constraints
+                        appendflag = 1; consecflag = 1 #default to 1
+                        #so that if constraints are not there, it will
+                        #be appended.
                         if ctr_flag:
                             if segcnt == 0:
                                 resname1 = 'None'
+                                patchname1 = 'None'
                             else:
                                 resname1 = residlist[chcnt][segcnt]
-                            
+                                patchname1 = out_list[chcnt][segcnt-1]
+                        
+                            # end if segcnt == 0
+
                             resname2 = residlist[chcnt][segcnt+1]
-                            appendflag =check_constraints(ctrfyle,patchname,\
+                            appendflag = check_constraints(ctrfyle,patchname,\
                                                           resname1,resname2)
 
+                        # end if ctr_flag==1
                         if appendflag == 1: #update while loop if
                             #constraints are met
                             out_list[chcnt].append(patchname)
+
+                            if branched == 0: #patch between n and n+1
+                                flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                            %(segcnt+1,patchname,\
+                                              segname,segcnt+1,segname,segcnt+2))
+                            else: # patch between n-1 and n+1
+                                flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                            %(segcnt+1,patchname,\
+                                              segname,segcnt,segname,segcnt+2))
+                                
                             segcnt += 1
                         elif appendflag == -2:
                             return 
+                        # end if appendflag == 1
 
                         break
+                    # end ranval < cumulprobarr[]
+
+                # end for arrcnt in range(len(cumulprobarr))
 
                 if findflag != 1:
                     print('Random value/Probarr:', ranval,cumulprobarr)
                     exit('Error in finding a random residue\n')
-            
-            flist.write(' }')
+                # end if find flag
+
+             # end while loop
+
+        # end for chcnt in range(nch)
+
+        flist.write(';#------- End patch list ----')
 
         # After going through all the chains, count occurence of each res/patch
         outdist = []

@@ -48,6 +48,7 @@ deg_poly   = 17 # degree of polymerization (final)
 swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
 seg_name = 'swli' #name of segment: switchgrass lignin
 num_chains = 1 # number of chains
+graft_opt = [1,'PCA','GOG'] # graft option, res, patch
 tol = 0.1 # relative tolerance for residue/patch generation
 maxatt = 500 # maximum attempts to obtain avg configuration
 itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
@@ -64,6 +65,12 @@ reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all seg list
 links_fname = 'linklist_' + str(casenum)+ '.tcl' #all link list
 log_fname = 'log_' + str(casenum) + '.txt' #log file
 
+# Open log file
+flog = open(outdir + '/' + log_fname,'w')
+init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
+              ,input_pdb,seg_name,num_chains)
+print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
+
 # Read defaults and throw exceptions
 if not os.path.exists(input_top):
     exit('Topology file not found \n')
@@ -75,11 +82,18 @@ if fl_constraint:
     if not os.path.exists(input_ctr):
         exit('Constraint file not found \n')
 
-resperc_dict = residue_ratios(swit_opt) # residue % dictionary mode
+# residue % dictionary mode
+resperc_dict = residue_ratios(swit_opt) 
 if not bool(resperc_dict):
     exit('ERROR: Unknown option for monomer parameters \n')
 
-linkperc_dict = linker_ratios(swit_opt) # linker % dictionary mode
+if graft_opt[0] == 1:
+    flog.write('Grafting incorporated while building the chains\n')
+else:
+    flog.write('Linear chains are built\n')
+
+# links %dict mode
+linkperc_dict = linker_ratios(swit_opt,graft_opt,resperc_dict) 
 if not bool(linkperc_dict):
     exit('ERROR: Unknown option for linker parameters \n')
 
@@ -100,10 +114,6 @@ fresin = open(outdir + '/' + reslist_fname,'w')
 fresin.write(';# Contains all segments for NAMD files.\n')
 flinkin = open(outdir + '/' + links_fname,'w')
 flinkin.write(';# Contains all patches/links for NAMD files.\n')
-flog = open(outdir + '/' + log_fname,'w')
-init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
-              ,input_pdb,seg_name,num_chains)
-print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
             
 # Create cumulative probability distribution of segments/patches
 flog.write('Making cumulative distribution for segments..\n')
@@ -131,7 +141,6 @@ link_list = create_patches(flinkin,deg_poly,num_chains,seg_name,\
                            linkperc_dict,cumul_linkarr,tol,\
                            maxatt,flog,fl_constraint,input_ctr,\
                            res_list)
-
 
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
@@ -188,7 +197,7 @@ elif itertype == 'multi':
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
 
-        # Exit and close chcnt-th file
+        # Exit and close nchth file
         fmain.write('exit')
         fmain.close() 
 
