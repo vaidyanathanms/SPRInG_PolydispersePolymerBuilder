@@ -31,7 +31,7 @@ from make_genpsf import gencpy
 from make_genpsf import psfgen_headers
 from make_genpsf import psfgen_postprocess
 from make_genpsf import residue_ratios
-from make_genpsf import linker_ratios
+from make_genpsf import patch_ratios
 from make_genpsf import init_logwrite
 from make_genpsf import cumul_probdist
 from make_genpsf import create_segments
@@ -61,8 +61,8 @@ input_pdb = 'G-bO4L-G.pdb' # file input - dimer
 
 # Output file names (will be generated automatically)
 pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
-reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all seg list
-links_fname = 'linklist_' + str(casenum)+ '.tcl' #all link list
+reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all res list
+patch_fname = 'patchlist_' + str(casenum)+ '.tcl' #all patch list
 log_fname = 'log_' + str(casenum) + '.txt' #log file
 
 # Open log file
@@ -92,10 +92,10 @@ if graft_opt[0] == 1:
 else:
     flog.write('Linear chains are built\n')
 
-# links %dict mode
-linkperc_dict = linker_ratios(swit_opt,graft_opt,resperc_dict) 
-if not bool(linkperc_dict):
-    exit('ERROR: Unknown option for linker parameters \n')
+# patches %dict mode
+patchperc_dict = patch_ratios(swit_opt,graft_opt,resperc_dict) 
+if not bool(patchperc_dict):
+    exit('ERROR: Unknown option for patch parameters \n')
 
 # Get directory info
 srcdir = os.getcwd()
@@ -112,8 +112,8 @@ gencpy(srcdir,outdir,input_ctr)
 # Open file and write headers
 fresin = open(outdir + '/' + reslist_fname,'w')
 fresin.write(';# Contains all segments for NAMD files.\n')
-flinkin = open(outdir + '/' + links_fname,'w')
-flinkin.write(';# Contains all patches/links for NAMD files.\n')
+fpatchin = open(outdir + '/' + patch_fname,'w')
+fpatchin.write(';# Contains all patches for NAMD files.\n')
             
 # Create cumulative probability distribution of segments/patches
 flog.write('Making cumulative distribution for segments..\n')
@@ -123,12 +123,12 @@ flog.write(str(cumul_resarr)+'\n')
 
 flog.write('Making cumulative distribution for patches..\n')
 print('Making cumulative distribution for patches..')
-cumul_linkarr = cumul_probdist(linkperc_dict,flog)
-flog.write(str(cumul_linkarr)+'\n')
+cumul_patcharr = cumul_probdist(patchperc_dict,flog)
+flog.write(str(cumul_patcharr)+'\n')
     
-# Set 2D default list and generate segments/linkers
+# Set 2D default list and generate segments/patches
 res_list = [[] for i in range(num_chains)]
-link_list = [[] for i in range(num_chains-1)]
+patch_list = [[] for i in range(num_chains-1)]
 
 # Create segments and check for avg probability 
 flog.write('Creating residue list..\n')
@@ -137,8 +137,8 @@ res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
 
 # Create patches with constraints and check for avg probability 
 flog.write('Creating patches list..\n')
-link_list = create_patches(flinkin,deg_poly,num_chains,seg_name,\
-                           linkperc_dict,cumul_linkarr,tol,\
+patch_list = create_patches(fpatchin,deg_poly,num_chains,seg_name,\
+                           patchperc_dict,cumul_patcharr,tol,\
                            maxatt,flog,fl_constraint,input_ctr,\
                            res_list)
 
@@ -155,7 +155,7 @@ if itertype == 'single':
     flog.write('Writing config for n-segments: %d\n' %(deg_poly))
     print('Writing config for n-segments: ', deg_poly)
     write_segments_onego(fmain,deg_poly,num_chains,seg_name,\
-                         res_list,link_list)
+                         res_list,patch_list)
     psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
     #Exit and close file
@@ -181,7 +181,7 @@ elif itertype == 'multi':
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
             print('Writing config for n-segments: ', nmonsthisiter)
             write_multi_segments(fmain,iter_num,nmonsthisiter,chnum,\
-                                 num_chains,seg_name,res_list,link_list)
+                                 num_chains,seg_name,res_list,patch_list)
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain,'namd2', 'mini.conf', 'mini.out')
             iter_num  = iter_num + 1
@@ -193,7 +193,7 @@ elif itertype == 'multi':
             print('Writing config for n-segments: ', deg_poly)
             iter_num = iter_num + 1
             write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
-                                 num_chains,seg_name,res_list,link_list)
+                                 num_chains,seg_name,res_list,patch_list)
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
 
@@ -210,6 +210,6 @@ print('Completed psf generation for casenum: ', casenum)
 
 # Close files
 fresin.close()
-flinkin.close()
+fpatchin.close()
 flog.close()
 
