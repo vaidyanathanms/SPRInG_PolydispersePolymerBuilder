@@ -372,7 +372,7 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 # Generate patches
 def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     ,tol,maxattmpt,flog,ctr_flag,ctrfyle,residlist,\
-                   patforbid):
+                   patforbid,graft_opt):
 
     # Write list to a separate file
     flist.write(';# Entire patch list\n')
@@ -471,7 +471,7 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                                                           resname1,resname2)
 
                             consecpatflag =is_forbid_patch(patchname,\
-                                                           patchnaem1,\
+                                                           patchname1,\
                                                            patforbid)
 
                         # end if ctr_flag==1

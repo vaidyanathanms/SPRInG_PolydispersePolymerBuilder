@@ -148,7 +148,7 @@ if fl_constraint:
     flog.write('Reading patch-patch constraints..\n')
     flog.write('All constraints \n')
     ppctr_list = read_patch_incomp(input_pp)
-    for row in pptctr_list:
+    for row in ppctr_list:
         for line in row:
             flog.write('\t'.join(line))
         flog.write('\n')
@@ -156,9 +156,9 @@ if fl_constraint:
 # Create patches with constraints and check for avg probability 
 flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly,num_chains,seg_name,\
-                           patchperc_dict,cumul_patcharr,tol,\
-                           maxatt,flog,fl_constraint,input_ctr,\
-                            res_list,pptctr_list)
+                            patchperc_dict,cumul_patcharr,tol,\
+                            maxatt,flog,fl_constraint,input_ctr,\
+                            res_list,ppctr_list,graft_opt)
 
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
