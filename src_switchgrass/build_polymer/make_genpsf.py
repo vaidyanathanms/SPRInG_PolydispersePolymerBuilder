@@ -301,6 +301,7 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 # Read and check patch constraints -- May not be effective as opposed
 # to reading at once and copying to array. Need to think about it.
 # Check special cases using files
+# THIS IS CONSTRAINT FOR RESIDUE1-PATCH-RESIDUE2 combination
 def check_constraints(inpfyle,patchname,resname1,resname2):
     
     bef_flag = 1; aft_flag = 1 # keep as true
@@ -336,15 +337,32 @@ def is_res_cons(resname1,resname2,graftopt):
     return sameflag
 #---------------------------------------------------------------------
 
-# check consecutive patches
-def is_pat_cons(patchname1,patchname2):
-    #right patch of nth residue != left patch of (n+1)th residue
-    
+# read all patch incompatibilities
+def read_patch_incomp(fname):
+    with open(fname,'r') as fin:
+        result = [[sval for sval in line.split()] for line in fin]
+    return result
+#---------------------------------------------------------------------
 
+# check forbidden consecutive patches
+# THIS IS FOR RES1-PATCH1-RES2-PATCH2 combination
+# Onlu patch1 and patch2 are important. rest is checked in
+# check_constraints 
+def is_forbid_patch(patchname1,patchname2,patforbid):
+    flag = 0 # default not forbidden
+    for i in range(len(patforbid)):
+        if patforbid[i][0] == patchname1:
+            print('Forbidden line', patforbid[i])
+            if any(patchname1 in st for st in patforbid[i]):
+                flag = 1
+        
+    return flag
+#---------------------------------------------------------------------
 
 # Generate patches
 def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,ctr_flag,ctrfyle,residlist):
+                    ,tol,maxattmpt,flog,ctr_flag,ctrfyle,residlist,\
+                   patforbid):
 
     # Write list to a separate file
     flist.write(';# Entire patch list\n')
@@ -425,10 +443,10 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                         patchname = list(inp_dict.keys())[arrcnt]
                         findflag = 1
 
-                        # Add constraints
-                        appendflag = 1; consecflag = 1 #default to 1
+                        # Add constraint flags: default to 1
                         #so that if constraints are not there, it will
-                        #be appended.
+                        #be appended. consec flag has to be 0 for true
+                        appendflag = 1; consecpatflag = 0 
                         if ctr_flag:
                             if patcnt == 0:
                                 resname1 = 'None'
@@ -441,9 +459,15 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                             resname2 = residlist[chcnt][patcnt+1]
                             appendflag = check_constraints(ctrfyle,patchname,\
                                                           resname1,resname2)
+
+                            consecpatflag =is_forbid_patch(patchname,\
+                                                           patchnaem1,\
+                                                           patforbid)
+
                         # end if ctr_flag==1
 
-                        if appendflag == 1: #update while loop if
+                        if appendflag == 1 and \
+                           consecpatflag == 0: #update while loop if
                             #constraints are met
                             out_list[chcnt].append(patchname)
 

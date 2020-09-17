@@ -42,7 +42,7 @@ from make_genpsf import run_namd
 
 # Input data
 casenum    = 1  # case number
-fl_constraint = 1 # flag for reading constraints (constraints.inp)
+fl_constraint = 1 # flag for reading constraints (patch-patch/patch-res)
 biomas_typ  = 'switchgrass_' # type of biomass; end with _
 deg_poly   = 17 # degree of polymerization (final)
 swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
@@ -55,9 +55,10 @@ itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
 iterinc   = 4 # iteration increments (for multi itertype)
 
 # Input file names
-input_ctr = 'constraints.inp' # patch constraint file input
+input_ctr = 'constraints.inp' # patch-res constraint file input
 input_top = 'lignin.top' # topology file input
 input_pdb = 'G-bO4L-G.pdb' # file input - dimer
+input_pp  = 'patch_incompatibility.inp' # patch-patch incompatibility
 
 # Output file names (will be generated automatically)
 pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
@@ -79,8 +80,8 @@ if not os.path.exists(input_pdb):
     exit('Dimer file not found \n')
 
 if fl_constraint:
-    if not os.path.exists(input_ctr):
-        exit('Constraint file not found \n')
+    if not os.path.exists(input_ctr) and not os.path.exists(input_pp):
+        exit('No constraint file not found \n')
 
 # residue % dictionary mode
 resperc_dict = residue_ratios(swit_opt) 
@@ -107,7 +108,9 @@ if not os.path.isdir(outdir):
 
 gencpy(srcdir,outdir,input_top)
 gencpy(srcdir,outdir,input_pdb)
-gencpy(srcdir,outdir,input_ctr)
+if fl_constraint:
+    gencpy(srcdir,outdir,input_ctr)
+    gencpy(srcdir,outdir,input_pp)
 
 # Open file and write headers
 fresin = open(outdir + '/' + reslist_fname,'w')
@@ -135,12 +138,23 @@ flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,flog)
 
+if fl_constraint:
+    # Read patch-patch constraints (in one go)
+    print('Reading patch-patch constraints..')
+    flog.write('Reading patch-patch constraints..\n')
+    flog.write('All constraints \n')
+    ppctr_list = read_patch_incomp(input_pp)
+    for row in pptctr_list:
+        for line in row:
+            flog.write('\t'.join(line))
+        flog.write('\n')
+
 # Create patches with constraints and check for avg probability 
 flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly,num_chains,seg_name,\
                            patchperc_dict,cumul_patcharr,tol,\
                            maxatt,flog,fl_constraint,input_ctr,\
-                           res_list)
+                            res_list,pptctr_list)
 
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
