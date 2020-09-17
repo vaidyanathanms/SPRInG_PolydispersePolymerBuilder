@@ -36,9 +36,11 @@ from make_genpsf import init_logwrite
 from make_genpsf import cumul_probdist
 from make_genpsf import create_segments
 from make_genpsf import create_patches
+from make_genpsf import read_patch_incomp
 from make_genpsf import write_multi_segments
 from make_genpsf import write_segments_onego
 from make_genpsf import run_namd
+
 
 # Input data
 casenum    = 1  # case number
@@ -58,13 +60,21 @@ iterinc   = 4 # iteration increments (for multi itertype)
 input_ctr = 'constraints.inp' # patch-res constraint file input
 input_top = 'lignin.top' # topology file input
 input_pdb = 'G-bO4L-G.pdb' # file input - dimer
-input_pp  = 'patch_incompatibility.inp' # patch-patch incompatibility
+input_pp  = 'patch_incomp.inp' # patch-patch incompatibility
 
 # Output file names (will be generated automatically)
 pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
 reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all res list
 patch_fname = 'patchlist_' + str(casenum)+ '.tcl' #all patch list
 log_fname = 'log_' + str(casenum) + '.txt' #log file
+
+# Get directory info
+srcdir = os.getcwd()
+outdir = srcdir + str('/casenum_') + str(casenum) # out directory
+
+# Create main directory and copy required files
+if not os.path.isdir(outdir):
+    os.mkdir(outdir)
 
 # Open log file
 flog = open(outdir + '/' + log_fname,'w')
@@ -98,14 +108,7 @@ patchperc_dict = patch_ratios(swit_opt,graft_opt,resperc_dict)
 if not bool(patchperc_dict):
     exit('ERROR: Unknown option for patch parameters \n')
 
-# Get directory info
-srcdir = os.getcwd()
-outdir = srcdir + str('/casenum_') + str(casenum) # out directory
-
-# Create main directory and copy required files
-if not os.path.isdir(outdir):
-    os.mkdir(outdir)
-
+# copy all files
 gencpy(srcdir,outdir,input_top)
 gencpy(srcdir,outdir,input_pdb)
 if fl_constraint:
@@ -136,7 +139,8 @@ patch_list = [[] for i in range(num_chains-1)]
 # Create segments and check for avg probability 
 flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
-                           resperc_dict,cumul_resarr,tol,maxatt,flog)
+                           resperc_dict,cumul_resarr,tol,maxatt,\
+                           flog,graft_opt)
 
 if fl_constraint:
     # Read patch-patch constraints (in one go)

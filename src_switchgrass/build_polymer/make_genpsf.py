@@ -92,17 +92,20 @@ def residue_ratios(opt):
 # Define patch ratios from literature
 def patch_ratios(opt,opt_graft,resdict):
 # add patch details
+
     frac_patch = collections.OrderedDict()
 
     if opt_graft[0] == 1:
+        newfrac_patch = collections.OrderedDict() #create new dict
         gr_resname = opt_graft[1]
         gr_patname = opt_graft[2]
         resflag = 0
-        for rescnt in len(resdict):
+        for rescnt in range(len(resdict)):
             if list(resdict.keys())[rescnt] == gr_resname:
                 resflag = 1
                 graft_prob = list(resdict.values())[rescnt]
-            frac_patch[gr_patname] = graft_prob
+                frac_patch[gr_patname] = graft_prob
+                newfrac_patch[gr_patname] = graft_prob
 
         if resflag == 0:
             print('ERROR: Could not find ', str(gr_resname))
@@ -120,20 +123,27 @@ def patch_ratios(opt,opt_graft,resdict):
 
         frac_patch['BO4'] = 0
 
-    # Renormalize if grafts are present
-    if graft_opt[0] == 1:
+    if opt_graft[0] != 1:
+        return frac_patch
+
+    # Renormalize if grafts are present and create new dict
+   
+    if opt_graft[0] == 1:
         sumprob = 0
-        for patcnt in len(frac_patch):
-            if list(frac_patch.keys())[patcnt] != graft_opt[2]:
-                sumprob += graft_opt[2]
+        for patcnt in range(len(frac_patch)):
+            if list(frac_patch.keys())[patcnt] != opt_graft[2]:
+                sumprob += list(frac_patch.values())[patcnt]
 
         normval = sumprob/(1-graft_prob)
-        for patcnt in len(frac_patch):
-            if list(frac_patch.keys())[patcnt] != graft_opt[2]:
-                list(frac_patch.values())[patcnt] /= sumprob
-            
+        print(sumprob,normval)
+        for patcnt in range(len(frac_patch)):
+            if list(frac_patch.keys())[patcnt] != opt_graft[2]:
 
-    return frac_patch
+                newprob = list(frac_patch.values())[patcnt]/normval
+                keyval = list(frac_patch.keys())[patcnt]
+                newfrac_patch[keyval] = newprob
+
+    return newfrac_patch
 #---------------------------------------------------------------------
 
 # Initiate log file
@@ -165,13 +175,13 @@ def cumul_probdist(inpdict,flog):
         dummy_distarr.append(val)
 
     # check normalization
-    if dummy_distarr[len(dummy_distarr)-1] != 1:
+    if abs(dummy_distarr[len(dummy_distarr)-1]-1) > pow(10,-5):
         print('Warning: data not normalized (', \
               dummy_distarr[len(dummy_distarr)-1],\
-              '). Forcing normalization \n')
+              '). Forcing normalization')
         flog.write('%s\t%g\t%s\n' %('Warning: data not normalized (', \
                                     dummy_distarr[len(dummy_distarr)-1],\
-                                    '). Forcing normalization \n'))
+                                    '). Forcing normalization'))
         sumval = sum(dummy_distarr)
         
         # force normalization
@@ -238,7 +248,7 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                             rescnt = rescnt + 1
                         else:
                             resname2 = out_list[chcnt][rescnt-1]
-                            consecresflag = is_res_cons(resname1,resname\
+                            consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
                             if consecresflag == 0:
                                 flist.write(' residue\t%d\t%s\n' \
