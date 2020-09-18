@@ -362,7 +362,6 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
     flag = 0 # default not forbidden
     for i in range(len(patforbid)):
         if patforbid[i][0] == patchname1:
-            print('Forbidden line', patforbid[i])
             if any(patchname1 in st for st in patforbid[i]):
                 flag = 1
         
@@ -405,8 +404,8 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                 # trivial. No need to check for probabilities. Append
                 # directly. However, need to reorder patches
                 # connecting the n-1 and n+1 residue
-                if residlist[patcnt] == graft_opt[1]:
-                    patchname = list(graft_opt[2])
+                if residlist[chcnt][patcnt] == graft_opt[1]:
+                    patchname = graft_opt[2]
                     branched = 1
                     flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                 %(patcnt+1,patchname,\
@@ -420,14 +419,15 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                 #The bond between the last and penultimate residue
                 #should be GOG
                 if patcnt == nmons-2 and \
-                   residlist[patcnt+1] == graft_opt[1]: 
+                   residlist[chcnt][patcnt+1] == graft_opt[1]: 
                     
                     if branched == 1:
                         print('ERR: Two consecutive graft resiudes',\
-                              residlist[patcnt],residlist[patcnt+1])
+                              residlist[chcnt][patcnt],\
+                              residlist[chcnt][patcnt+1])
                         return -1
 
-                    patchname = list(graft_opt[2])
+                    patchname = graft_opt[2]
                     branched = 1
                     flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                 %(patcnt+1,patchname,\
@@ -450,8 +450,14 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     #Break the loop once the first point where the
                     #condition is met.
                     if ranval < cumulprobarr[arrcnt]:
+
                         patchname = list(inp_dict.keys())[arrcnt]
                         findflag = 1
+
+                        
+                        if patchname == graft_opt[2]: 
+                            break #iterate iff the patch is not part
+                            #of graft patch
 
                         # Add constraint flags: default to 1
                         #so that if constraints are not there, it will
@@ -492,6 +498,7 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                                 branched = 0 # reset branch flag
 
                             patcnt += 1
+
                         elif appendflag == -2:
                             return 
                         # end if appendflag == 1
@@ -520,7 +527,8 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
         #normalize
         sumval = sum(outdist)
         if sumval != nch*(nmons-1):
-            print('Sum from distn,nch*(nmons-1):',sumval,nch*(nmons-1))
+            print('Sum from distn,nch*(nmons-1): '\
+                  ,sumval,nch*(nmons-1))
             exit('ERROR: Sum not equal to the total # of patches')
         normlist = [x/sumval for x in outdist]
 
@@ -557,8 +565,10 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 #---------------------------------------------------------------------
 
 # Write residues/patches in one go
-def write_segments_onego(fin,nmons,nch,segname,res_list,patch_list):
+def write_segments_onego(fin,nmons,nch,segname,res_list,patch_list,\
+                         graftopt):
 
+    fin.write(';# ------Begin main code -----\n')
     fin.write(';# Writing % segments' %(nmons))
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
@@ -577,21 +587,37 @@ def write_segments_onego(fin,nmons,nch,segname,res_list,patch_list):
     #Patches
     for chcnt in range(nch):
 
+        brflag = 0
+
         for patcnt in range(nmons-1):
 
-            fin.write('patch  %s  %s:%d  %s:%d\n' \
-                        %(patch_list[chcnt][patcnt],\
-                          segname,patcnt+1,segname,patcnt+2))
+            if br_flag == 0: #write normally
+                fin.write('patch  %s  %s:%d  %s:%d\n' \
+                          %(patch_list[chcnt][patcnt],\
+                            segname,patcnt+1,segname,patcnt+2))
 
+                if patch_list[chcnt][patcnt] == graft_opt[2] and \
+                   patcnt != 0:
+                    br_flag = 1
+                    
+            else: #patch between n-1 and n+1
+                fin.write('patch  %s  %s:%d  %s:%d\n' \
+                          %(patch_list[chcnt][patcnt],\
+                            segname,patcnt,segname,patcnt+2))
+                br_flag = 0
+ 
     fin.write('\n')
 #---------------------------------------------------------------------
 
 # Write residues/patches iteration by iteration
 def write_multi_segments(fin,iter_num,nmonsthisiter,nch,chnum,\
-                         segname,res_list,patch_list):
+                         segname,res_list,patch_list,graft_opt):
 
     if iter_num == 1:
-        fin.write(';# Chain number: %d of %d chains' %(nch,chnum))
+        fin.write(';# Chain number: %d of %d chains\n' %(nch,chnum))
+        fin.write(';# ----Begin main code -------\n')
+        fin.write('\n')
+
 
     fin.write(';# Iteration number: %d\n' %(iter_num))
     fin.write('set count %d' %(nmonsthisiter))
@@ -608,12 +634,24 @@ def write_multi_segments(fin,iter_num,nmonsthisiter,nch,chnum,\
     fin.write('}')        
     fin.write('\n')
         
-    #Patches -- indices should have -1 for first dimension
+    #Patches -- ch indices should have -1 for first dimension
+    br_flag = 0
     for patcnt in range(nmonsthisiter-1):
 
-        fin.write('patch  %s  %s:%d  %s:%d\n' \
-                  %(patch_list[chnum-1][patcnt],segname,patcnt+1,\
-                    segname,patcnt+2))
+        if br_flag == 0: #write normally
+            fin.write('patch  %s  %s:%d  %s:%d\n' \
+                      %(patch_list[chnum-1][patcnt],\
+                        segname,patcnt+1,segname,patcnt+2))
+
+            if patch_list[chnum-1][patcnt] == graft_opt[2] and \
+               patcnt != 0:
+                br_flag = 1
+                    
+        else: #patch between n-1 and n+1
+            fin.write('patch  %s  %s:%d  %s:%d\n' \
+                      %(patch_list[chnum-1][patcnt],\
+                        segname,patcnt,segname,patcnt+2))
+            br_flag = 0
 
     fin.write('\n')
 #---------------------------------------------------------------------

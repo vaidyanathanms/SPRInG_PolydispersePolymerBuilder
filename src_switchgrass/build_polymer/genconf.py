@@ -173,7 +173,7 @@ if itertype == 'single':
     flog.write('Writing config for n-segments: %d\n' %(deg_poly))
     print('Writing config for n-segments: ', deg_poly)
     write_segments_onego(fmain,deg_poly,num_chains,seg_name,\
-                         res_list,patch_list)
+                         res_list,patch_list,graft_opt)
     psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
     #Exit and close file
@@ -184,7 +184,7 @@ elif itertype == 'multi':
 
     for chcnt in range(num_chains):
         chnum = chcnt + 1
-        flog.write('Writing chain number: ', chnum)
+        flog.write('Writing chain number: %d\n' %(chnum))
         tcl_fname  = biomas_typ + 'case_' + str(casenum) + \
                      '_chnum_' + str(chnum) +'.tcl' 
         fmain = open(outdir + '/' + tcl_fname,'w')
@@ -196,10 +196,13 @@ elif itertype == 'multi':
         nmonsthisiter = iterinc
     
         while nmonsthisiter <= deg_poly:
+            if iter_num == 1:
+                psfgen_headers(fmain,input_top,pdbpsf_name)
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
             print('Writing config for n-segments: ', nmonsthisiter)
             write_multi_segments(fmain,iter_num,nmonsthisiter,chnum,\
-                                 num_chains,seg_name,res_list,patch_list)
+                                 num_chains,seg_name,res_list,patch_list,\
+                                 graft_opt)
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain,'namd2', 'mini.conf', 'mini.out')
             iter_num  = iter_num + 1
@@ -211,7 +214,8 @@ elif itertype == 'multi':
             print('Writing config for n-segments: ', deg_poly)
             iter_num = iter_num + 1
             write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
-                                 num_chains,seg_name,res_list,patch_list)
+                                 num_chains,seg_name,res_list,patch_list,\
+                                 graft_opt)
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
 
