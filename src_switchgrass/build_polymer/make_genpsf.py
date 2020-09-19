@@ -396,128 +396,104 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(';# -- Begin patches for %s ---\n' %(segname))
+
             patcnt = 0
             branched = 0
 
             # Need to check both the monomers a patch connects
+            # patch_n between res_n and res_n+1
 
             while patcnt <= nmons-2: #for checking constraints
 
-                # Special Case 1: Any residue is PCA (Grafted one)
-                # If residue is a grafted one, then the patch is
-                # trivial. No need to check for probabilities. Append
-                # directly. However, need to reorder patches
-                # connecting the n-1 and n+1 residue
-                if residlist[chcnt][patcnt] == graft_opt[1]:
+                resname1 = residlist[chcnt][patcnt]
+                resname2 = residlist[chcnt][patcnt+1]
+
+                # Normal case: resname1 and resname2 are "normal" RES
+                if resname1 != graft_opt[1] and resname2 != \
+                   graft_opt[1]:
+                    patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
+                                                               resname1,\
+                                                               resname2,\
+                                                               ctr_flag,\
+                                                               patcnt,\
+                                                               ctr_fyle,\
+                                                               patforbid):
+                    if pname == 'ERR':
+                        return -1 
+
+                    # Update list if conditions are met
+                    if aflag == 1 and cflag == 0: 
+                        out_list[chcnt].append(patchname)
+                        flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                    %(patcnt+1,patchname,\
+                                      segname,patcnt+1,segname,patcnt+2))
+                        patcnt += 1 # update counter
+
+                    elif aflag == -2: #ctr_fyle format is wrong
+                        return 
+
+                    #end update aflag/cflag
+
+                    continue # continue to while loop
+                        
+                # Special Case 1: "left RES" of the patch is a graft
+                # monomer. Graft patch between left side (res_n) and
+                # right side (res_n+1). Patches are assigned to the
+                # next residue
+                elif resname1 == graft_opt[1]:
                     patchname = graft_opt[2]
-                    branched = 1
                     flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                 %(patcnt+1,patchname,\
                                   segname,patcnt+1,segname,patcnt+2))
                     out_list[chcnt].append(patchname)
                     patcnt += 1
+                    continue #continue to next residue                    
 
-                    continue #continue to next residue
 
-                #Special Case 1: Last residue is a pCA.
-                #The bond between the last and penultimate residue
-                #should be GOG
-                if patcnt == nmons-2 and \
-                   residlist[chcnt][patcnt+1] == graft_opt[1]: 
-                    
-                    if branched == 1:
-                        print('ERR: Two consecutive graft resiudes',\
-                              residlist[chcnt][patcnt],\
-                              residlist[chcnt][patcnt+1])
-                        return -1
+                # Special Case 2: "right RES" of the patch is a graft
+                # monomer. 
 
-                    patchname = graft_opt[2]
-                    branched = 1
-                    flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                %(patcnt+1,patchname,\
-                                  segname,patcnt+1,segname,patcnt+2))
-                    out_list[chcnt].append(patchname)
-                    patcnt += 1
+                elif resname2 == graft_opt[1]:
+                    # Case 2a: last RES is graft. Patch graft between
+                    # n and n+1
+                    if patcnt == nmons-2: 
 
-                    continue #continue to next chain
-                    
-                
-                # If first condition is not met, generate a random
-                # number and do the following
-                ranval = random.random() #seed is current system time by default
-                findflag = 0
+                        patchname = graft_opt[2]
+                        flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                    %(patcnt+1,patchname,\
+                                      segname,patcnt+1,segname,patcnt+2))
+                        out_list[chcnt].append(patchname)
+                        patcnt += 1
+                        continue # continue to while loop/next chain
 
-                for arrcnt in range(len(cumulprobarr)):
-        
-                    #Only need to check the less than value because
-                    #the array is organized in increasing order.
-                    #Break the loop once the first point where the
-                    #condition is met.
-                    if ranval < cumulprobarr[arrcnt]:
+                    #Case 2b: patch normal between n and n+2
+                    else: 
+                        patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
+                                                                   resname1,\
+                                                                   resname2,\
+                                                                   ctr_flag,\
+                                                                   patcnt,\
+                                                                   ctr_fyle,\
+                                                                   patforbid):
+                        if pname == 'ERR':
+                            return -1 
 
-                        patchname = list(inp_dict.keys())[arrcnt]
-                        findflag = 1
-                        
-                        if patchname == graft_opt[2]: 
-                            break #iterate iff the patch is not part
-                            #of graft patch
-
-                        # Add constraint flags: default to 1
-                        #so that if constraints are not there, it will
-                        #be appended. consec flag has to be 0 for true
-                        appendflag = 1; consecpatflag = 0 
-                        if ctr_flag:
-                            if patcnt == 0:
-                                resname1 = 'None'
-                                patchname1 = 'None'
-                            else:
-                                resname1 = residlist[chcnt][patcnt]
-                                patchname1 = out_list[chcnt][patcnt-1]
-                        
-                            # end if patcnt == 0
-                            resname2 = residlist[chcnt][patcnt+1]
-                            appendflag = check_constraints(ctrfyle,patchname,\
-                                                          resname1,resname2)
-
-                            consecpatflag =is_forbid_patch(patchname,\
-                                                           patchname1,\
-                                                           patforbid)
-
-                        # end if ctr_flag==1
-
-                        if appendflag == 1 and \
-                           consecpatflag == 0: #update while loop if
-                            #constraints are met
+                        # Update list if conditions are met
+                        if aflag == 1 and cflag == 0: 
                             out_list[chcnt].append(patchname)
+                            flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                        %(patcnt+1,patchname,\
+                                          segname,patcnt,segname,patcnt+2))
+                        patcnt += 1 # update counter
 
-                            if branched == 0: #patch between n and n+1
-                                flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                            %(patcnt+1,patchname,\
-                                              segname,patcnt+1,segname,patcnt+2))
-                            else: # patch between n-1 and n+1
-                                flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                            %(patcnt+1,patchname,\
-                                              segname,patcnt,segname,patcnt+2))
-                                branched = 0 # reset branch flag
 
-                            patcnt += 1
-
-                        elif appendflag == -2:
-                            return 
-                        # end if appendflag == 1
-
-                        break
-                    # end ranval < cumulprobarr[]
-
-                # end for arrcnt in range(len(cumulprobarr))
-
-                if findflag != 1:
-                    print('Random value/Probarr:', ranval,cumulprobarr)
-                    print('Error: Did not find a random residue\n')
+                else: # Unknown condition
+                    print('ERROR in sequence')
+                    print('ch#/pat#/res1/res2',chcnt+1,patcnt+1,\
+                          resname1,resname2)
                     return -1
-                # end if find flag
 
-             # end while loop
+            # end while loop
             flist.write(';# --End patch list for %d--\n' %(chcnt+1))
 
         # end for chcnt in range(nch)
@@ -565,6 +541,70 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                    %(normval))
 
     return out_list
+#---------------------------------------------------------------------
+
+# Find patch for Case 1: when RES1 and RES2 are normal residues.
+def write_normal_patch(cumulprobarr,resname1,resname2,ctr_flag,\
+                       patincnt,presctrfyle,ppctrlist):
+
+    ranval = random.random() #seed is current system time by default
+    findflag = 0
+    arrcnt = 0
+
+    while arrcnt <= range(len(cumulprobarr)):
+        
+        #Only need to check the less than value because
+        #the array is organized in increasing order.
+        #Break the loop once the first point where the
+        #condition is met.
+        if ranval < cumulprobarr[arrcnt]:
+
+            patchname = list(inp_dict.keys())[arrcnt]
+            if patchname == graft_opt[2]: 
+                ranval = random.random() #generate new random number
+                arrcnt = 0 #reset while loop
+                continue # iterate until normal patch
+
+            findflag = 1
+            
+            # Add constraint flags: default to TRUE
+            #so that if constraints are not there, it will
+            #be appended. consec flag has to be 0 for true
+            appendflag = 1; consecpatflag = 0 
+            if ctr_flag:
+                if patincnt == 0:
+                    resname_L = 'None'
+                    patchname_L = 'None'
+                else:
+                    resname_L = resname1
+                    patchname_L = out_list[chcnt][patincnt-1]
+                        
+                # end if patcnt == 0
+                resname_R = resname2
+                appendflag = check_constraints(presctrfyle,patchname,\
+                                               resname_L,resname_R)
+                consecpatflag =is_forbid_patch(patchname,\
+                                               patchname_L,pptctrlist)
+
+                # end if ctr_flag==1
+
+            break
+
+        else: # if ranval !< cumulprobarr[arrcnt]
+            
+            arrcnt += 1 # update array counter
+                
+        # end ranval < cumulprobarr[]
+
+    # end while arrcnt in range(len(cumulprobarr))
+        
+    if findflag != 1:
+        print('Random value/Probarr:', ranval,cumulprobarr)
+        print('Error: Did not find a random residue\n')
+        patchname = 'ERR'
+    # end if find flag
+    
+    return patchname,appendflag,consecpatflag
 #---------------------------------------------------------------------
 
 # Write residues/patches in one go
