@@ -246,7 +246,7 @@ def create_segments(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                                         %(rescnt+1,resname1))
                             out_list[chcnt].append(resname1)
                             rescnt = rescnt + 1
-                        else:
+                        else: # no grafts in consecutive positions
                             resname2 = out_list[chcnt][rescnt-1]
                             consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
@@ -356,7 +356,7 @@ def read_patch_incomp(fname):
 
 # check forbidden consecutive patches
 # THIS IS FOR RES1-PATCH1-RES2-PATCH2 combination
-# Onlu patch1 and patch2 are important. rest is checked in
+# Only patch1 and patch2 are important. rest is checked in
 # check_constraints 
 def is_forbid_patch(patchname1,patchname2,patforbid):
     flag = 0 # default not forbidden
@@ -369,6 +369,8 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 #---------------------------------------------------------------------
 
 # Generate patches
+# If res_n is a graft, patch is applied between res_n and res_(n+1),
+# except when the last resiudue is a graft.
 def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
                     ,tol,maxattmpt,flog,ctr_flag,ctrfyle,residlist,\
                    patforbid,graft_opt):
@@ -396,6 +398,8 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
             flist.write(';# -- Begin patches for %s ---\n' %(segname))
             patcnt = 0
             branched = 0
+
+            # Need to check both the monomers a patch connects
 
             while patcnt <= nmons-2: #for checking constraints
 
@@ -453,7 +457,6 @@ def create_patches(flist,nmons,nch,segname,inp_dict,cumulprobarr\
 
                         patchname = list(inp_dict.keys())[arrcnt]
                         findflag = 1
-
                         
                         if patchname == graft_opt[2]: 
                             break #iterate iff the patch is not part
