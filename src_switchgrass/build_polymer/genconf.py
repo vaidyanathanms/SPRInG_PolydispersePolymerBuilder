@@ -45,11 +45,11 @@ from make_genpsf import run_namd
 # Input data
 casenum    = 1  # case number
 fl_constraint = 1 # flag for reading constraints (patch-patch/patch-res)
-biomas_typ  = 'switchgrass_' # type of biomass; end with _
+biomas_typ  = 'switchgrass' # type of biomass
 deg_poly   = 17 # degree of polymerization (final)
 swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
 seg_name = 'swli' #name of segment: switchgrass lignin
-num_chains = 1 # number of chains
+num_chains = 10 # number of chains
 graft_opt = [1,'PCA','GOG'] # graft option, res, patch
 tol = 0.1 # relative tolerance for residue/patch generation
 maxatt = 500 # maximum attempts to obtain avg configuration
@@ -57,13 +57,12 @@ itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
 iterinc   = 4 # iteration increments (for multi itertype)
 
 # Input file names
-input_ctr = 'constraints.inp' # patch-res constraint file input
+input_pres = 'constraints.inp' # patch-res constraint file input
 input_top = 'lignin.top' # topology file input
 input_pdb = 'G-bO4L-G.pdb' # file input - dimer
 input_pp  = 'patch_incomp.inp' # patch-patch incompatibility
 
 # Output file names (will be generated automatically)
-pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
 reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all res list
 patch_fname = 'patchlist_' + str(casenum)+ '.tcl' #all patch list
 log_fname = 'log_' + str(casenum) + '.txt' #log file
@@ -71,10 +70,15 @@ log_fname = 'log_' + str(casenum) + '.txt' #log file
 # Get directory info
 srcdir = os.getcwd()
 outdir = srcdir + str('/casenum_') + str(casenum) # out directory
+tcldir = outdir + '/all_tclfiles'
 
-# Create main directory and copy required files
+# Create main directories and copy required files
 if not os.path.isdir(outdir):
     os.mkdir(outdir)
+if not os.path.isdir(tcldir):
+    os.mkdir(tcldir)
+
+# Create tcl directory
 
 # Open log file
 flog = open(outdir + '/' + log_fname,'w')
@@ -90,7 +94,7 @@ if not os.path.exists(input_pdb):
     exit('Dimer file not found \n')
 
 if fl_constraint:
-    if not os.path.exists(input_ctr) and not os.path.exists(input_pp):
+    if not os.path.exists(input_pres) and not os.path.exists(input_pp):
         exit('No constraint file not found \n')
 
 # residue % dictionary mode
@@ -112,7 +116,7 @@ if not bool(patchperc_dict):
 gencpy(srcdir,outdir,input_top)
 gencpy(srcdir,outdir,input_pdb)
 if fl_constraint:
-    gencpy(srcdir,outdir,input_ctr)
+    gencpy(srcdir,outdir,input_pres)
     gencpy(srcdir,outdir,input_pp)
 
 # Open file and write headers
@@ -137,6 +141,7 @@ res_list = [[] for i in range(num_chains)]
 patch_list = [[] for i in range(num_chains-1)]
 
 # Create segments and check for avg probability 
+print('Generating residues..')
 flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,\
@@ -154,10 +159,11 @@ if fl_constraint:
         flog.write('\n')
 
 # Create patches with constraints and check for avg probability 
+print('Generating patches..')
 flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly,num_chains,seg_name,\
                             patchperc_dict,cumul_patcharr,tol,\
-                            maxatt,flog,fl_constraint,input_ctr,\
+                            maxatt,flog,fl_constraint,input_pres,\
                             res_list,ppctr_list,graft_opt)
 
 flog.write('Writing data to files \n')
@@ -165,32 +171,29 @@ flog.write('Output style %s\n' %(itertype))
 print('Writing data to files..')
 print('Output style: ', itertype)
 
-if itertype == 'single':
-    # Open single file and write all details
-    tcl_fname  = biomas_typ + str(casenum) + '_allchains.tcl' 
-    fmain = open(outdir + '/' + tcl_fname,'w')
-    psfgen_headers(fmain,input_top,pdbpsf_name)
-    flog.write('Writing config for n-segments: %d\n' %(deg_poly))
-    print('Writing config for n-segments: ', deg_poly)
-    write_segments_onego(fmain,deg_poly,num_chains,seg_name,\
-                         res_list,patch_list,graft_opt)
-    psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
-    #Exit and close file
-    fmain.write('exit')
-    fmain.close()
+for chcnt in range(num_chains):
+    chnum = chcnt + 1
+    flog.write('****Writing chain number: %d***\n' %(chnum))
+    print('Writing chain number: ', chnum)
 
-elif itertype == 'multi':
+    #prefix for pdb/psf/tcl files
+    pdbpsf_name = biomas_typ + 'case_' + str(casenum) + \
+                 '_chnum_' + str(chnum) 
+    tcl_fname  =  pdbpsf_name +'.tcl' 
+    fmain = open(tcldir + '/' + tcl_fname,'w')
 
-    for chcnt in range(num_chains):
-        chnum = chcnt + 1
-        flog.write('Writing chain number: %d\n' %(chnum))
-        tcl_fname  = biomas_typ + 'case_' + str(casenum) + \
-                     '_chnum_' + str(chnum) +'.tcl' 
-        fmain = open(outdir + '/' + tcl_fname,'w')
+    if itertype == 'single':
+        pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
+        psfgen_headers(fmain,input_top,pdbpsf_name)
+        flog.write('Writing config for n-segments: %d\n' %(deg_poly))
+        write_multi_segments(fmain,-1,deg_poly,num_chains,chnum,\
+                             seg_name,res_list,patch_list,graft_opt)
+        psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
+    elif itertype == 'multi':
+    
         flog.write('Iteration increment counter %d\n' %(iterinc))
-
         # Write segments according to iteration number
         iter_num = 1
         nmonsthisiter = iterinc
@@ -199,9 +202,8 @@ elif itertype == 'multi':
             if iter_num == 1:
                 psfgen_headers(fmain,input_top,pdbpsf_name)
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
-            print('Writing config for n-segments: ', nmonsthisiter)
-            write_multi_segments(fmain,iter_num,nmonsthisiter,chnum,\
-                                 num_chains,seg_name,res_list,patch_list,\
+            write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains,\
+                                 chnum,seg_name,res_list,patch_list,\
                                  graft_opt)
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain,'namd2', 'mini.conf', 'mini.out')
@@ -211,7 +213,6 @@ elif itertype == 'multi':
         # Write the rest in one go
         if deg_poly%iterinc != 0:
             flog.write('Writing config for n-segments: %d\n' %(deg_poly))
-            print('Writing config for n-segments: ', deg_poly)
             iter_num = iter_num + 1
             write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
                                  num_chains,seg_name,res_list,patch_list,\
@@ -219,13 +220,12 @@ elif itertype == 'multi':
             psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
             run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
 
-        # Exit and close nchth file
-        fmain.write('exit')
-        fmain.close() 
-
-else:
-    exit('ERROR: Unknown output write style option: ' + itertype)
-
+    else:
+        exit('ERROR: Unknown output write style option: ' + itertype)
+        
+#Exit and close file
+fmain.write('exit')
+fmain.close()
 
 flog.write('Completed psf generation for casenum: %d\n' %(casenum))
 print('Completed psf generation for casenum: ', casenum)
