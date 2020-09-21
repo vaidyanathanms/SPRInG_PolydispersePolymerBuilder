@@ -63,7 +63,6 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
     fin.write('guesscoord ;#  %s\n' %(comnt2))
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepsf $outputnmae.psf \n')
-
 #---------------------------------------------------------------------
 
 # Define monomer ratios from literature    
@@ -147,16 +146,22 @@ def patch_ratios(opt,opt_graft,resdict):
 #---------------------------------------------------------------------
 
 # Initiate log file
-def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch):
+def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch\
+                  ,att,tol,opstyle,fl_constraint,resfyle,patfyle):
     flog.write('Creating NAMD file for %s\n' %(bmtype))
     if optv == 'A' or optv == 'a':
         flog.write('Ref: Yan et al., Biomass & Bioener 34, 48-53, 2010\n')
     elif optv == 'B' or optv == 'b':
         flog.write('Ref: Samuel et al., Front. Ener. Res., 1 (14) 2014\n')
     flog.write('Case number: %d\n' %(casenum))
-    flog.write('Monomers/Chains: %d\t%d\n' %(M, nch))
+    flog.write('Res/patch inps: %s\t%s\n' %(resfyle,patfyle))
+    flog.write('Residues/Chains: %d\t%d\n' %(M, nch))
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
     flog.write('Segment name: %s\n' %(segname))
+    flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
+    flog.write('Constraint flag: %d\n' %(fl_constraint))
+    flog.write('Output style: %s\n' %(opstyle))
+    
     flog.write('Analysis beginning ..\n')
 #---------------------------------------------------------------------
 

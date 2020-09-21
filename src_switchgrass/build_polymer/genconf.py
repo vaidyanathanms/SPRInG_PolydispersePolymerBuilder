@@ -41,26 +41,94 @@ from make_genpsf import write_multi_segments
 from make_genpsf import write_segments_onego
 from make_genpsf import run_namd
 
+# Read input file
+print('Input file name: ', sys.argv[1])
+if len(sys.argv) != 2:
+    print('Unknown number of arguments: ', len(sys.argv),\
+          str(sys.argv))
+    exit()
+
+
+# Set defaults
+casenum = -1
+graft_opt = []
+
+# Read from file
+with open(sys.argv[1]) as farg:
+    for line in farg:
+        line = line.rstrip('\n')
+        words = line.split()
+        # call all functions
+        if words[0] == 'case_num':
+            casenum = int(words[1])
+        elif words[0] == 'biomass_type':
+            biomas_typ = words[1]
+        elif words[0] == 'ff_type':
+            swit_opt = words[1]
+        elif words[0] == 'num_resids':
+            deg_poly = int(words[1])
+        elif words[0] == 'num_chains':
+            num_chains = int(words[1])
+        elif words[0] == 'seg_name':
+            seg_name = words[1]
+        elif words[0] == 'grafting':
+            if len(words) < 4:
+                print('Not all grafting data present', line)
+            else:
+                graft_opt.append(int(words[1]))
+                graft_opt.append(words[2])
+                graft_opt.append(words[3])
+        elif words[0] == 'tol':
+            tol = float(words[1])
+        elif words[0] == 'nattempts':
+            maxatt = int(words[1])
+        elif words[0] == 'op_style':
+            itertype  = words[1]
+            if itertype == 'multi':
+                iterinc = int(words[2]) if len(words) == 3 \
+                          else exit('Args for multi not found: '+line)
+        elif words[0] == 'constraint_flag':
+            fl_constraint = int(words[1])
+        elif words[0] == 'patch_res_constraint':
+            input_pres = words[1] if fl_constraint == 1 \
+                        else exit('ERR: Constraint flag not set')
+        elif words[0] == 'patch_patch_constraint':
+            input_pp = words[1] if fl_constraint == 1 \
+                       else exit('Constraint flag not set')
+        elif words[0] == 'pdb_ipfile':
+            input_pdb = words[1]
+        elif words[0] == 'top_ipfile':
+            input_top = words[1]
+        elif words[0] == 'resid_inp':
+            resinpfyle = words[1]
+        elif words[0] == 'patch_inp':
+            patinpfyle = words[1]
+        else:
+            exit('Unknown keyword ' + str(words[0]))
 
 # Input data
-casenum    = 1  # case number
-fl_constraint = 1 # flag for reading constraints (patch-patch/patch-res)
-biomas_typ  = 'switchgrass' # type of biomass
-deg_poly   = 17 # degree of polymerization (final)
-swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
-seg_name = 'swli' #name of segment: switchgrass lignin
-num_chains = 10 # number of chains
-graft_opt = [1,'PCA','GOG'] # graft option, res, patch
-tol = 0.1 # relative tolerance for residue/patch generation
-maxatt = 500 # maximum attempts to obtain avg configuration
-itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
-iterinc   = 4 # iteration increments (for multi itertype)
+#casenum    = 1  # case number
+#fl_constraint = 1 # flag for reading constraints (patch-patch/patch-res)
+#biomas_typ  = 'switchgrass' # type of biomass
+#deg_poly   = 17 # degree of polymerization (final)
+#swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
+#seg_name = 'swli' #name of segment: switchgrass lignin
+#num_chains = 10 # number of chains
+#graft_opt = [1,'PCA','GOG'] # graft option, res, patch
+#tol = 0.1 # relative tolerance for residue/patch generation
+#maxatt = 500 # maximum attempts to obtain avg configuration
+#itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
+#iterinc   = 4 # iteration increments (for multi itertype)
 
 # Input file names
-input_pres = 'constraints.inp' # patch-res constraint file input
-input_top = 'lignin.top' # topology file input
-input_pdb = 'G-bO4L-G.pdb' # file input - dimer
-input_pp  = 'patch_incomp.inp' # patch-patch incompatibility
+#input_pres = 'constraints.inp' # patch-res constraint file input
+#input_top = 'lignin.top' # topology file input
+#input_pdb = 'G-bO4L-G.pdb' # file input - dimer
+#input_pp  = 'patch_incomp.inp' # patch-patch incompatibility
+
+if casenum == -1:
+    print('Case number not input: FATAL ERROR')
+    exit()
 
 # Output file names (will be generated automatically)
 reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all res list
@@ -78,12 +146,11 @@ if not os.path.isdir(outdir):
 if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
 
-# Create tcl directory
-
 # Open log file
 flog = open(outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
-              ,input_pdb,seg_name,num_chains)
+              ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
+              ,fl_constraint,resinpfyle,patinpfyle)
 print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
 
 # Read defaults and throw exceptions
