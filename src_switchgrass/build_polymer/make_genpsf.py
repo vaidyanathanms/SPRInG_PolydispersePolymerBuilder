@@ -31,6 +31,32 @@ def gencpy(dum_maindir,dum_destdir,fylname):
     desfyl = dum_destdir + '/' + fylname
     shutil.copy2(srcfyl,desfyl)
 #---------------------------------------------------------------------
+# Set defaults
+def def_vals():
+    return -1, 0, 0, 0, 0, 0, 0, 0, 0
+#---------------------------------------------------------------------
+
+# Check all flags 
+def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
+                    fl_constraint,fpresctr,fppctr,opt,ffflag)
+    outflag = 1
+    if casenum == -1:
+        print('Case number not input: FATAL ERROR'); outflag = -1
+    elif fdpbflag == 0 or ftopflag == 0:
+        print('PDB/Topology file not entered'); outflag = -1
+    elif ffflag = 0:
+        print('Force field type not set: A,B, None');outflag = -1
+    elif fresflag == 0 and (opt == 'none' or opt=='None'):
+        print('Residue file/option input not entered'); outflag = -1
+    elif fpatflag == 0 and (opt == 'none' or opt=='None'):
+        print('Patch file/option not entered'); outflag = -1
+    elif fl_constraint == 1:
+        if fpresctr == 0 or fpptctr == 0:
+            print('Constraint files not given: constraint flag ON')
+            outflag = -1
+
+    return outflag
+#---------------------------------------------------------------------
 
 # Define headers for psf files
 def psfgen_headers(fin,topname,outname):
@@ -66,12 +92,17 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
 #---------------------------------------------------------------------
 
 # Define monomer ratios from literature    
-def residue_ratios(opt):
+def residue_ratios(opt='none',inpfyle='none'):
 # add monomer details
     frac_res = collections.OrderedDict()
     
-    if opt == 'A' or opt == 'a':
+    if opt == 'None' or opt == 'none':
+        with open(inpfyle) as fyle_dict:
+            for line in fyle_dict:
+                (key, val) = line.split()
+                frac_res[key] = val
 
+    if opt == 'A' or opt == 'a':
         # H:G:S = 26:42:32 (B); pCA:FA = 1
         frac_res['PHP'] = 26/140 # % PHP (H) monomers
         frac_res['GUA'] = 42/140 # % GUA (G) monomers
@@ -80,21 +111,39 @@ def residue_ratios(opt):
         frac_res['FERU'] = 20/140 # % FA monomers
         
     elif opt == 'B' or opt == 'b':
-
         # G:S = 0.78, H = 2 (A); pCA:FA = 6:32
-
         gmonrat = 0.27
 
     return frac_res
 #---------------------------------------------------------------------
 
 # Define patch ratios from literature
-def patch_ratios(opt,opt_graft,resdict):
-# add patch details
+def patch_ratios(opt='none',inpfyle='none',opt_graft,resdict):
 
+# add patch details
     frac_patch = collections.OrderedDict()
 
-    if opt_graft[0] == 1:
+    if opt == 'None' or opt == 'none':
+        with open(inpfyle) as fyle_dict:
+            for line in fyle_dict:
+                (key, val) = line.split()
+                frac_res[key] = val
+
+    elif opt == 'A' or opt == 'a':
+        frac_patch['BO4R'] = 0.2
+        frac_patch['BO4L'] = 0.2
+        frac_patch['55']  = 0.2
+        frac_patch['405'] = 0.2
+        frac_patch['BB']  = 0.2
+
+    elif opt == 'B' or opt == 'b':
+        frac_patch['BO4'] = 0
+
+    # check for grafts and rearrange dictionary
+    if opt_graft[0] != 1:
+        return frac_patch
+
+    elif opt_graft[0] == 1:
         newfrac_patch = collections.OrderedDict() #create new dict
         gr_resname = opt_graft[1]
         gr_patname = opt_graft[2]
@@ -110,24 +159,7 @@ def patch_ratios(opt,opt_graft,resdict):
             print('ERROR: Could not find ', str(gr_resname))
             return 0
 
-    if opt == 'A' or opt == 'a':
-
-        frac_patch['BO4R'] = 0.2
-        frac_patch['BO4L'] = 0.2
-        frac_patch['55']  = 0.2
-        frac_patch['405'] = 0.2
-        frac_patch['BB']  = 0.2
-
-    elif opt == 'B' or opt == 'b':
-
-        frac_patch['BO4'] = 0
-
-    if opt_graft[0] != 1:
-        return frac_patch
-
-    # Renormalize if grafts are present and create new dict
-   
-    if opt_graft[0] == 1:
+        # Renormalize if grafts are present and create new dict
         sumprob = 0
         for patcnt in range(len(frac_patch)):
             if list(frac_patch.keys())[patcnt] != opt_graft[2]:
@@ -142,7 +174,11 @@ def patch_ratios(opt,opt_graft,resdict):
                 keyval = list(frac_patch.keys())[patcnt]
                 newfrac_patch[keyval] = newprob
 
-    return newfrac_patch
+        return newfrac_patch
+    else:
+        print('Unknown option', graft_opt[0])
+        return 0
+
 #---------------------------------------------------------------------
 
 # Initiate log file
