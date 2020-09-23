@@ -38,21 +38,21 @@ def def_vals():
 
 # Check all flags 
 def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
-                    fl_constraint,fpresctr,fppctr,opt,ffflag)
+                    fl_constraint,fpresctr,fppctr,opt,ffflag):
     outflag = 1
     if casenum == -1:
-        print('Case number not input: FATAL ERROR'); outflag = -1
-    elif fdpbflag == 0 or ftopflag == 0:
-        print('PDB/Topology file not entered'); outflag = -1
-    elif ffflag = 0:
-        print('Force field type not set: A,B, None');outflag = -1
+        print('ERR: Case number not input'); outflag = -1
+    elif fpdbflag == 0 or ftopflag == 0:
+        print('ERR: PDB/Topology file not entered'); outflag = -1
+    elif ffflag == 0:
+        print('ERR: Force field type not set: A,B, None');outflag = -1
     elif fresflag == 0 and (opt == 'none' or opt=='None'):
-        print('Residue file/option input not entered'); outflag = -1
+        print('ERR: Residue file/option input not entered'); outflag = -1
     elif fpatflag == 0 and (opt == 'none' or opt=='None'):
-        print('Patch file/option not entered'); outflag = -1
+        print('ERR: Patch file/option not entered'); outflag = -1
     elif fl_constraint == 1:
-        if fpresctr == 0 or fpptctr == 0:
-            print('Constraint files not given: constraint flag ON')
+        if fpresctr == 0 or fppctr == 0:
+            print('ERR: Constraint files not given: constraint flag ON')
             outflag = -1
 
     return outflag
@@ -99,8 +99,9 @@ def residue_ratios(opt='none',inpfyle='none'):
     if opt == 'None' or opt == 'none':
         with open(inpfyle) as fyle_dict:
             for line in fyle_dict:
+                line = line.strip()
                 (key, val) = line.split()
-                frac_res[key] = val
+                frac_res[key] = float(val)
 
     if opt == 'A' or opt == 'a':
         # H:G:S = 26:42:32 (B); pCA:FA = 1
@@ -118,7 +119,7 @@ def residue_ratios(opt='none',inpfyle='none'):
 #---------------------------------------------------------------------
 
 # Define patch ratios from literature
-def patch_ratios(opt='none',inpfyle='none',opt_graft,resdict):
+def patch_ratios(opt_graft,resdict,opt='none',inpfyle='none'):
 
 # add patch details
     frac_patch = collections.OrderedDict()
@@ -126,8 +127,9 @@ def patch_ratios(opt='none',inpfyle='none',opt_graft,resdict):
     if opt == 'None' or opt == 'none':
         with open(inpfyle) as fyle_dict:
             for line in fyle_dict:
+                line = line.strip()
                 (key, val) = line.split()
-                frac_res[key] = val
+                frac_patch[key] = float(val)
 
     elif opt == 'A' or opt == 'a':
         frac_patch['BO4R'] = 0.2

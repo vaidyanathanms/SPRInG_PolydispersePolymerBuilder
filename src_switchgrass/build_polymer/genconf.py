@@ -28,6 +28,8 @@ import math
 
 # Function definitions
 from make_genpsf import gencpy
+from make_genpsf import def_vals
+from make_genpsf import check_all_flags
 from make_genpsf import psfgen_headers
 from make_genpsf import psfgen_postprocess
 from make_genpsf import residue_ratios
@@ -41,17 +43,18 @@ from make_genpsf import write_multi_segments
 from make_genpsf import write_segments_onego
 from make_genpsf import run_namd
 
+
 # Read input file
-print('Input file name: ', sys.argv[1])
 if len(sys.argv) != 2:
     print('Unknown number of arguments: ', len(sys.argv),\
           str(sys.argv))
     exit()
+print('Input file name: ', sys.argv[1])
 
 # Set defaults
-casenum,fpdbflag,ftopflag,fresflag,fpatflag,fl_constraint,\
-    fpresctr,fppctr, ffflag =def_vals()
 graft_opt = []; swit_opt = 'None'
+casenum,fpdbflag,ftopflag,fresflag,fpatflag,fl_constraint,\
+    fpresctr,fppctr,ffflag =def_vals()
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -109,8 +112,9 @@ with open(sys.argv[1]) as farg:
             exit('Unknown keyword ' + str(words[0]))
 
 outflag = check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag\
-                          fl_constraint,fpresctr,fppctr,swit_opt)
-exit() if outflag == 1
+                          ,fl_constraint,fpresctr,fppctr,swit_opt,ffflag)
+if outflag == -1:
+    exit()
 
 # Output file names (will be generated automatically)
 reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all res list
@@ -157,7 +161,7 @@ else:
     flog.write('Linear chains are built\n')
 
 # patches %dict mode
-patchperc_dict = patch_ratios(swit_opt,patinpfyle,graft_opt,resperc_dict) 
+patchperc_dict = patch_ratios(graft_opt,resperc_dict,swit_opt,patinpfyle) 
 if not bool(patchperc_dict):
     exit('ERROR: Unknown option for patch parameters \n')
 
@@ -202,10 +206,9 @@ if fl_constraint:
     flog.write('Reading patch-patch constraints..\n')
     flog.write('All constraints \n')
     ppctr_list = read_patch_incomp(input_pp)
-    for row in ppctr_list:
-        for line in row:
-            flog.write('\t'.join(line))
-        flog.write('\n')
+    print(ppctr_list)
+    flog.writelines('\t'.join(str(jval) for jval in ival) +\
+                    '\n' for ival in ppctr_list)
 
 # Create patches with constraints and check for avg probability 
 print('Generating patches..')
