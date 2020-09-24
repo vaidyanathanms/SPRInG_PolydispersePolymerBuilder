@@ -111,6 +111,7 @@ with open(sys.argv[1]) as farg:
         else:
             exit('Unknown keyword ' + str(words[0]))
 
+
 outflag = check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag\
                           ,fl_constraint,fpresctr,fppctr,swit_opt,ffflag)
 if outflag == -1:
@@ -123,17 +124,17 @@ log_fname = 'log_' + str(casenum) + '.txt' #log file
 
 # Get directory info
 srcdir = os.getcwd()
-outdir = srcdir + str('/casenum_') + str(casenum) # out directory
-tcldir = outdir + '/all_tclfiles'
+head_outdir = srcdir + str('/casenum_') + str(casenum) # main outdir
+tcldir = head_outdir + '/all_tclfiles' # tcl outdir
 
 # Create main directories and copy required files
-if not os.path.isdir(outdir):
-    os.mkdir(outdir)
+if not os.path.isdir(head_outdir):
+    os.mkdir(head_outdir)
 if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
 
 # Open log file
-flog = open(outdir + '/' + log_fname,'w')
+flog = open(head_outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
               ,fl_constraint,resinpfyle,patinpfyle)
@@ -166,16 +167,16 @@ if not bool(patchperc_dict):
     exit('ERROR: Unknown option for patch parameters \n')
 
 # copy all files
-gencpy(srcdir,outdir,input_top)
-gencpy(srcdir,outdir,input_pdb)
+gencpy(srcdir,head_outdir,input_top)
+gencpy(srcdir,head_outdir,input_pdb)
 if fl_constraint:
-    gencpy(srcdir,outdir,input_pres)
-    gencpy(srcdir,outdir,input_pp)
+    gencpy(srcdir,head_outdir,input_pres)
+    gencpy(srcdir,head_outdir,input_pp)
 
 # Open file and write headers
-fresin = open(outdir + '/' + reslist_fname,'w')
+fresin = open(head_outdir + '/' + reslist_fname,'w')
 fresin.write(';# Contains all segments for NAMD files.\n')
-fpatchin = open(outdir + '/' + patch_fname,'w')
+fpatchin = open(head_outdir + '/' + patch_fname,'w')
 fpatchin.write(';# Contains all patches for NAMD files.\n')
             
 # Create cumulative probability distribution of segments/patches
@@ -206,7 +207,6 @@ if fl_constraint:
     flog.write('Reading patch-patch constraints..\n')
     flog.write('All constraints \n')
     ppctr_list = read_patch_incomp(input_pp)
-    print(ppctr_list)
     flog.writelines('\t'.join(str(jval) for jval in ival) +\
                     '\n' for ival in ppctr_list)
 
@@ -257,7 +257,8 @@ for chcnt in range(num_chains):
             write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains,\
                                  chnum,seg_name,res_list,patch_list,\
                                  graft_opt)
-            psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
+            psfgen_postprocess(fmain,input_pdb,itertype,\
+                               iter_num,seg_name)
             run_namd(fmain,'namd2', 'mini.conf', 'mini.out')
             iter_num  = iter_num + 1
             nmonsthisiter = nmonsthisiter + iterinc
@@ -269,7 +270,8 @@ for chcnt in range(num_chains):
             write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
                                  num_chains,seg_name,res_list,patch_list,\
                                  graft_opt)
-            psfgen_postprocess(fmain,input_pdb,itertype,iter_num,seg_name)
+            psfgen_postprocess(fmain,input_pdb,itertype,\
+                               iter_num,seg_name)
             run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
 
     else:
