@@ -33,12 +33,12 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return -1, 0, 0, 0, 0, 0, 0, 0, 0
+    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #---------------------------------------------------------------------
 
 # Check all flags 
 def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
-                    fl_constraint,fpresctr,fppctr,opt,ffflag):
+                    fl_constraint,fpresctr,fppctr,opt,ffflag,fnamd):
     outflag = 1
     if casenum == -1:
         print('ERR: Case number not input'); outflag = -1
@@ -54,6 +54,8 @@ def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
         if fpresctr == 0 or fppctr == 0:
             print('ERR: Constraint files not given: constraint flag ON')
             outflag = -1
+    elif fnamd == 0:
+        print('WARNING: No NAMD file found')
 
     return outflag
 #---------------------------------------------------------------------

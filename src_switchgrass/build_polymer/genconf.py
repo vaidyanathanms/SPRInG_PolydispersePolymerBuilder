@@ -52,9 +52,10 @@ if len(sys.argv) != 2:
 print('Input file name: ', sys.argv[1])
 
 # Set defaults
-graft_opt = []; swit_opt = 'None'
+graft_opt = []; swit_opt = 'None' 
+input_namd = 'none'; input_prm = 'none'
 casenum,fpdbflag,ftopflag,fresflag,fpatflag,fl_constraint,\
-    fpresctr,fppctr,ffflag =def_vals()
+    fpresctr,fppctr,ffflag,fnamdflag =def_vals()
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -108,12 +109,19 @@ with open(sys.argv[1]) as farg:
             resinpfyle = words[1]; fresflag = 1
         elif words[0] == 'patch_inp':
             patinpfyle = words[1]; fpatflag = 1
+        elif words[0] == 'namd_conf':
+            if len(words) != 3:
+                exit('Unknown number of arguments: ' + line)
+            else:
+                input_namd = words[1]; input_prm = words[2]
+                fnamdflag = 1
         else:
             exit('Unknown keyword ' + str(words[0]))
 
 
 outflag = check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag\
-                          ,fl_constraint,fpresctr,fppctr,swit_opt,ffflag)
+                          ,fl_constraint,fpresctr,fppctr,swit_opt,\
+                          ffflag,fnamdflag)
 if outflag == -1:
     exit()
 
@@ -150,6 +158,14 @@ if not os.path.exists(input_pdb):
 if fl_constraint:
     if not os.path.exists(input_pres) and not os.path.exists(input_pp):
         exit('No constraint file not found \n')
+
+if fnamdflag == 1:
+    if not os.path.exists(input_namd) or not os.path.exists(input_prm):
+        exit('No NAMD file found \n')
+    else:
+        gencpy(srcdir,tcldir,input_namd)
+        gencpy(srcdir,tcldir,input_prm)
+
 
 # residue % dictionary mode
 resperc_dict = residue_ratios(swit_opt,resinpfyle) 
@@ -259,7 +275,8 @@ for chcnt in range(num_chains):
                                  graft_opt)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
-            run_namd(fmain,'namd2', 'mini.conf', 'mini.out')
+            if fnamdflag == 1:
+                run_namd(fmain,'namd2',input_namd,'mini.out')
             iter_num  = iter_num + 1
             nmonsthisiter = nmonsthisiter + iterinc
 
@@ -272,7 +289,9 @@ for chcnt in range(num_chains):
                                  graft_opt)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
-            run_namd(fmain, 'namd2', 'mini.conf', 'mini.out')
+
+            if fnamdflag == 1:
+                run_namd(fmain,'namd2',input_namd,'mini.out')
 
     else:
         exit('ERROR: Unknown output write style option: ' + itertype)
