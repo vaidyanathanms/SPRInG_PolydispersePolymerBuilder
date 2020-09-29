@@ -11,8 +11,8 @@ op_style	multi	4
 constraint_flag 1
 patch_res_constraint	respatconstraints.inp
 patch_patch_constraint	patch_incomp.inp
-pdb_ipfile	G-bO4L-G.pdb
+pdb_ipfile	G-bO4L-G.pdb GUAI
 top_ipfile	lignin.top
 resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
-namd_conf	mini.conf lignin.prm
+namd_conf	mini_pyconf.conf lignin.prm
