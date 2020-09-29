@@ -36,6 +36,7 @@ from make_genpsf import residue_ratios
 from make_genpsf import patch_ratios
 from make_genpsf import init_logwrite
 from make_genpsf import cumul_probdist
+from make_genpsf import check_pdb_defaults
 from make_genpsf import create_segments
 from make_genpsf import create_patches
 from make_genpsf import read_patch_incomp
@@ -102,7 +103,11 @@ with open(sys.argv[1]) as farg:
             input_pp = words[1] if fl_constraint == 1 \
                        else exit('Constraint flag not set')
         elif words[0] == 'pdb_ipfile':
-            input_pdb = words[1]; fpdbflag = 1
+            if len(words) != 3:
+                exit('Unknown number of args: ' + line)
+            else:
+                input_pdb = words[1]; def_res = words[2]
+                fpdbflag = 1
         elif words[0] == 'top_ipfile':
             input_top = words[1]; ftopflag = 1
         elif words[0] == 'resid_inp':
@@ -163,8 +168,8 @@ if fnamdflag == 1:
     if not os.path.exists(input_namd) or not os.path.exists(input_prm):
         exit('No NAMD file found \n')
     else:
-        gencpy(srcdir,tcldir,input_namd)
-        gencpy(srcdir,tcldir,input_prm)
+        # Copy parameter file here. Input files will be copied later
+        gencpy(srcdir,tcldir,input_prm) 
 
 
 # residue % dictionary mode
@@ -210,12 +215,15 @@ flog.write(str(cumul_patcharr)+'\n')
 res_list = [[] for i in range(num_chains)]
 patch_list = [[] for i in range(num_chains-1)]
 
+# check pdb file defaults
+#flag = check_pdb_defaults(input_pdb,resperc_dict,seg_name)
+
 # Create segments and check for avg probability 
 print('Generating residues..')
 flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,\
-                           flog,graft_opt)
+                           flog,graft_opt,def_res)
 
 if fl_constraint:
     # Read patch-patch constraints (in one go)
@@ -246,13 +254,21 @@ for chcnt in range(num_chains):
     print('Writing chain number: ', chnum)
 
     #prefix for pdb/psf/tcl files
-    pdbpsf_name = biomas_typ + 'case_' + str(casenum) + \
-                 '_chnum_' + str(chnum) 
+    pdbpsf_name = biomas_typ + '_case_' + str(casenum) + \
+                  '_chnum_' + str(chnum) 
     tcl_fname  =  pdbpsf_name +'.tcl' 
     fmain = open(tcldir + '/' + tcl_fname,'w')
 
+    # Copy NAMD files
+    fr = open(input_namd,'r')
+    fw = open('mini.conf','w')
+    fid = fr.read().replace("py_inpname",pdbpsf_name)
+    fw.write(fid)
+    fr.close(); fw.close()
+    gencpy(srcdir,tcldir,'mini.conf')
+
     if itertype == 'single':
-        pdbpsf_name = biomas_typ + str(casenum)  #prefix for pdb/psf files
+        
         psfgen_headers(fmain,input_top,pdbpsf_name)
         flog.write('Writing config for n-segments: %d\n' %(deg_poly))
         write_multi_segments(fmain,-1,deg_poly,num_chains,chnum,\
@@ -260,7 +276,6 @@ for chcnt in range(num_chains):
         psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
     elif itertype == 'multi':
-    
         flog.write('Iteration increment counter %d\n' %(iterinc))
         # Write segments according to iteration number
         iter_num = 1
@@ -276,7 +291,7 @@ for chcnt in range(num_chains):
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
             if fnamdflag == 1:
-                run_namd(fmain,'namd2',input_namd,'mini.out')
+                run_namd(fmain,'namd2','mini.conf','mini.out')
             iter_num  = iter_num + 1
             nmonsthisiter = nmonsthisiter + iterinc
 
@@ -291,7 +306,7 @@ for chcnt in range(num_chains):
                                iter_num,seg_name)
 
             if fnamdflag == 1:
-                run_namd(fmain,'namd2',input_namd,'mini.out')
+                run_namd(fmain,'namd2','mini.conf','mini.out')
 
     else:
         exit('ERROR: Unknown output write style option: ' + itertype)
