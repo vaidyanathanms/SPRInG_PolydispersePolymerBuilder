@@ -138,13 +138,11 @@ log_fname = 'log_' + str(casenum) + '.txt' #log file
 # Get directory info
 srcdir = os.getcwd()
 head_outdir = srcdir + str('/casenum_') + str(casenum) # main outdir
-tcldir = head_outdir + '/all_tclfiles' # tcl outdir
+
 
 # Create main directories and copy required files
 if not os.path.isdir(head_outdir):
     os.mkdir(head_outdir)
-if not os.path.isdir(tcldir):
-    os.mkdir(tcldir)
 
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
@@ -167,10 +165,6 @@ if fl_constraint:
 if fnamdflag == 1:
     if not os.path.exists(input_namd) or not os.path.exists(input_prm):
         exit('No NAMD file found \n')
-    else:
-        # Copy parameter file here. Input files will be copied later
-        gencpy(srcdir,tcldir,input_prm) 
-
 
 # residue % dictionary mode
 resperc_dict = residue_ratios(swit_opt,resinpfyle) 
@@ -216,7 +210,9 @@ res_list = [[] for i in range(num_chains)]
 patch_list = [[] for i in range(num_chains-1)]
 
 # check pdb file defaults
-#flag = check_pdb_defaults(input_pdb,resperc_dict,seg_name)
+pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
+if pdbfyleflag == -1:
+    exit()
 
 # Create segments and check for avg probability 
 print('Generating residues..')
@@ -253,6 +249,11 @@ for chcnt in range(num_chains):
     flog.write('****Writing chain number: %d***\n' %(chnum))
     print('Writing chain number: ', chnum)
 
+    # Make chain level output directory
+    tcldir = head_outdir + '/all_tclfiles_chnum_' + str(chnum)
+    if not os.path.isdir(tcldir):
+        os.mkdir(tcldir)
+
     #prefix for pdb/psf/tcl files
     pdbpsf_name = biomas_typ + '_case_' + str(casenum) + \
                   '_chnum_' + str(chnum) 
@@ -260,6 +261,7 @@ for chcnt in range(num_chains):
     fmain = open(tcldir + '/' + tcl_fname,'w')
 
     # Copy NAMD files
+    gencpy(srcdir,tcldir,input_prm) 
     fr = open(input_namd,'r')
     fw = open('mini.conf','w')
     fid = fr.read().replace("py_inpname",pdbpsf_name)
