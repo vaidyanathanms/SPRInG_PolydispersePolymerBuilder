@@ -3,7 +3,7 @@ biomass_type	switchgrass
 ff_type	none
 num_resids	17
 num_chains	1
-seg_name	swli
+seg_name	LI5
 grafting	1	PCA	GOG
 tol	0.1
 nattempts	500
@@ -11,8 +11,8 @@ op_style	multi	4
 constraint_flag 1
 patch_res_constraint	respatconstraints.inp
 patch_patch_constraint	patch_incomp.inp
-pdb_ipfile	G-bO4L-G.pdb GUAI
+pdb_ipfile	single_G.pdb GUAI
 top_ipfile	lignin.top
 resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
-namd_conf	mini_pyconf.conf lignin.prm
+namd_inp	mini_pyconf.conf lignin.prm

@@ -114,7 +114,7 @@ with open(sys.argv[1]) as farg:
             resinpfyle = words[1]; fresflag = 1
         elif words[0] == 'patch_inp':
             patinpfyle = words[1]; fpatflag = 1
-        elif words[0] == 'namd_conf':
+        elif words[0] == 'namd_inp':
             if len(words) != 3:
                 exit('Unknown number of arguments: ' + line)
             else:
@@ -274,7 +274,7 @@ for chcnt in range(num_chains):
         psfgen_headers(fmain,input_top,pdbpsf_name)
         flog.write('Writing config for n-segments: %d\n' %(deg_poly))
         write_multi_segments(fmain,-1,deg_poly,num_chains,chnum,\
-                             seg_name,res_list,patch_list,graft_opt)
+                             seg_name,res_list,patch_list,graft_opt,deg_poly)
         psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
     elif itertype == 'multi':
@@ -289,12 +289,12 @@ for chcnt in range(num_chains):
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
             write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains,\
                                  chnum,seg_name,res_list,patch_list,\
-                                 graft_opt)
+                                 graft_opt,deg_poly)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
             if fnamdflag == 1:
                 run_namd(fmain,'namd2','mini.conf','mini.out')
-            iter_num  = iter_num + 1
+            iter_num  += 1
             nmonsthisiter = nmonsthisiter + iterinc
 
         # Write the rest in one go
@@ -303,7 +303,7 @@ for chcnt in range(num_chains):
             iter_num = iter_num + 1
             write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
                                  num_chains,seg_name,res_list,patch_list,\
-                                 graft_opt)
+                                 graft_opt,deg_poly)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
 
