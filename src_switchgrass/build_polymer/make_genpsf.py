@@ -242,8 +242,36 @@ def cumul_probdist(inpdict,flog):
 
 # Check whether the input pdb file is consistent with the inputs given
 # for generating the tcl file
-def check_pdb_defaults(inpfyle,inp_dict,seginp):
-    flag = 0 # default not true
+def check_pdb_defaults(inpfyle,defa_res,seginp):
+    flag = 1 # default true
+    resnum = 1
+    # Check whether pdb file contains default segment and segment name
+    with open(inpfyle) as fpdbin:
+        for line in fpdbin:
+            line = line.rstrip('\n')
+            all_words = re.split('\W+',line)
+            if all_words[0] == 'ATOM':
+                lenwords = len(all_words)
+                if all_words[lenwords-1] != seginp and \
+                   all_words[lenwords-2] != seginp:
+                    print(all_words[lenwords-1],all_words[lenwords-2])
+                    print('Did not find ',seginp,'in ',line)
+                    flag = -1
+                    break
+                if defa_res not in all_words:
+                    print('Did not find ',defa_res,'in ',line)
+                    flag = -1
+                    break
+                if all_words[4].isdigit():
+                    if int(all_words[4]) > resnum:
+                        print('WARNING: More than one res found: ',\
+                              resnum)
+                        resnum = int(all_words[4])
+                else:
+                    print('ERR: Unknown value for chain num',\
+                          all_words[4])
+                    flag = -1
+
 
     return flag
 #---------------------------------------------------------------------
@@ -285,7 +313,7 @@ def create_segments(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
             flist.write(' residue\t%d\t%s\n' %(1,defa_res))
             out_list[chcnt].append(defa_res)
             rescnt = 1
-
+            
             while rescnt < ntotres:
 
                 ranval = random.random() #seed is current system time by default
@@ -346,7 +374,6 @@ def create_segments(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
             print('Found optimal residue configuration..')
             flag_optimal = 1
             break
-
         else:
             flist.write('\n')
             for wout in range(len(outdist)):
@@ -442,6 +469,7 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
     flist.write(';# num_patches\t%d, num_chains\t%d\n' %(ntotres-1,nch))
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
+    
     for wout in range(len(inp_dict)):
         flog.write('%s (%g)\t' %(list(inp_dict.keys())[wout],\
                                  list(inp_dict.values())[wout]))
@@ -752,7 +780,18 @@ def write_segments_onego(fin,ntotres,nch,chnum,segname,res_list,\
 
 # Write residues/patches iteration by iteration
 def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
-                         segname,res_list,patch_list,graft_opt):
+                         segname,res_list,patch_list,graft_opt,\
+                         maxnummons):
+
+    # Extra condition to account for the graft monomer happening at
+    # the end of a PARTIAL segment. Since mth graft is attached to
+    # n+1th residue (except when it is at the end of a FULL segment),
+    # the n+1th residue has to be a normal residue. Since two graft
+    # residues cannot be adjacent, it suffices to add n+1th residue to
+    # that iteration.
+    if nresthisiter != maxnummons:
+        if res_list[chnum-1][nresthisiter-1] == graft_opt[1]:
+            nresthisiter += 1
 
     if iter_num == -1 or iter_num == 1:
         fin.write(';# Chain number: %d of %d chains\n' %(nch,chnum))
@@ -763,6 +802,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         fin.write(';# Iteration number: %d\n' %(iter_num))
         fin.write('set count %d' %(nresthisiter))
         fin.write('\n')
+
 
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
