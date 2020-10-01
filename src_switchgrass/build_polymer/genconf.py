@@ -293,6 +293,7 @@ for chcnt in range(num_chains):
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
             if fnamdflag == 1:
+                out_namd = 'mini' + str(iter_num) + '.out'
                 run_namd(fmain,'namd2','mini.conf','mini.out')
             iter_num  += 1
             nmonsthisiter = nmonsthisiter + iterinc
@@ -300,7 +301,7 @@ for chcnt in range(num_chains):
         # Write the rest in one go
         if deg_poly%iterinc != 0:
             flog.write('Writing config for n-segments: %d\n' %(deg_poly))
-            iter_num = iter_num + 1
+            iter_num += 1
             write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
                                  num_chains,seg_name,res_list,patch_list,\
                                  graft_opt,deg_poly)
@@ -308,6 +309,7 @@ for chcnt in range(num_chains):
                                iter_num,seg_name)
 
             if fnamdflag == 1:
+                out_namd = 'mini' + str(iter_num) + '.out'
                 run_namd(fmain,'namd2','mini.conf','mini.out')
 
     else:

@@ -93,7 +93,7 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepdb ${outputname}_${count}.pdb \n')#backup
     fin.write('writepsf $outputname.psf \n')
-    fin.write('writepdb ${outputname}_${count}.psf \n')#backup
+    fin.write('writepdb ${outputname}_${count}.psf \n')
 #---------------------------------------------------------------------
 
 # Define monomer ratios from literature    
@@ -230,11 +230,13 @@ def cumul_probdist(inpdict,flog):
         flog.write('%s\t%g\t%s\n' %('Warning: data not normalized (', \
                                     dummy_distarr[len(dummy_distarr)-1],\
                                     '). Forcing normalization'))
-        sumval = sum(dummy_distarr)
+        sumval = dummy_distarr[len(dummy_distarr)-1]
         
         # force normalization
         for cnt in range(len(dummy_distarr)):
             dummy_distarr[cnt] = dummy_distarr[cnt]/sumval
+            
+        print('New distribution: ', dummy_distarr)
             
     else:
         print('Generated target cumulative distribution..')
