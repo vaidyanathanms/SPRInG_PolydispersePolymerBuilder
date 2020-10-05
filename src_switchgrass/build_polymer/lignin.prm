@@ -54,6 +54,9 @@ CG0  OG2   750.00     1.2200 !CG2O2  OG2D1
 CG0  OG3   150.00     1.3340 !CG2O2  OG302  
 CT2  OG3   320.00     1.4400 !CG321  OG302 
 
+!FERU Added by VMS
+
+
 HT   OT     450.0                 0.9572      ! TIP3P geometry
 HT   HT       0.0                 1.5139      ! TIP3P geometry (for SHAKE)
 
@@ -314,6 +317,10 @@ OG2    0.0       -0.1200     1.7000   0.0 -0.12 1.40 ! OG2D1
 OG3    0.0       -0.1000     1.6500 ! OG302
 HT          0.00      -0.046     0.2245    ! TIP3P
 OT          0.00      -0.1521    1.7682    ! TIP3P
+OBL	0.00	-0.1200	1.7000	!OBL Added by VMS
+CE1	0.00	-0.0680	2.0900	!CE1 Added by VMS
+HE1	0.00	-0.0310	1.2500	!HE1 Added by VMS
+CL	0.00	-0.0700	2.0000	!CL Added by VMS
 
 SOD      0.0     -0.0469    1.36375   ! sodium
                    ! D. Beglovd and B. Roux, dA=-100.8 kcal/mol
