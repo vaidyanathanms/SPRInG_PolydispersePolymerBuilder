@@ -33,7 +33,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
 #---------------------------------------------------------------------
 
 # Check all flags 
@@ -870,3 +870,32 @@ def run_namd(fin,execfyle,inpfyle,outfyle):
     fin.write(';# -------------------------------------\n')
     fin.write('\n')
 #---------------------------------------------------------------------
+
+def initiate_packmol(fpin,inptype, chains, tolval):
+    fpin.write('# PACKMOL melt input for %s\n' %(inptype))
+    fpin.write('# Contains num chains: %d with tolerance of %g Ang\n'\
+               %(chains, tolval))
+    fpin.write('\n')
+    fpin.write('tolerance %g\n' (tolval))
+    fpin.write('\n')
+    fpin.write('# Input filetype\n')
+    fpin.write('filetype pdb\n')
+    outname = 'melt_' + inptype + '_nch_' + str(chains) + '.pdb'
+    fpin.write('# Output filename\n')
+    fpin.write('output %s\n' %(outname))
+    fpin.write('\n')
+    fpin.write('# Adding chains')
+#---------------------------------------------------------------------
+
+# Make packmol input scripts
+def make_packmol(fpin,structname,nrepeats,transflag):
+    fpin.write('structure %s\n' %(structname+'.pdb'))
+    fpin.write('\t number 1%d\n' %(nrepeats))
+    if trans_list != []:
+        fpin.write('\t fixed')
+        for k in range(6):
+            fpin.write('\t %s' %(trans_list[k]))
+        fpin.write('\n')
+    fpin.write('end structure')
+#---------------------------------------------------------------------
+

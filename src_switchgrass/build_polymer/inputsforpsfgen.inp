@@ -16,3 +16,4 @@ top_ipfile	lignin.top
 resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
 namd_inp	mini_pyconf.conf lignin.prm
+gen_packmol	DEF	DEF	0.0	0.0	0.0	0.0	0.0	0.0

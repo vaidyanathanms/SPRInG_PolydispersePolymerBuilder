@@ -43,7 +43,7 @@ from make_genpsf import read_patch_incomp
 from make_genpsf import write_multi_segments
 from make_genpsf import write_segments_onego
 from make_genpsf import run_namd
-
+from make_genpsf import make_packmol
 
 # Read input file
 if len(sys.argv) != 2:
@@ -56,7 +56,7 @@ print('Input file name: ', sys.argv[1])
 graft_opt = []; swit_opt = 'None' 
 input_namd = 'none'; input_prm = 'none'
 casenum,fpdbflag,ftopflag,fresflag,fpatflag,fl_constraint,\
-    fpresctr,fppctr,ffflag,fnamdflag =def_vals()
+    fpresctr,fppctr,ffflag,fnamdflag,pmolflag,packtol = def_vals()
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -120,6 +120,15 @@ with open(sys.argv[1]) as farg:
             else:
                 input_namd = words[1]; input_prm = words[2]
                 fnamdflag = 1
+        elif words[0] == 'gen_packmol':
+            if len(words) != 3 or len(words) != 9:
+                exit('Unknown number of arguments: '+ line)
+            input_packmol = words[1]; trans_list = []
+            if words[1] != 'DEF':
+                packtol = float(words[2])
+            if len(words) > 3:
+                for k in range(6):
+                    trans_list.append(words[3+k])            
         else:
             exit('Unknown keyword ' + str(words[0]))
 
@@ -243,6 +252,15 @@ flog.write('Output style %s\n' %(itertype))
 print('Writing data to files..')
 print('Output style: ', itertype)
 
+if pmolflag:
+    flog.write('Initiating packmol files for %d\n..' %(casenum))
+    print('Initiating packmol files for ', casenum)
+    if input_packmol == 'DEF':
+        packname = 'packmol_'+biomas_typ+'_case_'+str(casenum)+'.inp'
+    else:
+        packname = input_packmol
+    fpack = open(head_outdir + '/' + packname,'w')        
+    initiate_packmol(fpack,biomas_typ,num_chains,packtol)
 
 for chcnt in range(num_chains):
     chnum = chcnt + 1
@@ -294,7 +312,7 @@ for chcnt in range(num_chains):
                                iter_num,seg_name)
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
-                run_namd(fmain,'namd2','mini.conf','mini.out')
+                run_namd(fmain,'namd2','mini.conf',out_namd)
             iter_num  += 1
             nmonsthisiter = nmonsthisiter + iterinc
 
@@ -310,17 +328,24 @@ for chcnt in range(num_chains):
 
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
-                run_namd(fmain,'namd2','mini.conf','mini.out')
+                run_namd(fmain,'namd2','mini.conf',out_namd)
 
     else:
         exit('ERROR: Unknown output write style option: ' + itertype)
-        
+  
+    if pmolflag:
+        main_packol(fpack,pdbpsf_name,1,trans_list,)
+
 #Exit and close file
 fmain.write('exit')
 fmain.close()
 
+if pmolflag:
+    fpack.write('#---End of PACKMOL file----\n')
+    fpack.close()
 flog.write('Completed psf generation for casenum: %d\n' %(casenum))
 print('Completed psf generation for casenum: ', casenum)
+
 
 # Close files
 fresin.close()
