@@ -456,11 +456,13 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 #---------------------------------------------------------------------
 
 # Generate patch rules: patch - m, residues - n
-# Rule 1: patch "m" between resids n/n+1; check is_forbid_pat(m,m-1)
-# Rule 2: res_n = graft, graft_patch m between n/(n+1); check
-# is_forbid_pat(m-1,m+1) 
+# Rule 1: (a)patch "m" between resids n/n+1; check is_forbid_pat(m,m-1)
+# (b) check constraints for m between n/n+1
+# Rule 2: res_n = graft; (a) graft_patch m between n/(n+1); check
+# is_forbid_pat(m-1,m+1). 
 # Rule 3: if res_n+1 = graft, patch m between n/n+2; check
-# is_forbid_pat(m, m-1) => same as rule 1 (VERY IMP)
+# is_forbid_pat(m, m-1) => same as rule 1 (VERY IMP); check constrants
+# between n and n+2: VERY IMP
 # Rule 4: if last resiudue is a graft. graft_patch m between n/n-1; no
 # checks required
 
@@ -576,10 +578,11 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
                     #"normal" patch. For ex: H-1-G-2-PCA-3-G-4-PCA-5;
                     #normal checks will be between 2,4
                     else: 
+                        resname3 = residlist[chcnt][patcnt+2]
                         patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
                                                                    inp_dict,\
                                                                    resname1,\
-                                                                   resname2,\
+                                                                   resname3,\
                                                                    ctr_flag,\
                                                                    patcnt,\
                                                                    pres_fyle,\
@@ -698,8 +701,8 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
                                                resname_L,resname_R)
                 consecpatflag =is_forbid_patch(patchname_L,\
                                                patchname,ppctrlist)
-
                 # patchname cannot follow patchname_L
+
                 # end if ctr_flag==1
 
             break
