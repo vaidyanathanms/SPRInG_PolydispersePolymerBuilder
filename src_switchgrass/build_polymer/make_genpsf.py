@@ -871,12 +871,12 @@ def run_namd(fin,execfyle,inpfyle,outfyle):
     fin.write('\n')
 #---------------------------------------------------------------------
 
-def initiate_packmol(fpin,inptype, chains, tolval):
+def initiate_packmol(fpin,inptype,chains,tolval):
     fpin.write('# PACKMOL melt input for %s\n' %(inptype))
     fpin.write('# Contains num chains: %d with tolerance of %g Ang\n'\
                %(chains, tolval))
     fpin.write('\n')
-    fpin.write('tolerance %g\n' (tolval))
+    fpin.write('tolerance %g\n' %(tolval))
     fpin.write('\n')
     fpin.write('# Input filetype\n')
     fpin.write('filetype pdb\n')
@@ -884,13 +884,13 @@ def initiate_packmol(fpin,inptype, chains, tolval):
     fpin.write('# Output filename\n')
     fpin.write('output %s\n' %(outname))
     fpin.write('\n')
-    fpin.write('# Adding chains')
+    fpin.write('# Adding chains\n')
 #---------------------------------------------------------------------
 
 # Make packmol input scripts
-def make_packmol(fpin,structname,nrepeats,transflag):
+def make_packmol(fpin,structname,nrepeats,trans_list):
     fpin.write('structure %s\n' %(structname+'.pdb'))
-    fpin.write('\t number 1%d\n' %(nrepeats))
+    fpin.write('\t number %d\n' %(nrepeats))
     if trans_list != []:
         fpin.write('\t fixed')
         for k in range(6):

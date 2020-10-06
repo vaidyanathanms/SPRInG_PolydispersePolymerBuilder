@@ -43,6 +43,7 @@ from make_genpsf import read_patch_incomp
 from make_genpsf import write_multi_segments
 from make_genpsf import write_segments_onego
 from make_genpsf import run_namd
+from make_genpsf import initiate_packmol
 from make_genpsf import make_packmol
 
 # Read input file
@@ -121,7 +122,8 @@ with open(sys.argv[1]) as farg:
                 input_namd = words[1]; input_prm = words[2]
                 fnamdflag = 1
         elif words[0] == 'gen_packmol':
-            if len(words) != 3 or len(words) != 9:
+            pmolflag = 1
+            if len(words) != 3 and len(words) != 9:
                 exit('Unknown number of arguments: '+ line)
             input_packmol = words[1]; trans_list = []
             if words[1] != 'DEF':
@@ -334,13 +336,14 @@ for chcnt in range(num_chains):
         exit('ERROR: Unknown output write style option: ' + itertype)
   
     if pmolflag:
-        main_packol(fpack,pdbpsf_name,1,trans_list,)
+        make_packmol(fpack,pdbpsf_name,1,trans_list)
 
 #Exit and close file
 fmain.write('exit')
 fmain.close()
 
 if pmolflag:
+    fpack.write('\n')
     fpack.write('#---End of PACKMOL file----\n')
     fpack.close()
 flog.write('Completed psf generation for casenum: %d\n' %(casenum))
