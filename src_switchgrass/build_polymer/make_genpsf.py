@@ -152,36 +152,38 @@ def patch_ratios(opt_graft,resdict,opt='none',inpfyle='none'):
 
     elif opt_graft[0] == 1:
         newfrac_patch = collections.OrderedDict() #create new dict
-        gr_resname = opt_graft[1]
-        gr_patname = opt_graft[2]
-        resflag = 0
-        for rescnt in range(len(resdict)):
-            if list(resdict.keys())[rescnt] == gr_resname:
-                resflag = 1
-                graft_prob = list(resdict.values())[rescnt]
-                frac_patch[gr_patname] = graft_prob
-                newfrac_patch[gr_patname] = graft_prob
-
-        if resflag == 0:
-            print('ERROR: Could not find ', str(gr_resname))
-            return 0
+        grcnt = 1
+        while grcnt < len(opt_graft):
+            gr_resname = opt_graft[grcnt]
+            gr_patname = opt_graft[grcnt+1]
+            resflag = 0; graft_prob = 0
+            for rescnt in range(len(resdict)):
+                if list(resdict.keys())[rescnt] == gr_resname:
+                    resflag = 1
+                    graft_prob += list(resdict.values())[rescnt]
+                    frac_patch[gr_patname] = graft_prob
+                    newfrac_patch[gr_patname] = graft_prob
+                    
+            grcnt = grcnt + 2 
+            if resflag == 0:
+                print('ERROR: Could not find ', str(gr_resname))
+                return 0
 
         # Renormalize if grafts are present and create new dict
         sumprob = 0
         for patcnt in range(len(frac_patch)):
-            if list(frac_patch.keys())[patcnt] != opt_graft[2]:
+            if list(frac_patch.keys())[patcnt] not in opt_graft:
                 sumprob += list(frac_patch.values())[patcnt]
 
         normval = sumprob/(1-graft_prob)
 
         for patcnt in range(len(frac_patch)):
-            if list(frac_patch.keys())[patcnt] != opt_graft[2]:
-
+            if list(frac_patch.keys())[patcnt] not in opt_graft:
                 newprob = list(frac_patch.values())[patcnt]/normval
                 keyval = list(frac_patch.keys())[patcnt]
                 newfrac_patch[keyval] = newprob
-
         return newfrac_patch
+
     else:
         print('Unknown option', graft_opt[0])
         return 0
@@ -429,7 +431,7 @@ def check_constraints(inpfyle,patchname,resname1,resname2):
 def is_res_cons(resname1,resname2,graftopt):
     sameflag = 0
     if graftopt[0] == 1:
-        if resname1 == graftopt[1] and resname2 == graftopt[1]:
+        if (resname1 in graftopt) and (resname2 in graftopt):
             sameflag = 1
     return sameflag
 #---------------------------------------------------------------------
@@ -505,8 +507,8 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
                 resname2 = residlist[chcnt][patcnt+1]
 
                 # Normal case: resname1 and resname2 are "normal" RES
-                if resname1 != graft_opt[1] and resname2 != \
-                   graft_opt[1]:
+                if (resname1 not in graft_opt) and (resname2 not in\
+                   graft_opt):
                     patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
                                                                inp_dict,\
                                                                resname1,\
@@ -546,8 +548,9 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
                 # defintion needs to be checked. Therefore don't
                 # update patchname_L. Next "normal" patch will be
                 # compared alongside patchname_L
-                elif resname1 == graft_opt[1]:
-                    patchname  = graft_opt[2]
+                elif resname1 in graft_opt:
+                    resindex   = graft_opt.index(resname1)
+                    patchname  = graft_opt[resindex+1]
                     flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                 %(patcnt+1,patchname,\
                                   segname,patcnt+1,segname,patcnt+2))
@@ -558,14 +561,15 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
 
                 # Special Case 2: "right RES" of the patch is a graft
                 # monomer. 
-                elif resname2 == graft_opt[1]:
+                elif resname2 in graft_opt:
                     # Case 2a: last RES is graft. Patch graft between
                     # n and n+1. graft_at_n is irrelevant here,
                     # because resname1 and resname2 cannot be
                     # simultaneously grafts. Again dont update
                     # patchname_L. It is irrelevant
                     if patcnt == ntotres-2: 
-                        patchname = graft_opt[2]
+                        resindex  = graft_opt.index(resname2)
+                        patchname = graft_opt[resindex+1]
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                     %(patcnt+1,patchname,\
                                       segname,patcnt+1,segname,patcnt+2))
@@ -678,7 +682,7 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
         if ranval < cumulprobarr[arrcnt]:
 
             patchname = list(pat_dict.keys())[arrcnt]
-            if patchname == graft_opt[2]: 
+            if patchname in graft_opt: 
                 ranval = random.random() #generate new random number
                 arrcnt = 0 #reset while loop
                 continue # iterate until normal patch
@@ -751,18 +755,18 @@ def write_segments_onego(fin,ntotres,nch,chnum,segname,res_list,\
         patchname = patch_list[chnum-1][patcnt]
 
         # Normal Case: (see create_patches)
-        if resname1 != graft_opt[1] and resname2 != graft_opt[1]:
+        if resname1 not in graft_opt and resname2 not in graft_opt:
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
 
 
         # Special Case 1: (see create_patches)
-        elif resname1 == graft_opt[1]:
+        elif resname1 in graft_opt:
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                           %(patchname,segname,patcnt+1,segname,patcnt+2))
 
         # Special Case 2: (see create_patches)
-        elif resname2 == graft_opt[1]:
+        elif resname2 in graft_opt:
 
             # Case 2a: last RES is graft. Patch graft between
             # n and n+1
@@ -797,7 +801,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
     # residues cannot be adjacent, it suffices to add n+1th residue to
     # that iteration.
     if nresthisiter != maxnummons:
-        if res_list[chnum-1][nresthisiter-1] == graft_opt[1]:
+        if res_list[chnum-1][nresthisiter-1] in graft_opt:
             nresthisiter += 1
 
     if iter_num == -1 or iter_num == 1:
@@ -830,17 +834,17 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         patchname = patch_list[chnum-1][patcnt]
 
         # Normal Case: (see create_patches)
-        if resname1 != graft_opt[1] and resname2 != graft_opt[1]:
+        if (resname1 not in graft_opt) and (resname2 not in graft_opt):
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
 
         # Special Case 1: (see create_patches)
-        elif resname1 == graft_opt[1]:
+        elif resname1 in graft_opt:
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
             
         # Special Case 2: (see create_patches)
-        elif resname2 == graft_opt[1]:
+        elif resname2 in graft_opt:
 
             # Case 2a: last RES is graft. Patch graft between
             # n and n+1
