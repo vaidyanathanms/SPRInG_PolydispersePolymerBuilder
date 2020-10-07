@@ -78,12 +78,12 @@ with open(sys.argv[1]) as farg:
         elif words[0] == 'seg_name':
             seg_name = words[1]
         elif words[0] == 'grafting':
-            if len(words) < 4:
-                print('Not all grafting data present', line)
+            if len(words) < 4 or (len(words)-2)%2 != 0:
+                print('Unknown number of graft options', line)
             else:
                 graft_opt.append(int(words[1]))
-                graft_opt.append(words[2])
-                graft_opt.append(words[3])
+                for wcnt in range(len(words)-2):
+                    graft_opt.append(words[wcnt+2])
         elif words[0] == 'tol':
             tol = float(words[1])
         elif words[0] == 'nattempts':
