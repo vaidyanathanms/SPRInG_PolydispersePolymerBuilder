@@ -2,4 +2,4 @@
 src_switchgrass/build_polymer/createmelt_packmol.py~
 src_switchgrass/build_polymer/kaciedata/
 src_switchgrass/build_polymer/loukas_data/
-./src_switchgrass/build_polymer/supp_createmelt_packmol.*
+src_switchgrass/build_polymer/supp_createmelt_packmol.*
