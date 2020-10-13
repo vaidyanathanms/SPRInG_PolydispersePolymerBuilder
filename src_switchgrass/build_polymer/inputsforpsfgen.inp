@@ -4,7 +4,7 @@ ff_type	none
 num_resids	17
 num_chains	1
 seg_name	LI5
-grafting	1	PCA	GOG
+grafting	1	PCA	GOG	FERU	GOG
 tol	0.1
 nattempts	500
 op_style	multi	4
