@@ -33,15 +33,20 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
+    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
 #---------------------------------------------------------------------
 
 # Check all flags 
 def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
-                    fl_constraint,fpresctr,fppctr,opt,ffflag,fnamd):
+                    fl_constraint,fpresctr,fppctr,opt,ffflag,fnamd,\
+                    disflag,M,N):
     outflag = 1
     if casenum == -1:
         print('ERR: Case number not input'); outflag = -1
+    elif N == 0:
+        print('ERR: No chains found in input'); outflag = -1
+    elif disflag == 0 and M == 0:
+        print('ERR: Monodisperse systems with no MW'); outflag = -1
     elif fpdbflag == 0 or ftopflag == 0:
         print('ERR: PDB/Topology file not entered'); outflag = -1
     elif ffflag == 0:
@@ -191,16 +196,26 @@ def patch_ratios(opt_graft,resdict,opt='none',inpfyle='none'):
 #---------------------------------------------------------------------
 
 # Initiate log file
-def init_logwrite(flog,casenum,bmtype,M,optv,tfile,pfile,segname,nch\
-                  ,att,tol,opstyle,fl_constraint,resfyle,patfyle):
+def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
+                  ,att,tol,opstyle,fl_constraint,resfyle,patfyle,\
+                  disflag):
+    flog.write('Case number: %d\n' %(casenum))
     flog.write('Creating NAMD file for %s\n' %(bmtype))
     if optv == 'A' or optv == 'a':
         flog.write('Ref: Yan et al., Biomass & Bioener 34, 48-53, 2010\n')
     elif optv == 'B' or optv == 'b':
         flog.write('Ref: Samuel et al., Front. Ener. Res., 1 (14) 2014\n')
-    flog.write('Case number: %d\n' %(casenum))
+
+    if disflag == 0:
+        flog.write('Monodisperse system \n')
+        flog.write('Num Chains/num Residues: %d\t%d\n'%(nch,Marr[0]))
+    else:
+        flog.write('Polydisperse system \n')
+        for i in len(Marr):
+            flog.write('Chain#/Num Residues: %d\t%d\n' %(i+1,Marr[i]))
+
+    flog.write('Tot res/pat: %d\t%d\n' %(sum(Marr),sum(Marr)-len(Marr)))
     flog.write('Res/patch inps: %s\t%s\n' %(resfyle,patfyle))
-    flog.write('Residues/Chains: %d\t%d\n' %(M, nch))
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
     flog.write('Segment name: %s\n' %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
@@ -283,12 +298,17 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
 #---------------------------------------------------------------------
     
 # Create entire list in one go so that cumulative distribution holds true
-def create_segments(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
+def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                     ,tol,maxattmpt,flog,graftopt,defa_res):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
-    flist.write(';#  num_resds\t%d, num_chains\t%d\n' %(ntotres,nch))
+    for i in range(nch):
+        flist.write(';#  num_resds\t%d, chain#\t%d\n' \
+                    %(nresarr[i],i+1))
+
+    sum_of_res = sum(nresarr)
+    flist.write('; Total number of residues\t%d\n' %(sum_of_res))
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
     if defa_res not in list(inp_dict.keys()):
@@ -319,8 +339,9 @@ def create_segments(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
             flist.write(' residue\t%d\t%s\n' %(1,defa_res))
             out_list[chcnt].append(defa_res)
             rescnt = 1
-            
-            while rescnt < ntotres:
+            deg_poly_chain = nresarr[chcnt]
+
+            while rescnt < deg_poly_chain:
 
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
@@ -361,8 +382,8 @@ def create_segments(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
 
         #normalize
         sumval = sum(outdist)
-        if sumval != nch*ntotres:
-            print('Sum from distn,nch*ntotres:',sumval,nch*ntotres)
+        if sumval != sum_of_res:
+            print('Sum from distn,sum_of_res:',sumval,sum_of_res)
             exit('ERROR: Sum not equal to the total # of residues')
         normlist = [x/sumval for x in outdist]
 
@@ -468,13 +489,20 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 # Rule 4: if last resiudue is a graft. graft_patch m between n/n-1; no
 # checks required
 
-def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
+def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                    ,tol,maxattmpt,flog,ctr_flag,pres_fyle,residlist,\
                    patforbid,graft_opt):
 
     # Write list to a separate file
     flist.write(';# Entire patch list\n')
-    flist.write(';# num_patches\t%d, num_chains\t%d\n' %(ntotres-1,nch))
+    for i in range(nch):
+        flist.write(';#  num_patches\t%d, chain#\t%d\n' \
+                    %(nresarr[i]-1,i+1))
+
+    sum_of_res = sum(nresarr)
+    sum_of_pat = sum_of_res - nch
+    flist.write('; Total number of patches\t%d\n' %(sum_of_pat))
+
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
     
@@ -497,12 +525,13 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
             patcnt = 0
             branched = 0
             patname_L = 'None'
+            deg_poly_chain = nresarr[chcnt]
 
             # aflag: for checking res-pat-res constraints
             # cflag: for checking pat1-pat2 adjancency
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
-            while patcnt <= ntotres-2: #for checking constraints
+            while patcnt <= deg_poly_chain-2: #for checking constraints
                 resname1 = residlist[chcnt][patcnt]
                 resname2 = residlist[chcnt][patcnt+1]
 
@@ -567,7 +596,7 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
                     # because resname1 and resname2 cannot be
                     # simultaneously grafts. Again dont update
                     # patchname_L. It is irrelevant
-                    if patcnt == ntotres-2: 
+                    if patcnt == deg_poly_chain-2: 
                         resindex  = graft_opt.index(resname2)
                         patchname = graft_opt[resindex+1]
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
@@ -626,9 +655,9 @@ def create_patches(flist,ntotres,nch,segname,inp_dict,cumulprobarr\
 
         #normalize
         sumval = sum(outdist)
-        if sumval != nch*(ntotres-1):
-            print('Sum from distn,nch*(ntotres-1): '\
-                  ,sumval,nch*(ntotres-1))
+        if sumval != sum_of_pat:
+            print('Sum from distn,sum_of_pat array:'\
+                  ,sumval,sum_of_pat)
             exit('ERROR: Sum not equal to the total # of patches')
         normlist = [x/sumval for x in outdist]
 
@@ -730,17 +759,17 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
 
 # Write residues/patches in one go -- OBSOLTE. 
 # Added in write_multi_segments
-def write_segments_onego(fin,ntotres,nch,chnum,segname,res_list,\
+def write_segments_onego(fin,nresarr,nch,chnum,segname,res_list,\
                          patch_list,graft_opt):
 
     fin.write(';# ------Begin main code -----\n')
-    fin.write(';# Writing % segments' %(ntotres))
+    fin.write(';# Writing % segments' %(sum(nresarr)))
     fin.write(';# Writing output for %d' %(chnum))
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
     
     #Residues
-    for rescnt in range(ntotres):
+    for rescnt in range(nresarr):
         fin.write('  residue  %d  %s\n' \
                   %(rescnt+1,res_list[chnum-1][rescnt]))
 
@@ -748,7 +777,7 @@ def write_segments_onego(fin,ntotres,nch,chnum,segname,res_list,\
     fin.write('\n')
 
     #Patches
-    for patcnt in range(ntotres-2):
+    for patcnt in range(max(nresarr)-2):
             
         resname1 = res_list[chnum-1][patcnt]
         resname2 = res_list[chnum-1][patcnt+1]
@@ -770,7 +799,7 @@ def write_segments_onego(fin,ntotres,nch,chnum,segname,res_list,\
 
             # Case 2a: last RES is graft. Patch graft between
             # n and n+1
-            if patcnt == ntotres-2: 
+            if patcnt == max(nresarr)-2: 
                 fin.write('patch  %s  %s:%d  %s:%d\n' \
                           %(patchname,segname,patcnt+1,segname,patcnt+2))
 

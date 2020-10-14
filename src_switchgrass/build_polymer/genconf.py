@@ -56,8 +56,9 @@ print('Input file name: ', sys.argv[1])
 # Set defaults
 graft_opt = []; swit_opt = 'None' 
 input_namd = 'none'; input_prm = 'none'
-casenum,fpdbflag,ftopflag,fresflag,fpatflag,fl_constraint,\
-    fpresctr,fppctr,ffflag,fnamdflag,pmolflag,packtol = def_vals()
+casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
+    fl_constraint,disperflag,fpresctr,fppctr,ffflag,fnamdflag,\
+    pmolflag,packtol = def_vals()
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -71,8 +72,10 @@ with open(sys.argv[1]) as farg:
             biomas_typ = words[1]
         elif words[0] == 'ff_type':
             swit_opt = words[1]; ffflag = 1
+        elif words[0] == 'disperse':
+            disper_fyle = words[1]; disperflag = 1
         elif words[0] == 'num_resids':
-            deg_poly = int(words[1])
+            mono_deg_poly = int(words[1])
         elif words[0] == 'num_chains':
             num_chains = int(words[1])
         elif words[0] == 'seg_name':
@@ -137,7 +140,7 @@ with open(sys.argv[1]) as farg:
 
 outflag = check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag\
                           ,fl_constraint,fpresctr,fppctr,swit_opt,\
-                          ffflag,fnamdflag)
+                          ffflag,fnamdflag,disperflag,mono_deg_poly,num_chains)
 if outflag == -1:
     exit()
 
@@ -150,16 +153,26 @@ log_fname = 'log_' + str(casenum) + '.txt' #log file
 srcdir = os.getcwd()
 head_outdir = srcdir + str('/casenum_') + str(casenum) # main outdir
 
-
 # Create main directories and copy required files
 if not os.path.isdir(head_outdir):
     os.mkdir(head_outdir)
 
+# Make monomer array for all chains
+if disperflag:
+    deg_poly_all = make_res_counts(disper_fyle)
+else:
+    deg_poly_all = [mono_deg_poly]*num_chains
+print('Tot ch/res/pat',num_chains,sum(deg_poly_all),\
+      sum(deg_poly_all)-num_chains)
+
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
-init_logwrite(flog,casenum,biomas_typ,deg_poly,swit_opt,input_top\
+init_logwrite(flog,casenum,biomas_typ,deg_poly_all,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
-              ,fl_constraint,resinpfyle,patinpfyle)
+              ,fl_constraint,resinpfyle,patinpfyle,disperflag)
+if disperflag:
+    print('Polydispersity file: %s\n' %(disper_fyle))
+    
 print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
 
 # Read defaults and throw exceptions
@@ -228,7 +241,7 @@ if pdbfyleflag == -1:
 # Create segments and check for avg probability 
 print('Generating residues..')
 flog.write('Creating residue list..\n')
-res_list = create_segments(fresin,deg_poly,num_chains,seg_name,\
+res_list = create_segments(fresin,deg_poly_all,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,\
                            flog,graft_opt,def_res)
 
@@ -244,7 +257,7 @@ if fl_constraint:
 # Create patches with constraints and check for avg probability 
 print('Generating patches..')
 flog.write('Creating patches list..\n')
-patch_list = create_patches(fpatchin,deg_poly,num_chains,seg_name,\
+patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
                             patchperc_dict,cumul_patcharr,tol,\
                             maxatt,flog,fl_constraint,input_pres,\
                             res_list,ppctr_list,graft_opt)
@@ -289,12 +302,15 @@ for chcnt in range(num_chains):
     fr.close(); fw.close()
     gencpy(srcdir,tcldir,'mini.conf')
 
+    deg_poly_this_chain = deg_poly_all[chcnt]
+
     if itertype == 'single':
         
         psfgen_headers(fmain,input_top,pdbpsf_name)
-        flog.write('Writing config for n-segments: %d\n' %(deg_poly))
-        write_multi_segments(fmain,-1,deg_poly,num_chains,chnum,\
-                             seg_name,res_list,patch_list,graft_opt,deg_poly)
+        flog.write('Writing config for  %d chains\n' %(num_chains))
+        write_multi_segments(fmain,-1,deg_poly_this_chain,num_chains,chnum,\
+                             seg_name,res_list,patch_list,graft_opt,\
+                             deg_poly_this_chain)
         psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
 
     elif itertype == 'multi':
@@ -303,13 +319,13 @@ for chcnt in range(num_chains):
         iter_num = 1
         nmonsthisiter = iterinc
     
-        while nmonsthisiter <= deg_poly:
+        while nmonsthisiter <= deg_poly_this_chain:
             if iter_num == 1:
                 psfgen_headers(fmain,input_top,pdbpsf_name)
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
             write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains,\
                                  chnum,seg_name,res_list,patch_list,\
-                                 graft_opt,deg_poly)
+                                 graft_opt,deg_poly_this_chain)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
             if fnamdflag == 1:
@@ -319,12 +335,13 @@ for chcnt in range(num_chains):
             nmonsthisiter = nmonsthisiter + iterinc
 
         # Write the rest in one go
-        if deg_poly%iterinc != 0:
-            flog.write('Writing config for n-segments: %d\n' %(deg_poly))
+        if deg_poly_this_chain%iterinc != 0:
+            flog.write('Writing config for n-segments: %d\n' \
+                       %(deg_poly_this_chain))
             iter_num += 1
-            write_multi_segments(fmain,iter_num,deg_poly,chcnt,\
+            write_multi_segments(fmain,iter_num,deg_poly_this_chain,chcnt,\
                                  num_chains,seg_name,res_list,patch_list,\
-                                 graft_opt,deg_poly)
+                                 graft_opt,deg_poly_this_chain)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
 
@@ -362,7 +379,7 @@ flog.close()
 #casenum    = 1  # case number
 #fl_constraint = 1 # flag for reading constraints (patch-patch/patch-res)
 #biomas_typ  = 'switchgrass' # type of biomass
-#deg_poly   = 17 # degree of polymerization (final)
+#deg_poly   = 22 # degree of polymerization (final)
 #swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
 #seg_name = 'swli' #name of segment: switchgrass lignin
 #num_chains = 10 # number of chains
