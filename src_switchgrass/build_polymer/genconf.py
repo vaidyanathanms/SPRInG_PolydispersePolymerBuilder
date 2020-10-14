@@ -222,12 +222,17 @@ pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
 if pdbfyleflag == -1:
     exit()
 
-# Create segments and check for avg probability 
+# Create residues and check for avg probability 
 print('Generating residues..')
 flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly_all,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,\
                            flog,graft_opt,def_res)
+if res_list == -1:
+    exit()
+
+
+# Create patches with constraints and check for avg probability 
 if fl_constraint:
     # Read patch-patch constraints (in one go)
     print('Reading patch-patch constraints..')
@@ -237,7 +242,6 @@ if fl_constraint:
     flog.writelines('\t'.join(str(jval) for jval in ival) +\
                     '\n' for ival in ppctr_list)
 
-# Create patches with constraints and check for avg probability 
 print('Generating patches..')
 flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
@@ -245,6 +249,11 @@ patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
                             maxatt,flog,fl_constraint,input_pres,\
                             res_list,ppctr_list,graft_opt)
 
+if patch_list == -1:
+    exit()
+
+
+# Write to file
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
 print('Writing data to files..')

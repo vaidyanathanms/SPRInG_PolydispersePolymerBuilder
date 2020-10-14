@@ -363,7 +363,7 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
 
     flog.write('L2norm \n')
 
-    flag_optimal = -1
+    flag_optimal = -1; oneconfigflag = -1; normold = 999999999
 
     for attnum in range(maxattmpt):
 
@@ -441,22 +441,32 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             flog.write('Found optimal residue configuration\n')
             print('Found optimal residue configuration..')
             flag_optimal = 1
+            return out_list
             break
-        else:
+        elif normval < normold:
+            if oneconfigflag == -1:
+                oneconfigflag = 1
+                print('Found ONE configuration with res_err: ', normval)
+            backup_list = [] #create new_backup list
+            backup_list = out_list.copy()
             flist.write('\n')
             for wout in range(len(outdist)):
                 flog.write('%g\t' %(outdist[wout]))
             flog.write('%g\n' %(normval))
+            normold = normval
 
+    if oneconfigflag == -1:
+        print('Could not find a residue list with constraints')
+        return -1
 
     if flag_optimal == -1:
         print('Did not find optimal residue configuration')
-        print('Using last residue configuration with L2norm: ', normval)
+        print('Using best residue configuration with L2norm: ',normold)
         flog.write('Did not find optimal residue configuration\n')
-        flog.write('Using last configuration with residue L2norm: %g'\
-                   %(normval))
+        flog.write('Using best configuration with residue L2norm: %g'\
+                   %(normold))
+        return backup_list
 
-    return out_list
 #---------------------------------------------------------------------
 
 # Read and check patch constraints -- May not be effective as opposed
@@ -551,9 +561,10 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         flog.write('%s (%g)\t' %(list(inp_dict.keys())[wout],\
                                  list(inp_dict.values())[wout]))
     flog.write('L2norm \n')
-    flag_optimal = -1
+    flag_optimal = -1; oneconfigflag = -1; normold = 999999999
 
     for attnum in range(maxattmpt):
+
         flog.write('%d\t' %(attnum+1))    
         flist.write(';# Attempt number \t%d\n' %(attnum+1))
         out_list = [[] for i in range(nch)] #reset every attempt
@@ -573,6 +584,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
             while patcnt <= deg_poly_chain-2: #for checking constraints
+                print(attnum,chcnt,patcnt)
                 resname1 = residlist[chcnt][patcnt]
                 resname2 = residlist[chcnt][patcnt+1]
 
@@ -592,6 +604,8 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                                                chcnt,\
                                                                patname_L)
 
+                    if patchname == 'BB':
+                        print('Case1')
                     if patchname == 'ERR':
                         return -1 
 
@@ -626,6 +640,9 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                   segname,patcnt+1,segname,patcnt+2))
                     out_list[chcnt].append(patchname)
                     patcnt += 1
+                    if patchname == 'BB':
+                        print('Case2')
+
                     continue #continue to next residue                    
 
 
@@ -645,6 +662,9 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                       segname,patcnt+1,segname,patcnt+2))
                         out_list[chcnt].append(patchname)
                         patcnt += 1
+                        if patchname == 'BB':
+                            print('Case3')
+
                         continue # continue to while loop/next chain
 
                     #Case 2b: patch normal between n and n+2. But
@@ -665,6 +685,9 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                                                    out_list,\
                                                                    chcnt,\
                                                                    patname_L)
+                        if patchname == 'BB':
+                            print('Case4')
+
                         if patchname == 'ERR':
                             return -1 
 
@@ -715,23 +738,32 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             flog.write('Found optimal patch configuration\n')
             print('Found optimal patch configuration..')
             flag_optimal = 1
+            return out_list
             break
 
-        else:
+        elif normval < normold:
+            if oneconfigflag == -1:
+                oneconfigflag = 1
+                print('Found ONE configuration with pat_err: ', normval)
+            backup_pat_list = [] #create new_backup list
+            backup_pat_list = out_list.copy()
             flist.write('\n')
             for wout in range(len(outdist)):
                 flog.write('%g\t' %(outdist[wout]))
             flog.write('%g\n' %(normval))
+            normold = normval
 
-
+    if oneconfigflag == -1:
+        print('Could not find a patch list with constraints')
+        return -1
     if flag_optimal == -1:
         print('Did not find optimal patch configuration')
-        print('Using last patch configuration with L2norm: ', normval)
+        print('Using best patch configuration with L2norm: ',normold)
         flog.write('Did not find patch optimal configuration\n')
         flog.write('Using last patch configuration with L2norm: %g'\
-                   %(normval))
+                   %(normold))
+        return backup_pat_list
 
-    return out_list
 #---------------------------------------------------------------------
 
 # Find patch for Case 1: when RES1 and RES2 are normal residues.
