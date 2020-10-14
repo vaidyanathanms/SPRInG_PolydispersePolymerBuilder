@@ -82,7 +82,7 @@ with open(sys.argv[1]) as farg:
             seg_name = words[1]
         elif words[0] == 'grafting':
             if len(words) < 4 or (len(words)-2)%2 != 0:
-                print('Unknown number of graft options', line)
+                exit('Unknown number of graft options: ' + line)
             else:
                 graft_opt.append(int(words[1]))
                 for wcnt in range(len(words)-2):
@@ -157,24 +157,25 @@ head_outdir = srcdir + str('/casenum_') + str(casenum) # main outdir
 if not os.path.isdir(head_outdir):
     os.mkdir(head_outdir)
 
+print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
+
 # Make monomer array for all chains
 if disperflag:
-    deg_poly_all = make_res_counts(disper_fyle)
+    deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
+    print('Polydispersity file: ' disper_fyle)
 else:
     deg_poly_all = [mono_deg_poly]*num_chains
-print('Tot ch/res/pat',num_chains,sum(deg_poly_all),\
-      sum(deg_poly_all)-num_chains)
+    pdival = 1.0
+    print('Monodispersed case')
+print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
+      sum(deg_poly_all)-num_chains,pdival)
 
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly_all,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
-              ,fl_constraint,resinpfyle,patinpfyle,disperflag)
-if disperflag:
-    print('Polydispersity file: %s\n' %(disper_fyle))
+              ,fl_constraint,resinpfyle,patinpfyle,disperflag,pdival)
     
-print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
-
 # Read defaults and throw exceptions
 if not os.path.exists(input_top):
     exit('Topology file not found \n')

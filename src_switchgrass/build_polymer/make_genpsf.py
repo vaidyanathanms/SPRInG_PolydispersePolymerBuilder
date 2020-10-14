@@ -195,10 +195,41 @@ def patch_ratios(opt_graft,resdict,opt='none',inpfyle='none'):
 
 #---------------------------------------------------------------------
 
+# Assign MW for polydisperse cases
+def make_polydisp_resids(inpfyle, nch):
+    chflag = 0
+    with open(inpfyle) as fyle_pdi:
+        for line in fyle_pdi:
+            line = line.strip()
+            if chflag == 0:
+                if len(line) != 2 or line[0] != 'num_chains':
+                    print('Unknown first line in: ', inpfyle, line)
+                    return -1
+                numch = int(line[1])
+                if numch != nch:
+                    print('ERR: Mismatch in number of chains')
+                    return -1
+                chflag = 1
+                resmw_data = []
+            else:
+                resmw_data.append(int(line[0]))
+
+    num_avg_mw = 0; wt_avg_mw = 0
+    for mws in range(len(resmw_data)):
+        num_avg_mw += resmw_data[mws]
+        wt_avg_mw  += pow(resmw_data[mws],2)
+    
+    wt_avg_mw  = wt_avg_mw/num_avg_mw
+    num_avg_mw = num_avg_mw/nch
+    pdiout = wt_avg_mw/num_avg_mw
+
+    return resmw_data, pdiout
+#---------------------------------------------------------------------
+
 # Initiate log file
 def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
                   ,att,tol,opstyle,fl_constraint,resfyle,patfyle,\
-                  disflag):
+                  disflag,pdiinp):
     flog.write('Case number: %d\n' %(casenum))
     flog.write('Creating NAMD file for %s\n' %(bmtype))
     if optv == 'A' or optv == 'a':
@@ -214,6 +245,7 @@ def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
         for i in len(Marr):
             flog.write('Chain#/Num Residues: %d\t%d\n' %(i+1,Marr[i]))
 
+    flog.write('PDI: %\g\n' %(pdiinp))
     flog.write('Tot res/pat: %d\t%d\n' %(sum(Marr),sum(Marr)-len(Marr)))
     flog.write('Res/patch inps: %s\t%s\n' %(resfyle,patfyle))
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
