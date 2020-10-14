@@ -197,22 +197,31 @@ def patch_ratios(opt_graft,resdict,opt='none',inpfyle='none'):
 
 # Assign MW for polydisperse cases
 def make_polydisp_resids(inpfyle, nch):
+    if not os.path.exists(inpfyle):
+        print('ERR: PDI file: ', inpfyle, 'not found')
+        return -1, 0
     chflag = 0
     with open(inpfyle) as fyle_pdi:
         for line in fyle_pdi:
-            line = line.strip()
+            line = re.split('\W+',line.strip('\n'))
             if chflag == 0:
                 if len(line) != 2 or line[0] != 'num_chains':
-                    print('Unknown first line in: ', inpfyle, line)
-                    return -1
+                    print('ERR: Unknown first line in: ', inpfyle)
+                    print(line, '\n', len(line), line[0])
+                    return -1, 0
                 numch = int(line[1])
-                if numch != nch:
-                    print('ERR: Mismatch in number of chains')
-                    return -1
                 chflag = 1
                 resmw_data = []
             else:
+                if int(line[0]) < 3:
+                    print('ERR: Minimum 3 residues should be present')
+                    return -1, 0
                 resmw_data.append(int(line[0]))
+
+    if len(resmw_data) != nch or nch != numch:
+        print('ERR: Mismatch in number of chains')
+        print(len(resmw_data), nch, numch)
+        return -1, 0
 
     num_avg_mw = 0; wt_avg_mw = 0
     for mws in range(len(resmw_data)):
@@ -242,10 +251,10 @@ def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
         flog.write('Num Chains/num Residues: %d\t%d\n'%(nch,Marr[0]))
     else:
         flog.write('Polydisperse system \n')
-        for i in len(Marr):
+        for i in range(len(Marr)):
             flog.write('Chain#/Num Residues: %d\t%d\n' %(i+1,Marr[i]))
 
-    flog.write('PDI: %\g\n' %(pdiinp))
+    flog.write('PDI: %g\n' %(pdiinp))
     flog.write('Tot res/pat: %d\t%d\n' %(sum(Marr),sum(Marr)-len(Marr)))
     flog.write('Res/patch inps: %s\t%s\n' %(resfyle,patfyle))
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
@@ -879,7 +888,8 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
 
-    #Residues -- indices should have -1 for first dimension
+    #Residues -- indices should have -1 for first dimension  
+    print(chnum,nresthisiter)
     for rescnt in range(nresthisiter):
         fin.write('  residue  %d  %s\n' %(rescnt+1,\
                                           res_list[chnum-1][rescnt]))
@@ -943,8 +953,11 @@ def initiate_packmol(fpin,inptype,chains,tolval):
     fpin.write('\n')
     fpin.write('tolerance %g\n' %(tolval))
     fpin.write('\n')
+
     fpin.write('# Input filetype\n')
     fpin.write('filetype pdb\n')
+    fpin.write('\n')
+
     outname = 'melt_' + inptype + '_nch_' + str(chains) + '.pdb'
     fpin.write('# Output filename\n')
     fpin.write('output %s\n' %(outname))
@@ -961,6 +974,7 @@ def make_packmol(fpin,structname,nrepeats,trans_list):
         for k in range(6):
             fpin.write('\t %s' %(trans_list[k]))
         fpin.write('\n')
-    fpin.write('end structure')
+    fpin.write('end structure\n')
+    fpin.write('\n')
 #---------------------------------------------------------------------
 

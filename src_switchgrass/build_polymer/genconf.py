@@ -25,26 +25,7 @@ import re
 import shutil
 import glob
 import math
-
-# Function definitions
-from make_genpsf import gencpy
-from make_genpsf import def_vals
-from make_genpsf import check_all_flags
-from make_genpsf import psfgen_headers
-from make_genpsf import psfgen_postprocess
-from make_genpsf import residue_ratios
-from make_genpsf import patch_ratios
-from make_genpsf import init_logwrite
-from make_genpsf import cumul_probdist
-from make_genpsf import check_pdb_defaults
-from make_genpsf import create_segments
-from make_genpsf import create_patches
-from make_genpsf import read_patch_incomp
-from make_genpsf import write_multi_segments
-from make_genpsf import write_segments_onego
-from make_genpsf import run_namd
-from make_genpsf import initiate_packmol
-from make_genpsf import make_packmol
+from make_genpsf import * # function definitions
 
 # Read input file
 if len(sys.argv) != 2:
@@ -161,8 +142,10 @@ print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
 
 # Make monomer array for all chains
 if disperflag:
+    print('Polydispersity file: ', disper_fyle)
     deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
-    print('Polydispersity file: ' disper_fyle)
+    if pdival == 0:
+        exit()
 else:
     deg_poly_all = [mono_deg_poly]*num_chains
     pdival = 1.0
@@ -245,7 +228,6 @@ flog.write('Creating residue list..\n')
 res_list = create_segments(fresin,deg_poly_all,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,\
                            flog,graft_opt,def_res)
-
 if fl_constraint:
     # Read patch-patch constraints (in one go)
     print('Reading patch-patch constraints..')
@@ -340,9 +322,9 @@ for chcnt in range(num_chains):
             flog.write('Writing config for n-segments: %d\n' \
                        %(deg_poly_this_chain))
             iter_num += 1
-            write_multi_segments(fmain,iter_num,deg_poly_this_chain,chcnt,\
-                                 num_chains,seg_name,res_list,patch_list,\
-                                 graft_opt,deg_poly_this_chain)
+            write_multi_segments(fmain,iter_num,deg_poly_this_chain,\
+                                 num_chains,chnum,seg_name,res_list,\
+                                 patch_list,graft_opt,deg_poly_this_chain)
             psfgen_postprocess(fmain,input_pdb,itertype,\
                                iter_num,seg_name)
 
