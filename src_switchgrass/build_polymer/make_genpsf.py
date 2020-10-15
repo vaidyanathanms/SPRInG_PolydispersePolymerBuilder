@@ -568,9 +568,18 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         flog.write('%d\t' %(attnum+1))    
         flist.write(';# Attempt number \t%d\n' %(attnum+1))
         out_list = [[] for i in range(nch)] #reset every attempt
+        chcnt = -1 # easier than assigning to 0 and finding end of
+        # next loop
+        all_patch_flag = 1 # to make sure all patches in all the
+        # chains for a given attempt is taken care of. If not move to
+        # the next attempt. DEFAULT to TRUE.
 
-        for chcnt in range(nch):
+        while chcnt < nch-1: #since chcnt is initialized to -1
 
+            if all_patch_flag == -1:
+                break #move to next attempt
+
+            chcnt += 1
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(';# -- Begin patches for %s ---\n' %(segname))
 
@@ -583,10 +592,17 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             # cflag: for checking pat1-pat2 adjancency
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
+            innerpatattempt = 0
             while patcnt <= deg_poly_chain-2: #for checking constraints
+
+                innerpatattempt += 1 #update until 100 attempts/res
+                if innerpatattempt > deg_poly_chain*100: 
+                    all_patch_flag = -1 # uncheck flag 
+                    break
+
                 resname1 = residlist[chcnt][patcnt]
                 resname2 = residlist[chcnt][patcnt+1]
-
+                
                 # Normal case: resname1 and resname2 are "normal" RES
                 if (resname1 not in graft_opt) and (resname2 not in\
                    graft_opt):
@@ -701,46 +717,50 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
 
         # end for chcnt in range(nch)
 
-        # After going through all the chains, count occurence of each res/patch
-        outdist = []
-        for key in inp_dict:
-            outdist.append(sum([i.count(key) for i in out_list]))
+        # Sum and update patch list IFF all patches are present
+        if all_patch_flag == 1:
 
-        #normalize
-        sumval = sum(outdist)
-        if sumval != sum_of_pat:
-            print('Sum from distn,sum_of_pat array:'\
-                  ,sumval,sum_of_pat)
-            exit('ERROR: Sum not equal to the total # of patches')
-        normlist = [x/sumval for x in outdist]
+            # After going through all the chains, count occurence of 
+            #each res/patch
+            outdist = []
+            for key in inp_dict:
+                outdist.append(sum([i.count(key) for i in out_list]))
 
-        #extract target probabilities and compare
-        targ_probs = list(inp_dict.values())
-        normval = numpy.linalg.norm(numpy.array(normlist) \
-                                    - numpy.array(targ_probs))
-    
-        if normval <= tol:
-            #write to log file
-            for wout in range(len(outdist)):
-                flog.write('%g\t' %(outdist[wout]))
-            flog.write('%g\n' %(normval))
-            flog.write('Found optimal patch configuration\n')
-            print('Found optimal patch configuration..')
-            flag_optimal = 1
-            return out_list
-            break
+            #normalize
+            sumval = sum(outdist)
+            if sumval != sum_of_pat:
+                print('Sum from distn,sum_of_pat array:'\
+                      ,sumval,sum_of_pat)
+                exit('ERROR: Sum not equal to the total # of patches')
+            normlist = [x/sumval for x in outdist]
 
-        elif normval < normold:
-            if oneconfigflag == -1:
-                oneconfigflag = 1
-                print('Found ONE configuration with pat_err: ', normval)
-            backup_pat_list = [] #create new_backup list
-            backup_pat_list = out_list.copy()
-            flist.write('\n')
-            for wout in range(len(outdist)):
-                flog.write('%g\t' %(outdist[wout]))
-            flog.write('%g\n' %(normval))
-            normold = normval
+            #extract target probabilities and compare
+            targ_probs = list(inp_dict.values())
+            normval = numpy.linalg.norm(numpy.array(normlist) \
+                                        - numpy.array(targ_probs))
+
+            if normval <= tol:
+                #write to log file
+                for wout in range(len(outdist)):
+                    flog.write('%g\t' %(outdist[wout]))
+                flog.write('%g\n' %(normval))
+                flog.write('Found optimal patch configuration\n')
+                print('Found optimal patch configuration..')
+                flag_optimal = 1
+                return out_list
+                break
+
+            elif normval < normold:
+                if oneconfigflag == -1:
+                    oneconfigflag = 1
+                    print('Found ONE configuration with pat_err: ', normval)
+                backup_pat_list = [] #create new_backup list
+                backup_pat_list = out_list.copy()
+                flist.write('\n')
+                for wout in range(len(outdist)):
+                    flog.write('%g\t' %(outdist[wout]))
+                flog.write('%g\n' %(normval))
+                normold = normval
 
     if oneconfigflag == -1:
         print('Could not find a patch list with constraints')
@@ -910,7 +930,6 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
     fin.write(' segment %s {\n' %(segname))
 
     #Residues -- indices should have -1 for first dimension  
-    print(chnum,nresthisiter)
     for rescnt in range(nresthisiter):
         fin.write('  residue  %d  %s\n' %(rescnt+1,\
                                           res_list[chnum-1][rescnt]))
