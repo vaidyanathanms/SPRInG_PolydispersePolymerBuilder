@@ -7,7 +7,7 @@ num_chains	10
 seg_name	LI5
 grafting	1	PCA	GOG	FERU	GOG
 tol	0.1
-nattempts	500
+nattempts	50
 op_style	multi	4
 constraint_flag 1
 patch_res_constraint	respatconstraints.inp
