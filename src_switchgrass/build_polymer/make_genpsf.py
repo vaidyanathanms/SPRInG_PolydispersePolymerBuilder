@@ -583,8 +583,9 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             # cflag: for checking pat1-pat2 adjancency
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
+            interattempt = 0
             while patcnt <= deg_poly_chain-2: #for checking constraints
-                print(attnum,chcnt,patcnt)
+
                 resname1 = residlist[chcnt][patcnt]
                 resname2 = residlist[chcnt][patcnt+1]
 
@@ -604,8 +605,6 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                                                chcnt,\
                                                                patname_L)
 
-                    if patchname == 'BB':
-                        print('Case1')
                     if patchname == 'ERR':
                         return -1 
 
@@ -640,9 +639,6 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                   segname,patcnt+1,segname,patcnt+2))
                     out_list[chcnt].append(patchname)
                     patcnt += 1
-                    if patchname == 'BB':
-                        print('Case2')
-
                     continue #continue to next residue                    
 
 
@@ -662,9 +658,6 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                       segname,patcnt+1,segname,patcnt+2))
                         out_list[chcnt].append(patchname)
                         patcnt += 1
-                        if patchname == 'BB':
-                            print('Case3')
-
                         continue # continue to while loop/next chain
 
                     #Case 2b: patch normal between n and n+2. But
@@ -673,6 +666,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                     #normal checks will be between 2,4
                     else: 
                         resname3 = residlist[chcnt][patcnt+2]
+                        resname2 = residlist[chcnt][patcnt+1]
                         patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
                                                                    inp_dict,\
                                                                    resname1,\
@@ -685,8 +679,6 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                                                    out_list,\
                                                                    chcnt,\
                                                                    patname_L)
-                        if patchname == 'BB':
-                            print('Case4')
 
                         if patchname == 'ERR':
                             return -1 
@@ -697,7 +689,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                             flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                         %(patcnt+1,patchname,\
                                           segname,patcnt+1,segname,patcnt+3))
-                            patchname_L = patchname # update "normal" patch
+                            patname_L = patchname # update "normal" patch
                             patcnt += 1 # update counter
 
 
@@ -771,7 +763,7 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
                        ctr_flag,patincnt,presctrfyle,ppctrlist,\
                        graft_opt,curpat_list,chcnt,patchname_L):
 
-    ranval = random.random() #seed is current system time by default
+    ranval = random.random() #seed is current system time by default    
     findflag = 0
     arrcnt = 0
 
@@ -813,14 +805,14 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
 
             break
 
-        else: # if ranval !< cumulprobarr[arrcnt]
+        else: # if ranval > cumulprobarr[arrcnt]
             
             arrcnt += 1 # update array counter
                 
         # end ranval < cumulprobarr[]
 
     # end while arrcnt in range(len(cumulprobarr))
-        
+
     if findflag != 1:
         print('Random value/Probarr:', ranval,cumulprobarr)
         print('Error: Did not find a random residue\n')
