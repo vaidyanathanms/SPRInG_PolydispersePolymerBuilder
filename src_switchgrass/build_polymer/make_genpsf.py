@@ -583,9 +583,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             # cflag: for checking pat1-pat2 adjancency
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
-            interattempt = 0
             while patcnt <= deg_poly_chain-2: #for checking constraints
-
                 resname1 = residlist[chcnt][patcnt]
                 resname2 = residlist[chcnt][patcnt+1]
 
@@ -666,7 +664,6 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                     #normal checks will be between 2,4
                     else: 
                         resname3 = residlist[chcnt][patcnt+2]
-                        resname2 = residlist[chcnt][patcnt+1]
                         patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
                                                                    inp_dict,\
                                                                    resname1,\
