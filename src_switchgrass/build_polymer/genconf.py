@@ -39,7 +39,7 @@ graft_opt = []; swit_opt = 'None'
 input_namd = 'none'; input_prm = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,fpresctr,fppctr,ffflag,fnamdflag,\
-    pmolflag,packtol = def_vals()
+    pmolflag,cleanslate,packtol = def_vals()
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -105,6 +105,10 @@ with open(sys.argv[1]) as farg:
             else:
                 input_namd = words[1]; input_prm = words[2]
                 fnamdflag = 1
+        elif words[0] == 'clean_directories':
+            cleanslate = 1 if words[1] == 'Y' \
+                      else 0 if words [1] == 'N' \
+                           else exit('Unknown args: '+line)
         elif words[0] == 'gen_packmol':
             pmolflag = 1
             if len(words) != 3 and len(words) != 9:
@@ -136,6 +140,11 @@ head_outdir = srcdir + str('/casenum_') + str(casenum) # main outdir
 
 # Create main directories and copy required files
 if not os.path.isdir(head_outdir):
+    os.mkdir(head_outdir)
+elif cleanslate:
+    print('Removing old: ', head_outdir)
+    srcdir
+    shutil.rmtree(head_outdir)
     os.mkdir(head_outdir)
 
 print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)

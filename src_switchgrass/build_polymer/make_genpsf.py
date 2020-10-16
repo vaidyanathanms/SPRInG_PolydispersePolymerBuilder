@@ -33,7 +33,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
+    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
 #---------------------------------------------------------------------
 
 # Check all flags 
@@ -414,7 +414,7 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                     print('Random value/Probarr:', ranval,cumulprobarr)
                     exit('Error in finding a random residue\n')
             
-            flist.write(' }')
+            flist.write(' }\n')
 
         # After going through all the chains, count occurence of each res/patch
         outdist = []
@@ -433,11 +433,13 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         normval = numpy.linalg.norm(numpy.array(normlist) \
                                     - numpy.array(targ_probs))
     
+        # Write to log file
+        for wout in range(len(outdist)):
+            flog.write('%g\t' %(outdist[wout]/sumval))
+        flog.write('%g\n' %(normval))
+
         if normval <= tol:
             #write to log file
-            for wout in range(len(outdist)):
-                flog.write('%g\t' %(outdist[wout]))
-            flog.write('%g\n' %(normval))
             flog.write('Found optimal residue configuration\n')
             print('Found optimal residue configuration..')
             flag_optimal = 1
@@ -446,13 +448,12 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         elif normval < normold:
             if oneconfigflag == -1:
                 oneconfigflag = 1
-                print('Found ONE configuration with res_err: ', normval)
+                print('Found configuration with res_err: ',normval)
+            else:
+                print('Updating configuration with res_err: ',normval)
             backup_list = [] #create new_backup list
             backup_list = out_list.copy()
             flist.write('\n')
-            for wout in range(len(outdist)):
-                flog.write('%g\t' %(outdist[wout]))
-            flog.write('%g\n' %(normval))
             normold = normval
 
     if oneconfigflag == -1:
@@ -463,7 +464,7 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         print('Did not find optimal residue configuration')
         print('Using best residue configuration with L2norm: ',normold)
         flog.write('Did not find optimal residue configuration\n')
-        flog.write('Using best configuration with residue L2norm: %g'\
+        flog.write('Using best configuration with residue L2norm: %g\n'\
                    %(normold))
         return backup_list
 
@@ -577,6 +578,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         while chcnt < nch-1: #since chcnt is initialized to -1
 
             if all_patch_flag == -1:
+                flog.write('Could not find a sequence \n')
                 break #move to next attempt
 
             chcnt += 1
@@ -739,11 +741,13 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             normval = numpy.linalg.norm(numpy.array(normlist) \
                                         - numpy.array(targ_probs))
 
+            # Write to log file
+            for wout in range(len(outdist)):
+                flog.write('%g\t' %(outdist[wout]/sumval))
+            flog.write('%g\n' %(normval))
+
             if normval <= tol:
                 #write to log file
-                for wout in range(len(outdist)):
-                    flog.write('%g\t' %(outdist[wout]))
-                flog.write('%g\n' %(normval))
                 flog.write('Found optimal patch configuration\n')
                 print('Found optimal patch configuration..')
                 flag_optimal = 1
@@ -753,13 +757,12 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
             elif normval < normold:
                 if oneconfigflag == -1:
                     oneconfigflag = 1
-                    print('Found ONE configuration with pat_err: ', normval)
+                    print('Found configuration with pat_err: ',normval)
+                else:
+                    print('Updating configuration with pat_err: ',normval)
                 backup_pat_list = [] #create new_backup list
                 backup_pat_list = out_list.copy()
                 flist.write('\n')
-                for wout in range(len(outdist)):
-                    flog.write('%g\t' %(outdist[wout]))
-                flog.write('%g\n' %(normval))
                 normold = normval
 
     if oneconfigflag == -1:
@@ -769,7 +772,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         print('Did not find optimal patch configuration')
         print('Using best patch configuration with L2norm: ',normold)
         flog.write('Did not find patch optimal configuration\n')
-        flog.write('Using last patch configuration with L2norm: %g'\
+        flog.write('Using last patch configuration with L2norm: %g\n'\
                    %(normold))
         return backup_pat_list
 
