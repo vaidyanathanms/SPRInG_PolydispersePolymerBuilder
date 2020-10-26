@@ -33,13 +33,12 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
+    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
 #---------------------------------------------------------------------
 
 # Check all flags 
 def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
-                    fl_constraint,fpresctr,fppctr,opt,ffflag,fnamd,\
-                    disflag,M,N):
+                    opt,ffflag,fnamd,disflag,M,N):
     outflag = 1
     if casenum == -1:
         print('ERR: Case number not input'); outflag = -1
@@ -55,10 +54,6 @@ def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
         print('ERR: Residue file/option input not entered'); outflag = -1
     elif fpatflag == 0 and (opt == 'none' or opt=='None'):
         print('ERR: Patch file/option not entered'); outflag = -1
-    elif fl_constraint == 1:
-        if fpresctr == 0 or fppctr == 0:
-            print('ERR: Constraint files not given: constraint flag ON')
-            outflag = -1
     elif fnamd == 0:
         print('WARNING: No NAMD file found')
 
@@ -260,7 +255,7 @@ def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
     flog.write('Segment name: %s\n' %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
-    if fl_constraint == 1 or fl_constraint == 2:
+    if fl_constraint != 0 :
         flog.write('Patch/residue constraints: Yes\n')
     else:
         flog.write('Patch/residue constraints: No\n')
@@ -280,12 +275,13 @@ def find_init_files(fl_constraint,fpdbflag,input_top='none',\
     if fpdbflag and not os.path.exists(input_pdb):
         print('Initial structure file not found \n', input_pdb)
         return -1
-    if fl_constraint == 1: 
-        if not os.path.exists(input_pres) and \
-           not os.path.exists(input_pp):
-            print('No constraint file not found \n')
-            return -1
-    elif fl_constraint == 2:
+    if fl_constraint == 1 and not os.path.exists(input_pres):
+        print('Patch-residue constraint file not found', input_pres)
+        return -1
+    elif fl_constraint == 2 and not os.path.exists(input_pp): 
+        print('Patch-patch constraint file not found', input_pp)
+        return -1
+    elif fl_constraint == 3:
         if not os.path.exists(input_pres) or \
            not os.path.exists(input_pp):
             print('One or more constraint file(s) not found \n')
@@ -838,7 +834,7 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
             #so that if constraints are not there, it will
             #be appended. consec flag has to be 0 for true
             appendflag = 1; consecpatflag = 0 
-            if ctr_flag:
+            if ctr_flag != 0:
                 if patincnt == 0:
                     resname_L = 'None'
                 else:
@@ -846,10 +842,12 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
                         
                 # end if patcnt == 0
                 resname_R = resname2
-                appendflag = check_constraints(presctrfyle,patchname,\
-                                               resname_L,resname_R)
-                consecpatflag =is_forbid_patch(patchname_L,\
-                                               patchname,ppctrlist)
+                if ctr_flag == 1 or ctr_flag == 3:
+                    appendflag = check_constraints(presctrfyle,patchname,\
+                                                   resname_L,resname_R)
+                elif ctr_flag == 2 or ctr_flag == 3:
+                    consecpatflag =is_forbid_patch(patchname_L,\
+                                                   patchname,ppctrlist)
                 # patchname cannot follow patchname_L
 
                 # end if ctr_flag==1

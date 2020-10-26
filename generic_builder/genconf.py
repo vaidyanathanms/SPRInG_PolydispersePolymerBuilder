@@ -35,11 +35,12 @@ if len(sys.argv) != 2:
 print('Input file name: ', sys.argv[1])
 
 # Set defaults
-graft_opt = []; swit_opt = 'None' 
+graft_opt = []; swit_opt = 'None';
 input_namd = 'None'; input_prm = 'None'
+input_pres = 'none'; input_pp = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
-    fl_constraint,disperflag,fpresctr,fppctr,ffflag,fnamdflag,\
-    pmolflag,cleanslate,packtol = def_vals()
+    fl_constraint,disperflag,ffflag,fnamdflag,pmolflag,cleanslate,\
+    packtol = def_vals()
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -79,14 +80,10 @@ with open(sys.argv[1]) as farg:
                           else exit('Args for multi not found: '+line)
         elif words[0] == 'patch_res_constraint':
             fl_constraint = 1
-            fpresctr = 1
-            input_pres = words[1] if fl_constraint == 1 \
-                        else exit('ERR: Constraint flag not set')
+            input_pres = words[1] 
         elif words[0] == 'patch_patch_constraint':
-            fl_constraint += 1
-            fppctr = 1
-            input_pp = words[1] if fl_constraint == 1 \
-                       else exit('Constraint flag not set')
+            fl_constraint == 3 if fl_constraint == 1 else 2
+            input_pp = words[1] 
         elif words[0] == 'pdb_ipfile':
             if len(words) != 3:
                 exit('Unknown number of args: ' + line)
@@ -124,8 +121,8 @@ with open(sys.argv[1]) as farg:
 
 
 outflag = check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag\
-                          ,fl_constraint,fpresctr,fppctr,swit_opt,\
-                          ffflag,fnamdflag,disperflag,mono_deg_poly,num_chains)
+                          ,swit_opt,ffflag,fnamdflag,disperflag,\
+                          mono_deg_poly,num_chains)
 if outflag == -1:
     exit()
 
@@ -152,7 +149,7 @@ print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
 # Make monomer array for all chains
 if disperflag:
     print('Polydispersity file: ', disper_fyle)
-    deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
+    deg_poly_all,pd<ival = make_polydisp_resids(disper_fyle,num_chains)
     if pdival == 0:
         exit()
 else:
@@ -167,9 +164,8 @@ flog = open(head_outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly_all,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
               ,fl_constraint,resinpfyle,patinpfyle,disperflag,pdival)
-    
 
-
+# Check NAMD inputs
 if fnamdflag == 1:
     if not os.path.exists(input_namd) or not os.path.exists(input_prm):
         exit('No NAMD file found \n')
@@ -189,11 +185,20 @@ patchperc_dict = patch_ratios(graft_opt,resperc_dict,swit_opt,patinpfyle)
 if not bool(patchperc_dict):
     exit('ERROR: Unknown option for patch parameters \n')
 
-# copy all files
+# Check initial and pdb file defaults and copy files
+allinitflags = find_init_files(fl_constraint,fpdbflag,input_top,\
+                               input_pdb,input_pres,input_pp)
+if allinitflags == -1:
+    exit()
+if fpdbflag: # if initial pdb file is present
+    pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
+    if pdbfyleflag == -1:
+        exit()
 gencpy(srcdir,head_outdir,input_top)
 gencpy(srcdir,head_outdir,input_pdb)
-if fl_constraint:
+if fl_constraint == 1 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pres)
+elif fl_constraint == 2 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pp)
 
 # Open file and write headers
@@ -217,17 +222,6 @@ flog.write(str(cumul_patcharr)+'\n')
 res_list = [[] for i in range(num_chains)]
 patch_list = [[] for i in range(num_chains-1)]
 
-# check initial and pdb file defaults
-allinitflags = find_init_files(fl_constraint,fpdbflag,input_top,\
-                               input_pdb,input_pres,input_pp)
-if allinitflags == -1:
-    exit()
-if fpdbflag: # if initial pdb file is present
-    pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
-    if pdbfyleflag == -1:
-        exit()
-
-
 # Create residues and check for avg probability 
 print('Generating residues..')
 flog.write('Creating residue list..\n')
@@ -237,9 +231,8 @@ res_list = create_segments(fresin,deg_poly_all,num_chains,seg_name,\
 if res_list == -1:
     exit()
 
-
 # Create patches with constraints and check for avg probability 
-if fl_constraint:
+if fl_constraint == 2 or fl_constraint == 3:
     # Read patch-patch constraints (in one go)
     print('Reading patch-patch constraints..')
     flog.write('Reading patch-patch constraints..\n')
@@ -247,6 +240,8 @@ if fl_constraint:
     ppctr_list = read_patch_incomp(input_pp)
     flog.writelines('\t'.join(str(jval) for jval in ival) +\
                     '\n' for ival in ppctr_list)
+else:
+    ppctr_list = [[]]
 
 print('Generating patches..')
 flog.write('Creating patches list..\n')
