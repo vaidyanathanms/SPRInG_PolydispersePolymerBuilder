@@ -33,30 +33,28 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
+    return 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
 #---------------------------------------------------------------------
 
 # Check all flags 
-def check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag,\
-                    opt,ffflag,fnamd,disflag,M,N):
+def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
+                    fnamd,fpdbflag,ftopflag):
     outflag = 1
-    if casenum == -1:
+    if casenum < 0:
         print('ERR: Case number not input'); outflag = -1
     elif N == 0:
         print('ERR: No chains found in input'); outflag = -1
     elif disflag == 0 and M == 0:
         print('ERR: Monodisperse systems with no MW'); outflag = -1
-    elif fpdbflag == 0 or ftopflag == 0:
-        print('ERR: PDB/Topology file not entered'); outflag = -1
-    elif ffflag == 0:
-        print('ERR: Force field type not set: A,B, None');outflag = -1
-    elif fresflag == 0 and (opt == 'none' or opt=='None'):
-        print('ERR: Residue file/option input not entered'); outflag = -1
-    elif fpatflag == 0 and (opt == 'none' or opt=='None'):
-        print('ERR: Patch file/option not entered'); outflag = -1
-    elif fnamd == 0:
-        print('WARNING: No NAMD file found')
-
+    elif fresflag == 0:
+        print('ERR: Residue input not entered'); outflag = -1
+    elif fpatflag == 0:
+        print('ERR: Patch not entered'); outflag = -1
+    elif ftopflag == 0:
+        print('ERR: Topology file not entered'); outflag = -1
+    elif fnamd != 0 and fpdbflag == 0 
+        print('ERROR: To run NAMD, input PDB files are required')
+        outflag = -1
     return outflag
 #---------------------------------------------------------------------
 
@@ -96,55 +94,42 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
     fin.write('writepdb ${outputname}_${count}.psf \n')
 #---------------------------------------------------------------------
 
-# Define monomer ratios from literature    
-def residue_ratios(opt='none',inpfyle='none'):
-# add monomer details
-    frac_res = collections.OrderedDict()
-    
-    if opt == 'None' or opt == 'none':
-        with open(inpfyle) as fyle_dict:
-            for line in fyle_dict:
-                line = line.strip()
-                (key, val) = line.split()
-                frac_res[key] = float(val)
+# Read monomer ratios from input file
+def residue_ratios(inpfyle):
 
-    elif opt == 'A' or opt == 'a':
-        # H:G:S = 26:42:32 (B); pCA:FA = 1
-        frac_res['PHP'] = 26/140 # % PHP (H) monomers
-        frac_res['GUA'] = 42/140 # % GUA (G) monomers
-        frac_res['SYR'] = 32/140 # % SYR (S) monomers
-        frac_res['PCA'] = 20/140 # % PCA monomers
-        frac_res['FERU'] = 20/140 # % FA monomers
-        
-    elif opt == 'B' or opt == 'b':
-        # G:S = 0.78, H = 2 (A); pCA:FA = 6:32
-        gmonrat = 0.27
+    frac_res = collections.OrderedDict()
+
+    # Check file existence
+    if not os.path.exists(inpfyle):
+        print('Residue input file not found \n', inpfyle)
+        return -1
+
+    # add monomer details
+    with open(inpfyle) as fyle_dict:
+        for line in fyle_dict:
+            line = line.strip()
+            (key, val) = line.split()
+            frac_res[key] = float(val)
 
     return frac_res
 #---------------------------------------------------------------------
 
 # Define patch ratios from literature
-def patch_ratios(opt_graft,resdict,opt='none',inpfyle='none'):
+def patch_ratios(opt_graft,resdict,inpfyle):
 
-# add patch details
     frac_patch = collections.OrderedDict()
 
-    if opt == 'None' or opt == 'none':
-        with open(inpfyle) as fyle_dict:
-            for line in fyle_dict:
-                line = line.strip()
-                (key, val) = line.split()
-                frac_patch[key] = float(val)
+    # Check file existence
+    if not os.path.exists(inpfyle):
+        print('Residue input file not found \n', inpfyle)
+        return -1
 
-    elif opt == 'A' or opt == 'a':
-        frac_patch['BO4R'] = 0.2
-        frac_patch['BO4L'] = 0.2
-        frac_patch['55']  = 0.2
-        frac_patch['405'] = 0.2
-        frac_patch['BB']  = 0.2
-
-    elif opt == 'B' or opt == 'b':
-        frac_patch['BO4'] = 0
+    # add patch details
+    with open(inpfyle) as fyle_dict:
+        for line in fyle_dict:
+            line = line.strip()
+            (key, val) = line.split()
+            frac_patch[key] = float(val)
 
     # check for grafts and rearrange dictionary
     if opt_graft[0] != 1:
@@ -231,15 +216,11 @@ def make_polydisp_resids(inpfyle, nch):
 #---------------------------------------------------------------------
 
 # Initiate log file
-def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
+def init_logwrite(flog,casenum,bmtype,Marr,tfile,pfile,segname,nch\
                   ,att,tol,opstyle,fl_constraint,resfyle,patfyle,\
                   disflag,pdiinp):
     flog.write('Case number: %d\n' %(casenum))
     flog.write('Creating NAMD file for %s\n' %(bmtype))
-    if optv == 'A' or optv == 'a':
-        flog.write('Ref: Yan et al., Biomass & Bioener 34, 48-53, 2010\n')
-    elif optv == 'B' or optv == 'b':
-        flog.write('Ref: Samuel et al., Front. Ener. Res., 1 (14) 2014\n')
 
     if disflag == 0:
         flog.write('Monodisperse system \n')
@@ -251,7 +232,7 @@ def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
 
     flog.write('PDI: %g\n' %(pdiinp))
     flog.write('Tot res/pat: %d\t%d\n' %(sum(Marr),sum(Marr)-len(Marr)))
-    flog.write('Res/patch inps: %s\t%s\n' %(resfyle,patfyle))
+    flog.write('Res/patch inputs: %s\t%s\n' %(resfyle,patfyle))
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
     flog.write('Segment name: %s\n' %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
@@ -267,7 +248,6 @@ def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
 # Check initial files
 def find_init_files(fl_constraint,fpdbflag,input_top='none',\
                     input_pdb='none',input_pres='none',input_pp='none'):
-
     # Read defaults and throw exceptions
     if not os.path.exists(input_top):
         print('Topology file not found \n', input_top)

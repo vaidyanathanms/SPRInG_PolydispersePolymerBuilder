@@ -2,19 +2,9 @@
 # Ver: Sept-04-2020
 # Author: Vaidyanathan Sethuraman
 # To generate the initial configuration file for lignin topology
-# Use NAMD to run the script
-# An iterative procedure is used
-
-# References for lignin structure: 
-# (A) Yan et al., Biomass and Bioenergy 34, 48-53, 2010 
-# (B) Samuel et al., Frontiers in Energy Research, 1 (14) 2014
+# Use NAMD and LigninBuilder to run the script
 
 # 'None' is a keyword reserved - DONT USE IT for PDB/PSF filenames.
-# Switchgrass variety: Alamo switchgrass
-
-# H:G:S = 26:42:32 (A); G:S = 0.75 - 0.78, H = 2 (B)
-# pCA:FA = 1 (A); pCA:FA = 6:32 (B) 
-
 #------------------------------------------------------------------
 
 # Import modules
@@ -26,6 +16,7 @@ import shutil
 import glob
 import math
 from make_genpsf import * # function definitions
+#------------------------------------------------------------------
 
 # Read input file
 if len(sys.argv) != 2:
@@ -33,14 +24,16 @@ if len(sys.argv) != 2:
           str(sys.argv))
     exit()
 print('Input file name: ', sys.argv[1])
+#------------------------------------------------------------------
 
 # Set defaults
-graft_opt = []; swit_opt = 'None';
+graft_opt = []; 
 input_namd = 'None'; input_prm = 'None'
 input_pres = 'none'; input_pp = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
-    fl_constraint,disperflag,ffflag,fnamdflag,pmolflag,cleanslate,\
+    fl_constraint,disperflag,fnamdflag,pmolflag,cleanslate,\
     packtol = def_vals()
+#------------------------------------------------------------------
 
 # Read from file: see definitions/defaults at the end of the script
 with open(sys.argv[1]) as farg:
@@ -52,8 +45,6 @@ with open(sys.argv[1]) as farg:
             casenum = int(words[1])
         elif words[0] == 'biomass_type': 
             biomas_typ = words[1]
-        elif words[0] == 'ff_type':
-            swit_opt = words[1]; ffflag = 1
         elif words[0] == 'disperse':
             disper_fyle = words[1]; disperflag = 1
         elif words[0] == 'num_resids':
@@ -120,20 +111,23 @@ with open(sys.argv[1]) as farg:
             exit('Unknown keyword ' + str(words[0]))
 
 
-outflag = check_all_flags(casenum,fpdbflag,ftopflag,fresflag,fpatflag\
-                          ,swit_opt,ffflag,fnamdflag,disperflag,\
-                          mono_deg_poly,num_chains)
+outflag = check_all_flags(casenum,fresflag,fpatflag,disperflag,\
+                          mono_deg_poly,num_chains,fnamdflag,\
+                          fpdbflag,ftopflag)
 if outflag == -1:
     exit()
+#------------------------------------------------------------------
 
 # Output file names (will be generated automatically)
 reslist_fname = 'reslist_' + str(casenum) + '.tcl' #all res list
 patch_fname = 'patchlist_' + str(casenum)+ '.tcl' #all patch list
 log_fname = 'log_' + str(casenum) + '.txt' #log file
+#------------------------------------------------------------------
 
 # Get directory info
 srcdir = os.getcwd()
 head_outdir = srcdir + str('/casenum_') + str(casenum) # main outdir
+#------------------------------------------------------------------
 
 # Create main directories and copy required files
 if not os.path.isdir(head_outdir):
@@ -143,13 +137,13 @@ elif cleanslate:
     srcdir
     shutil.rmtree(head_outdir)
     os.mkdir(head_outdir)
-
 print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
+#------------------------------------------------------------------
 
 # Make monomer array for all chains
 if disperflag:
     print('Polydispersity file: ', disper_fyle)
-    deg_poly_all,pd<ival = make_polydisp_resids(disper_fyle,num_chains)
+    deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
     if pdival == 0:
         exit()
 else:
@@ -158,32 +152,7 @@ else:
     print('Monodispersed case')
 print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
       sum(deg_poly_all)-num_chains,pdival)
-
-# Open log file
-flog = open(head_outdir + '/' + log_fname,'w')
-init_logwrite(flog,casenum,biomas_typ,deg_poly_all,swit_opt,input_top\
-              ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
-              ,fl_constraint,resinpfyle,patinpfyle,disperflag,pdival)
-
-# Check NAMD inputs
-if fnamdflag == 1:
-    if not os.path.exists(input_namd) or not os.path.exists(input_prm):
-        exit('No NAMD file found \n')
-
-# residue % dictionary mode
-resperc_dict = residue_ratios(swit_opt,resinpfyle) 
-if not bool(resperc_dict):
-    exit('ERROR: Unknown option for monomer parameters \n')
-
-if graft_opt[0] == 1:
-    flog.write('Grafting incorporated while building the chains\n')
-else:
-    flog.write('Linear chains are built\n')
-
-# patches %dict mode
-patchperc_dict = patch_ratios(graft_opt,resperc_dict,swit_opt,patinpfyle) 
-if not bool(patchperc_dict):
-    exit('ERROR: Unknown option for patch parameters \n')
+#------------------------------------------------------------------
 
 # Check initial and pdb file defaults and copy files
 allinitflags = find_init_files(fl_constraint,fpdbflag,input_top,\
@@ -200,12 +169,43 @@ if fl_constraint == 1 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pres)
 elif fl_constraint == 2 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pp)
+#------------------------------------------------------------------
+
+# Open log file
+flog = open(head_outdir + '/' + log_fname,'w')
+init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top\
+              ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
+              ,fl_constraint,resinpfyle,patinpfyle,disperflag,pdival)
+#------------------------------------------------------------------
+
+# Check NAMD inputs
+if fnamdflag == 1:
+    if not os.path.exists(input_namd) or not os.path.exists(input_prm):
+        exit('No NAMD file found \n')
+#------------------------------------------------------------------
+
+# residue % dictionary mode
+resperc_dict = residue_ratios(resinpfyle) 
+if not bool(resperc_dict):
+    exit('ERROR: Check input residue file \n')
+if graft_opt[0] == 1:
+    flog.write('Grafting incorporated while building the chains\n')
+else:
+    flog.write('Linear chains are built\n')
+#------------------------------------------------------------------
+
+# patches %dict mode
+patchperc_dict = patch_ratios(graft_opt,resperc_dict,patinpfyle) 
+if not bool(patchperc_dict):
+    exit('ERROR: Check input patch file \n')
+#------------------------------------------------------------------
 
 # Open file and write headers
 fresin = open(head_outdir + '/' + reslist_fname,'w')
 fresin.write(';# Contains all segments for NAMD files.\n')
 fpatchin = open(head_outdir + '/' + patch_fname,'w')
 fpatchin.write(';# Contains all patches for NAMD files.\n')
+#------------------------------------------------------------------
             
 # Create cumulative probability distribution of segments/patches
 flog.write('Making cumulative distribution for segments..\n')
@@ -217,10 +217,12 @@ flog.write('Making cumulative distribution for patches..\n')
 print('Making cumulative distribution for patches..')
 cumul_patcharr = cumul_probdist(patchperc_dict,flog)
 flog.write(str(cumul_patcharr)+'\n')
+#------------------------------------------------------------------
     
 # Set 2D default list and generate segments/patches
 res_list = [[] for i in range(num_chains)]
 patch_list = [[] for i in range(num_chains-1)]
+#------------------------------------------------------------------
 
 # Create residues and check for avg probability 
 print('Generating residues..')
@@ -230,6 +232,7 @@ res_list = create_segments(fresin,deg_poly_all,num_chains,seg_name,\
                            flog,graft_opt,def_res)
 if res_list == -1:
     exit()
+#------------------------------------------------------------------
 
 # Create patches with constraints and check for avg probability 
 if fl_constraint == 2 or fl_constraint == 3:
@@ -252,14 +255,14 @@ patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
 
 if patch_list == -1:
     exit()
+#------------------------------------------------------------------
 
 # Write to file
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
 print('Writing data to files..')
 print('Output style: ', itertype)
-
-if pmolflag:
+if pmolflag: #PACKMOL directives
     flog.write('Initiating packmol files for %d\n..' %(casenum))
     print('Initiating packmol files for ', casenum)
     if input_packmol == 'DEF':
@@ -297,7 +300,6 @@ for chcnt in range(num_chains):
     deg_poly_this_chain = deg_poly_all[chcnt]
 
     if itertype == 'single':
-        
         psfgen_headers(fmain,input_top,pdbpsf_name)
         flog.write('Writing config for  %d chains\n' %(num_chains))
         write_multi_segments(fmain,-1,deg_poly_this_chain,num_chains,chnum,\
@@ -346,43 +348,22 @@ for chcnt in range(num_chains):
   
     if pmolflag:
         make_packmol(fpack,pdbpsf_name,1,trans_list)
-
+#------------------------------------------------------------------
 #Exit and close file
 fmain.write('exit')
 fmain.close()
-
+#------------------------------------------------------------------
+#Extra PACKMOL directives
 if pmolflag:
     fpack.write('\n')
     fpack.write('#---End of PACKMOL file----\n')
     fpack.close()
 flog.write('Completed psf generation for casenum: %d\n' %(casenum))
 print('Completed psf generation for casenum: ', casenum)
-
+#------------------------------------------------------------------
 
 # Close files
 fresin.close()
 fpatchin.close()
 flog.close()
-
-
-
-#-------------------------Defaults------------------------------------
-# Input data
-#casenum    = 1  # case number
-#fl_constraint = 1 # flag for reading constraints (patch-patch/patch-res)
-#biomas_typ  = 'switchgrass' # type of biomass
-#deg_poly   = 22 # degree of polymerization (final)
-#swit_opt   = 'A' # references, A,B (add more and hard code if necesary)
-#seg_name = 'swli' #name of segment: switchgrass lignin
-#num_chains = 10 # number of chains
-#graft_opt = [1,'PCA','GOG'] # graft option, res, patch
-#tol = 0.1 # relative tolerance for residue/patch generation
-#maxatt = 500 # maximum attempts to obtain avg configuration
-#itertype  = 'multi' # O/p style: single-> one go. multi-> multi iter
-#iterinc   = 4 # iteration increments (for multi itertype)
-
-# Input file names
-#input_pres = 'constraints.inp' # patch-res constraint file input
-#input_top = 'lignin.top' # topology file input
-#input_pdb = 'G-bO4L-G.pdb' # file input - dimer
-#input_pp  = 'patch_incomp.inp' # patch-patch incompatibility
+#------------------------------------------------------------------
