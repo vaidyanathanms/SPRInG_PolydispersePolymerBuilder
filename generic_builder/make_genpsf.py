@@ -260,10 +260,37 @@ def init_logwrite(flog,casenum,bmtype,Marr,optv,tfile,pfile,segname,nch\
     flog.write('Input Topol file/PDB file: %s\t%s\n' %(tfile,pfile))
     flog.write('Segment name: %s\n' %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
-    flog.write('Constraint flag: %d\n' %(fl_constraint))
+    if fl_constraint == 1 or fl_constraint == 2:
+        flog.write('Patch/residue constraints: Yes\n')
+    else:
+        flog.write('Patch/residue constraints: No\n')
+
     flog.write('Output style: %s\n' %(opstyle))
     
     flog.write('Analysis beginning ..\n')
+#---------------------------------------------------------------------
+# Check initial files
+def find_init_files(fl_constraint,fpdbflag,input_top='none',\
+                    input_pdb='none',input_pres='none',input_pp='none'):
+
+    # Read defaults and throw exceptions
+    if not os.path.exists(input_top):
+        print('Topology file not found \n', input_top)
+        return -1
+    if fpdbflag and not os.path.exists(input_pdb):
+        print('Initial structure file not found \n', input_pdb)
+        return -1
+    if fl_constraint == 1: 
+        if not os.path.exists(input_pres) and \
+           not os.path.exists(input_pp):
+            print('No constraint file not found \n')
+            return -1
+    elif fl_constraint == 2:
+        if not os.path.exists(input_pres) or \
+           not os.path.exists(input_pp):
+            print('One or more constraint file(s) not found \n')
+            return -1
+    return 1
 #---------------------------------------------------------------------
 
 # Create cumulative probability distribution from a dictionary
@@ -340,7 +367,7 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
     
 # Create entire list in one go so that cumulative distribution holds true
 def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,graftopt,defa_res):
+                    ,tol,maxattmpt,flog,graftopt,defa_res='none'):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
@@ -352,10 +379,11 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
     flist.write('; Total number of residues\t%d\n' %(sum_of_res))
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
-    if defa_res not in list(inp_dict.keys()):
-        print('FATAL ERR: default residue not in the input')
-        print(defa_res, list(inp_dict.keys()))
-        return -1
+    if defa_res != 'none':
+        if defa_res not in list(inp_dict.keys()):
+            print('FATAL ERR: default residue not in the input')
+            print(defa_res, list(inp_dict.keys()))
+            return -1
 
     for wout in range(len(inp_dict)):
         flog.write('%s (%g)\t' %(list(inp_dict.keys())[wout],\
@@ -376,12 +404,15 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         for chcnt in range(nch):
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(' segment %s {\n' %(segname))
-            # first is default residue
-            flist.write(' residue\t%d\t%s\n' %(1,defa_res))
-            out_list[chcnt].append(defa_res)
-            rescnt = 1
-            deg_poly_chain = nresarr[chcnt]
+            # first is default residue if present
+            if defa_res != 'none':
+                flist.write(' residue\t%d\t%s\n' %(1,defa_res))
+                out_list[chcnt].append(defa_res)
+                rescnt = 1
+            else:
+                rescnt = 0
 
+            deg_poly_chain = nresarr[chcnt]
             while rescnt < deg_poly_chain:
 
                 ranval = random.random() #seed is current system time by default

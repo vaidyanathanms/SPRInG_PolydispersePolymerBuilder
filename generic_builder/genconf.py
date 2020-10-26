@@ -36,7 +36,7 @@ print('Input file name: ', sys.argv[1])
 
 # Set defaults
 graft_opt = []; swit_opt = 'None' 
-input_namd = 'none'; input_prm = 'none'
+input_namd = 'None'; input_prm = 'None'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,fpresctr,fppctr,ffflag,fnamdflag,\
     pmolflag,cleanslate,packtol = def_vals()
@@ -77,13 +77,13 @@ with open(sys.argv[1]) as farg:
             if itertype == 'multi':
                 iterinc = int(words[2]) if len(words) == 3 \
                           else exit('Args for multi not found: '+line)
-        elif words[0] == 'constraint_flag':
-            fl_constraint = int(words[1])
         elif words[0] == 'patch_res_constraint':
+            fl_constraint = 1
             fpresctr = 1
             input_pres = words[1] if fl_constraint == 1 \
                         else exit('ERR: Constraint flag not set')
         elif words[0] == 'patch_patch_constraint':
+            fl_constraint += 1
             fppctr = 1
             input_pp = words[1] if fl_constraint == 1 \
                        else exit('Constraint flag not set')
@@ -168,16 +168,7 @@ init_logwrite(flog,casenum,biomas_typ,deg_poly_all,swit_opt,input_top\
               ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
               ,fl_constraint,resinpfyle,patinpfyle,disperflag,pdival)
     
-# Read defaults and throw exceptions
-if not os.path.exists(input_top):
-    exit('Topology file not found \n')
 
-if not os.path.exists(input_pdb):
-    exit('Dimer file not found \n')
-
-if fl_constraint:
-    if not os.path.exists(input_pres) and not os.path.exists(input_pp):
-        exit('No constraint file not found \n')
 
 if fnamdflag == 1:
     if not os.path.exists(input_namd) or not os.path.exists(input_prm):
@@ -226,10 +217,16 @@ flog.write(str(cumul_patcharr)+'\n')
 res_list = [[] for i in range(num_chains)]
 patch_list = [[] for i in range(num_chains-1)]
 
-# check pdb file defaults
-pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
-if pdbfyleflag == -1:
+# check initial and pdb file defaults
+allinitflags = find_init_files(fl_constraint,fpdbflag,input_top,\
+                               input_pdb,input_pres,input_pp)
+if allinitflags == -1:
     exit()
+if fpdbflag: # if initial pdb file is present
+    pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
+    if pdbfyleflag == -1:
+        exit()
+
 
 # Create residues and check for avg probability 
 print('Generating residues..')
@@ -260,7 +257,6 @@ patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
 
 if patch_list == -1:
     exit()
-
 
 # Write to file
 flog.write('Writing data to files \n')
