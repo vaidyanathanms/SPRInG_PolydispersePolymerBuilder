@@ -238,7 +238,7 @@ def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
     flog.write('PDI: %g\n' %(pdiinp))
     flog.write('Tot res/pat: %d\t%d\n' %(sum(Marr),sum(Marr)-len(Marr)))
     flog.write('Res/patch inputs: %s\t%s\n' %(resfyle,patfyle))
-    flog.write('Input Topology file file: %s\t%s\n' %(tfile))
+    flog.write('Input Topology file file: %s\n' %(tfile))
     flog.write('Segment name: %s\n' %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
     if fl_constraint != 0 :
@@ -250,6 +250,7 @@ def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
     
     flog.write('Analysis beginning ..\n')
 #---------------------------------------------------------------------
+
 # Check initial files
 def find_init_files(fl_constraint,fpdbflag,fnamdflag,input_top='none',\
                     input_pdb='none',input_pres='none',input_pp='none'):
@@ -349,7 +350,7 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
     
 # Create entire list in one go so that cumulative distribution holds true
 def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,graftopt,defa_res='none'):
+                    ,tol,maxattmpt,flog,graftopt,defa_res):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
@@ -412,8 +413,9 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                 
                         findflag = 1   
                         resname1 = list(inp_dict.keys())[arrcnt]
-                        resname2 = out_list[chcnt][rescnt-1]
-                        consecresflag = is_res_cons(resname1,resname2\
+                        if rescnt != 0: 
+                            resname2 = out_list[chcnt][rescnt-1]
+                            consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
                         if consecresflag == 0:
                             flist.write(' residue\t%d\t%s\n' \
@@ -934,7 +936,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
             nresthisiter += 1
 
     if iter_num == -1 or iter_num == 1:
-        fin.write(';# Chain number: %d of %d chains\n' %(nch,chnum))
+        fin.write(';# Chain number: %d of %d chains\n' %(chnum,nch))
         fin.write(';# ----Begin main code -------\n')
         fin.write('\n')
 
