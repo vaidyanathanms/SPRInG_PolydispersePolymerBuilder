@@ -28,8 +28,8 @@ print('Input file name: ', sys.argv[1])
 
 # Set defaults
 graft_opt = []; 
-input_namd = 'None'; input_prm = 'None'
-input_pres = 'none'; input_pp = 'none'
+input_pdb = 'none'; input_namd = 'None'; input_prm = 'None'
+input_pres = 'none'; input_pp = 'none'; seg_name = 'LIG'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,fnamdflag,pmolflag,cleanslate,\
     packtol = def_vals()
@@ -39,6 +39,8 @@ casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
 with open(sys.argv[1]) as farg:
     for line in farg:
         line = line.rstrip('\n')
+        if line.startswith('#'):
+            continue
         words = line.split()
         # call all functions
         if words[0] == 'case_num': 
@@ -112,8 +114,8 @@ with open(sys.argv[1]) as farg:
 
 
 outflag = check_all_flags(casenum,fresflag,fpatflag,disperflag,\
-                          mono_deg_poly,num_chains,fnamdflag,\
-                          fpdbflag,ftopflag)
+                          mono_deg_poly,num_chains,fnamdflag,fpdbflag,\
+                          ftopflag)
 if outflag == -1:
     exit()
 #------------------------------------------------------------------
@@ -155,16 +157,11 @@ print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
 #------------------------------------------------------------------
 
 # Check initial and pdb file defaults and copy files
-allinitflags = find_init_files(fl_constraint,fpdbflag,input_top,\
-                               input_pdb,input_pres,input_pp)
+allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,\
+                               input_top,input_pdb,input_pres,input_pp)
 if allinitflags == -1:
     exit()
-if fpdbflag: # if initial pdb file is present
-    pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
-    if pdbfyleflag == -1:
-        exit()
 gencpy(srcdir,head_outdir,input_top)
-gencpy(srcdir,head_outdir,input_pdb)
 if fl_constraint == 1 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pres)
 elif fl_constraint == 2 or fl_constraint == 3:
@@ -173,15 +170,23 @@ elif fl_constraint == 2 or fl_constraint == 3:
 
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
-init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top\
-              ,input_pdb,seg_name,num_chains,maxatt,tol,itertype\
-              ,fl_constraint,resinpfyle,patinpfyle,disperflag,pdival)
+init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top,\
+              ,num_chains,maxatt,tol,itertype,fl_constraint,\
+              resinpfyle,patinpfyle,disperflag,pdival)
 #------------------------------------------------------------------
 
-# Check NAMD inputs
+# Check NAMD inputs and pdb file checks
 if fnamdflag == 1:
     if not os.path.exists(input_namd) or not os.path.exists(input_prm):
         exit('No NAMD file found \n')
+if fpdbflag and fnamdflag: # if initial pdb file is present
+    pdbfyleflag = check_pdb_defaults(input_pdb,def_res,seg_name)
+    if pdbfyleflag == -1:
+        exit()
+    flog.write('NAMD runs will be added in the script\n')
+    flog.write('Input PDB name: %s\n' %(input_pdb))
+    flog.write('Segment name: %s\n' %(segname))
+    gencpy(srcdir,head_outdir,input_pdb) #copy initial pdbfile
 #------------------------------------------------------------------
 
 # residue % dictionary mode
@@ -258,11 +263,15 @@ if patch_list == -1:
 #------------------------------------------------------------------
 
 # Write to file
+# Headers
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
 print('Writing data to files..')
 print('Output style: ', itertype)
-if pmolflag: #PACKMOL directives
+#------------------------------------------------------------------
+
+#PACKMOL directives
+if pmolflag: 
     flog.write('Initiating packmol files for %d\n..' %(casenum))
     print('Initiating packmol files for ', casenum)
     if input_packmol == 'DEF':
@@ -271,7 +280,9 @@ if pmolflag: #PACKMOL directives
         packname = input_packmol
     fpack = open(head_outdir + '/' + packname,'w')        
     initiate_packmol(fpack,biomas_typ,num_chains,packtol)
+#------------------------------------------------------------------
 
+# Write for each chain
 for chcnt in range(num_chains):
     chnum = chcnt + 1
     flog.write('****Writing chain number: %d***\n' %(chnum))
@@ -305,7 +316,7 @@ for chcnt in range(num_chains):
         write_multi_segments(fmain,-1,deg_poly_this_chain,num_chains,chnum,\
                              seg_name,res_list,patch_list,graft_opt,\
                              deg_poly_this_chain)
-        psfgen_postprocess(fmain,input_pdb,itertype,0,'None')
+        psfgen_postprocess(fmain,itertype,0,seg_name,fnamdflag,input_pdb)
 
     elif itertype == 'multi':
         flog.write('Iteration increment counter %d\n' %(iterinc))
@@ -320,8 +331,8 @@ for chcnt in range(num_chains):
             write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains,\
                                  chnum,seg_name,res_list,patch_list,\
                                  graft_opt,deg_poly_this_chain)
-            psfgen_postprocess(fmain,input_pdb,itertype,\
-                               iter_num,seg_name)
+            psfgen_postprocess(fmain,itertype,iter_num,seg_name,\
+                               fnamdflag,input_pdb)
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
                 run_namd(fmain,'namd2','mini.conf',out_namd)
@@ -336,8 +347,8 @@ for chcnt in range(num_chains):
             write_multi_segments(fmain,iter_num,deg_poly_this_chain,\
                                  num_chains,chnum,seg_name,res_list,\
                                  patch_list,graft_opt,deg_poly_this_chain)
-            psfgen_postprocess(fmain,input_pdb,itertype,\
-                               iter_num,seg_name)
+            psfgen_postprocess(fmain,itertype,iter_num,seg_name,\
+                               fnamdflag,input_pdb)
 
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
@@ -349,10 +360,12 @@ for chcnt in range(num_chains):
     if pmolflag:
         make_packmol(fpack,pdbpsf_name,1,trans_list)
 #------------------------------------------------------------------
+
 #Exit and close file
 fmain.write('exit')
 fmain.close()
 #------------------------------------------------------------------
+
 #Extra PACKMOL directives
 if pmolflag:
     fpack.write('\n')
