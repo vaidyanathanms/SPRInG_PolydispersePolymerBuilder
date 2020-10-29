@@ -4,17 +4,16 @@ disperse	polydisp.inp
 num_resids	22
 num_chains	10
 top_ipfile	lignin.top
-pdb_ipfile	single_G.pdb GUAI
 seg_name	LI5
 grafting	1	PCA	GOG	FERU	GOG
 tol	0.1
 nattempts	50
 op_style	multi	4
-constraint_flag 1
 patch_res_constraint	respatconstraints.inp
 patch_patch_constraint	patch_incomp.inp
 resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
-namd_inp	mini_pyconf.conf lignin.prm
 gen_packmol	DEF	DEF	0.0	0.0	0.0	0.0	0.0	0.0
 clean_directories	Y
+# optional: namd_inp	mini_pyconf.conf lignin.prm
+# optional: pdb_ipfile	single_G.pdb GUAI
