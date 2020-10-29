@@ -565,7 +565,6 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
     flag_optimal = -1; oneconfigflag = -1; normold = 999999999
 
     for attnum in range(maxattmpt):
-
         flog.write('%d\t' %(attnum+1))    
         flist.write(';# Attempt number \t%d\n' %(attnum+1))
         out_list = [[] for i in range(nch)] #reset every attempt
@@ -919,7 +918,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
             nresthisiter += 1
 
     if iter_num == -1 or iter_num == 1:
-        fin.write(';# Chain number: %d of %d chains\n' %(nch,chnum))
+        fin.write(';# Chain number: %d of %d chains\n' %(chnum,nch))
         fin.write(';# ----Begin main code -------\n')
         fin.write('\n')
 
