@@ -98,7 +98,7 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
     fin.write('guesscoord ;#  %s\n' %(comnt2))
     fin.write('writepdb $outputname.pdb \n')
     fin.write('writepsf $outputname.psf \n')
-    if style == 'multi':
+    if writetype == 'multi':
         fin.write('writepdb ${outputname}_${count}.pdb \n')#backup
         fin.write('writepdb ${outputname}_${count}.psf \n')
 #---------------------------------------------------------------------
