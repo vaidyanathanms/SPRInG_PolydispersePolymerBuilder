@@ -79,8 +79,9 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
     fin.write(';# Writing output \n')
     fin.write('regenerate angles dihedrals \n')
     if writetype == 'single':
-        comnt = 'dimer pdb for reference'
-        fin.write('coordpdb %s  ;# %s\n' %(basic_pdb,comnt))
+        comnt = 'reference pdb'
+        pdbfyle =  '../' + basic_pdb
+        fin.write('coordpdb %s  ;# %s\n' %(pdbfyle,comnt))
         comnt2 = 'Guesses rest of the coordinates from PDB inp'
     elif writetype == 'multi':
         if iter_num == 1:
@@ -96,9 +97,10 @@ def psfgen_postprocess(fin,basic_pdb,writetype,iter_num,segname):
         
     fin.write('guesscoord ;#  %s\n' %(comnt2))
     fin.write('writepdb $outputname.pdb \n')
-    fin.write('writepdb ${outputname}_${count}.pdb \n')#backup
     fin.write('writepsf $outputname.psf \n')
-    fin.write('writepdb ${outputname}_${count}.psf \n')
+    if style == 'multi':
+        fin.write('writepdb ${outputname}_${count}.pdb \n')#backup
+        fin.write('writepdb ${outputname}_${count}.psf \n')
 #---------------------------------------------------------------------
 
 # Define monomer ratios from literature    
