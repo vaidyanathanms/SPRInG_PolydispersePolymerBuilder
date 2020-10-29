@@ -92,11 +92,13 @@ def psfgen_postprocess(fin,writetype,iter_num,segname,fnamdflag,\
         fin.write('coordpdb %s  %s  ;#  %s\n' %(pdbfyle,segname,comnt))
         fin.write('guesscoord ;#  %s\n' %(comnt2))        
         fin.write('writepdb $outputname.pdb \n')
-        fin.write('writepdb ${outputname}_${count}.pdb \n')#backup
+        if writetype == 'multi':
+            fin.write('writepdb ${outputname}_${count}.pdb \n')#backup
 
 
     fin.write('writepsf $outputname.psf \n')
-    fin.write('writepdb ${outputname}_${count}.psf \n')
+    if writetype == 'multi':
+        fin.write('writepdb ${outputname}_${count}.psf \n')
 #---------------------------------------------------------------------
 
 # Read monomer ratios from input file
