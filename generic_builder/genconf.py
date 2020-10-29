@@ -29,13 +29,14 @@ print('Input file name: ', sys.argv[1])
 # Set defaults
 graft_opt = []; 
 input_pdb = 'none'; input_namd = 'None'; input_prm = 'None'
-input_pres = 'none'; input_pp = 'none'; seg_name = 'LIG'
+input_pres = 'none'; input_pp = 'none'
+def_res = 'none'; seg_name = 'LIG'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,fnamdflag,pmolflag,cleanslate,\
     packtol = def_vals()
 #------------------------------------------------------------------
 
-# Read from file: see definitions/defaults at the end of the script
+# Read from file
 with open(sys.argv[1]) as farg:
     for line in farg:
         line = line.rstrip('\n')
@@ -171,7 +172,7 @@ elif fl_constraint == 2 or fl_constraint == 3:
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top,\
-              ,num_chains,maxatt,tol,itertype,fl_constraint,\
+              seg_name,num_chains,maxatt,tol,itertype,fl_constraint,\
               resinpfyle,patinpfyle,disperflag,pdival)
 #------------------------------------------------------------------
 
@@ -300,13 +301,14 @@ for chcnt in range(num_chains):
     fmain = open(tcldir + '/' + tcl_fname,'w')
 
     # Copy NAMD files
-    gencpy(srcdir,tcldir,input_prm) 
-    fr = open(input_namd,'r')
-    fw = open('mini.conf','w')
-    fid = fr.read().replace("py_inpname",pdbpsf_name)
-    fw.write(fid)
-    fr.close(); fw.close()
-    gencpy(srcdir,tcldir,'mini.conf')
+    if fnamdflag:
+        gencpy(srcdir,tcldir,input_prm) 
+        fr = open(input_namd,'r')
+        fw = open('mini.conf','w')
+        fid = fr.read().replace("py_inpname",pdbpsf_name)
+        fw.write(fid)
+        fr.close(); fw.close()
+        gencpy(srcdir,tcldir,'mini.conf')
 
     deg_poly_this_chain = deg_poly_all[chcnt]
 
