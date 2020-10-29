@@ -32,7 +32,7 @@ input_pdb = 'none'; input_namd = 'None'; input_prm = 'None'
 input_pres = 'none'; input_pp = 'none'
 def_res = 'none'; seg_name = 'LIG'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
-    fl_constraint,disperflag,fnamdflag,pmolflag,cleanslate,\
+    fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
     packtol = def_vals()
 #------------------------------------------------------------------
 
@@ -49,7 +49,15 @@ with open(sys.argv[1]) as farg:
         elif words[0] == 'biomass_type': 
             biomas_typ = words[1]
         elif words[0] == 'disperse':
-            disper_fyle = words[1]; disperflag = 1
+            disperflag = 1
+            if words[1] == 'READ':
+                disper_fyle = words[1]; 
+            elif words[1] == 'CREATE':
+                makepdifile = 1; 
+                inp_pdival = float(words[2])
+                disper_fyle = words[3]
+            else:
+                exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0] == 'num_resids':
             mono_deg_poly = int(words[1])
         elif words[0] == 'num_chains':
@@ -143,8 +151,27 @@ elif cleanslate:
 print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
 #------------------------------------------------------------------
 
+# Check initial and pdb file defaults and copy files
+allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,makepdifile,\
+                               input_top,input_pdb,input_pres,input_pp)
+if allinitflags == -1:
+    exit()
+gencpy(srcdir,head_outdir,input_top)
+if fl_constraint == 1 or fl_constraint == 3:
+    gencpy(srcdir,head_outdir,input_pres)
+elif fl_constraint == 2 or fl_constraint == 3:
+    gencpy(srcdir,head_outdir,input_pp)
+elif makepdifile == 1:
+    gencpy(srcdir,head_outdir,'SZ_dist2.f90')
+#------------------------------------------------------------------
+
 # Make monomer array for all chains
 if disperflag:
+    if makepdifile == 1:
+        init_pdi_write(inp_pdival,mono_deg_poly,num_chains,head_outdir)
+        compile_and_run_pdi(head_outdir)
+        os.chdir(srcdir) #Change back to source directory
+
     print('Polydispersity file: ', disper_fyle)
     deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
     if pdival == 0:
@@ -155,18 +182,6 @@ else:
     print('Monodispersed case')
 print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
       sum(deg_poly_all)-num_chains,pdival)
-#------------------------------------------------------------------
-
-# Check initial and pdb file defaults and copy files
-allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,\
-                               input_top,input_pdb,input_pres,input_pp)
-if allinitflags == -1:
-    exit()
-gencpy(srcdir,head_outdir,input_top)
-if fl_constraint == 1 or fl_constraint == 3:
-    gencpy(srcdir,head_outdir,input_pres)
-elif fl_constraint == 2 or fl_constraint == 3:
-    gencpy(srcdir,head_outdir,input_pp)
 #------------------------------------------------------------------
 
 # Open log file
@@ -263,8 +278,7 @@ if patch_list == -1:
     exit()
 #------------------------------------------------------------------
 
-# Write to file
-# Headers
+# Write to file: Headers
 flog.write('Writing data to files \n')
 flog.write('Output style %s\n' %(itertype))
 print('Writing data to files..')

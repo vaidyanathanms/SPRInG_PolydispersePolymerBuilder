@@ -33,7 +33,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
+    return 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0
 #---------------------------------------------------------------------
 
 # Check all flags 
@@ -182,6 +182,36 @@ def patch_ratios(opt_graft,resdict,inpfyle):
 
 #---------------------------------------------------------------------
 
+# Initial PDI details if polydisperse chains are to be generated
+def init_pdi_write(pdival, avgmw, nch, destdir):
+
+    pdi_fyl = destdir + '/pdidetails.txt'
+    finit   = open(pdi_fyl,'w')
+    finit.write('%s\t %s\n' %('chain_data', '#pdi mw nchains'))
+    finit.write('%g\t %g\t %g\n' %(pdival,avgmw,nch))
+    finit.close()
+#---------------------------------------------------------------------
+
+# Compole and run PDI. 
+def compile_and_run_pdi(destdir):
+    
+    os.chdir(destdir)
+    if not os.path.exists('pdidetails.txt'):
+        print('init_pdi.txt not found')
+        return
+
+    if not os.path.exists('SZDist2.f90'):
+        print('SZDist2.f90 not found')
+        return
+        
+    # Generate PDI data
+    print("Generating polydisperse residues...")
+    subprocess.call(["ifort","-r8","-check","-traceback",
+                     "SZDist2.f90","-o","pdiinp.o"])
+
+    subprocess.call(["./pdiinp.o"])
+#---------------------------------------------------------------------
+
 # Assign MW for polydisperse cases
 def make_polydisp_resids(inpfyle, nch):
     if not os.path.exists(inpfyle):
@@ -254,8 +284,9 @@ def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
 #---------------------------------------------------------------------
 
 # Check initial files
-def find_init_files(fl_constraint,fpdbflag,fnamdflag,input_top='none',\
-                    input_pdb='none',input_pres='none',input_pp='none'):
+def find_init_files(fl_constraint,fpdbflag,fnamdflag,makepdifile,\
+                    input_top='none',input_pdb='none',input_pres='none',\
+                    input_pp='none'):
     # Read defaults and throw exceptions
     if not os.path.exists(input_top):
         print('Topology file not found \n', input_top)
@@ -275,6 +306,9 @@ def find_init_files(fl_constraint,fpdbflag,fnamdflag,input_top='none',\
            not os.path.exists(input_pp):
             print('One or more constraint file(s) not found \n')
             return -1
+    elif makepdifile == 1 and not os.path.exists('SZ_dist2.f90'):
+        print('Source file to generate PDIs not found')
+        return -1
     return 1
 #---------------------------------------------------------------------
 
