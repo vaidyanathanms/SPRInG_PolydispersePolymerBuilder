@@ -306,16 +306,16 @@ if pmolflag:
     initiate_packmol(fpack,biomas_typ,num_chains,packtol)
 #------------------------------------------------------------------
 
+# Make tcl output directory
+tcldir = head_outdir + '/all_tclfiles'
+if not os.path.isdir(tcldir):
+    os.mkdir(tcldir)
+
 # Write for each chain
 for chcnt in range(num_chains):
     chnum = chcnt + 1
     flog.write('****Writing chain number: %d***\n' %(chnum))
     print('Writing chain number: ', chnum)
-
-    # Make chain level output directory
-    tcldir = head_outdir + '/all_tclfiles_chnum_' + str(chnum)
-    if not os.path.isdir(tcldir):
-        os.mkdir(tcldir)
 
     #prefix for pdb/psf/tcl files
     pdbpsf_name = biomas_typ + '_case_' + str(casenum) + \
