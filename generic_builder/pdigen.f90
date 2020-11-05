@@ -14,11 +14,9 @@ PROGRAM GENERATE_SZDIST
      WRITE(log_fid,*) "Generating list for chain type ", chid
      CALL GENERATE_MWVALS(chid)
   END DO
-  CALL WRITE_STATS()
-  CALL CLOSE_FILES()
+  CALL CLOSE_AND_DEALLOCATE()
 
 END PROGRAM GENERATE_SZDIST
-
 !---------------------------------------------------------------------
 
 SUBROUTINE READ_PDIINP_FILE()
@@ -114,6 +112,10 @@ SUBROUTINE INIT_LOGWRITE()
   WRITE(log_fid,*) "************************************************"
   WRITE(log_fid,*) 
 
+  PRINT *, "*******************************************************"
+  PRINT *, "Drawing molecular weights from Schulz-Zimm distribution"
+  
+
 END SUBROUTINE INIT_LOGWRITE
 !---------------------------------------------------------------------
 
@@ -136,8 +138,8 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   ! PDI is within the tolerance, then set to 0
   INTEGER:: init_index,nextmw ! for systems with nchains < 8
 
-  inv_pdi = 1.0/real(PDI_arr(chain_id) - 1.0)
-  
+  inv_pdi = 1.0/real(PDI_arr(chain_id) - 1.0) !1/(PDI-1)
+
   ! Initialize all arrays to zero
   DO i = 1, maxsteps
      rat_arr(i) = 0
@@ -153,13 +155,13 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   ! Sigma (S) is on the range of 0 to infinity but will only count to
   ! "range" where sigma is assumed to be zero         
   DO i=1,maxsteps
-     rat_arr(i) = (range/REAL(maxsteps))*i
+     rat_arr(i) = (range/REAL(maxsteps))*REAL(i)
   END DO
 
   IF(PDI_arr(chain_id) .GT. 1.0) THEN
      ! Calculate probability function
      DO i=1,maxsteps
-        Prob_SZ(i) = (inv_pdi**inv_pdi)*(GAMMA(rat_arr(i))**-1)&
+        Prob_SZ(i) = (inv_pdi**inv_pdi)*(GAMMA(rat_arr(i))**-1.0)&
              &*(rat_arr(i)**(inv_pdi-1))*(EXP(-1.0*inv_pdi*rat_arr(i)))
      END DO
 
@@ -198,7 +200,6 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   Mi2 = 0
   itercnt = 0
   MolWt_arr = 0
-
   
   IF(ABS(PDI_arr(chain_id) - 1.0) .LT. 10**(-5)) THEN
      !Monodisperse case
@@ -239,9 +240,10 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
            DO WHILE (subtract == 1) 
               randnum = randnum - IntNormalDist(j)
               
+              !MW of ith monomer in nchain_list(chain_id)
               IF (randnum .LE.  0) THEN
                  subtract = 0
-                 MolWt_arr(chain_id) = INT(rat_arr(j-1)*avg_mw_arr(chain_id))
+                 MolWt_arr(i) = INT(rat_arr(j-1)*avg_mw_arr(chain_id))
               ELSE  
                  j = j + 1
                  IF(j == maxsteps+1) then
@@ -256,7 +258,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
         END DO
         
-        ! Calculate PDI of list
+        ! Calculate PDI of generated list
         DO chcnt=1,nchain_list(chain_id)
            Mi2 = Mi2 + (MolWt_arr(chcnt)**2)
            Mi = Mi + Molwt_arr(chcnt)
@@ -288,24 +290,20 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      WRITE(log_fid,*) "WARNING: Values NOT based on Schulz-Zimm distri&
           &bution"
      
-     init_index = 1
      nextmw = INT(avg_mw_arr(chain_id)/8.0)
      IF(nextmw < 1) nextmw = 1
-     IF(MOD(nchain_list(chain_id),2) .NE. 0) THEN
-        MolWt_arr(1) = avg_mw_arr(chain_id)
-        init_index = init_index + 1
-     END IF
-     DO i = init_index,2,nchain_list(chain_id)
-        MolWt_arr(i) = avg_mw_arr(chain_id) + nextmw
-        MolWt_arr(i+1) = avg_mw_arr(chain_id) - nextmw
-        nextmw = nextmw + INT(avg_mw_arr(chain_id)/8.0)
-        IF(nextmw < 1) nextmw = 1
-     END DO
      DO i = 1,nchain_list(chain_id)
-        IF(MolWt_arr(i) < 2) MolWt_arr = 2
+        MolWt_arr(i) = avg_mw_arr(chain_id) + INT(i/2)*INT((-1)**i)&
+             &*nextmw
      END DO
+     
+     ! Assign MW of 2 for MWs lesser than 2
+     DO i = 1,nchain_list(chain_id)
+        IF(MolWt_arr(i) < 2) MolWt_arr(i) = 2
+     END DO
+
      ! Calculate PDI of list
-     DO i=chcnt,nchain_list(chain_id)
+     DO chcnt=1,nchain_list(chain_id)
         Mi2 = Mi2 + (MolWt_arr(chcnt)**2)
         Mi = Mi + Molwt_arr(chcnt)
      END DO
@@ -326,6 +324,8 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      WRITE(out_fid,'(I0)') MolWt_arr(chcnt)
   END DO
 
+  DEALLOCATE(MolWt_arr) ! Deallocate for new chain system
+
 END SUBROUTINE GENERATE_MWVALS
 !---------------------------------------------------------------------
 
@@ -338,22 +338,35 @@ SUBROUTINE WRITE_STATS(chval,m1,m2,pdival)
   REAL :: mn, mw
 
   mn = REAL(m1)/REAL(nchain_list(chval))
-  mw = mn/REAL(nchain_list(chval))
-
+  mw = m2/m1
+ 
   WRITE(log_fid,*) "Chain details"
   WRITE(log_fid,*) "-------------"
-  WRITE(log_fid,*) "Type","Target PDI_val","Num of Chains","Inp Mn","O&
-       &ut Mn", "Out Mw", "Out PDI"
-  WRITE(log_fid,*) chval,PDI_arr(chval),nchain_list(chval)&
-       &,avg_mw_arr(chval), mn, mw, pdival
+  WRITE(log_fid,'(7(A,3X))') "Type", "Target_PDI_val",&
+       & "Num_of_chains", "Inp_Mn", "Out_Mn", "Out_Mw", "Out_PDI"
+  WRITE(log_fid,'(I0,1X,F8.4,1X,2(I0,1X),3(F9.4,1X))') chval&
+       &,PDI_arr(chval),nchain_list(chval),avg_mw_arr(chval), mn, mw,&
+       & pdival
    
 END SUBROUTINE WRITE_STATS
 !---------------------------------------------------------------------
 
-SUBROUTINE CLOSE_FILES()
+SUBROUTINE CLOSE_AND_DEALLOCATE()
 
+  USE PDI_PARAMS
+  IMPLICIT NONE
+  
+  ! Deallocate
+  DEALLOCATE(avg_mw_arr)
+  DEALLOCATE(nchain_list)
+  DEALLOCATE(PDI_arr)
+
+  ! Close files
   CLOSE(log_fid)
   CLOSE(out_fid)
 
-END SUBROUTINE CLOSE_FILES
+  PRINT *, "End generation of molecular weights.."
+  PRINT *, "*******************************************************"
+
+END SUBROUTINE CLOSE_AND_DEALLOCATE
 !---------------------------------------------------------------------

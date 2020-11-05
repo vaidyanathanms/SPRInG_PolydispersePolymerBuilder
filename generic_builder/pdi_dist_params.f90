@@ -17,7 +17,6 @@ MODULE PDI_PARAMS
   INTEGER, PARAMETER :: pdi_fid = 300, log_fid = 400, out_fid = 500
 
   !---------------------Arrays----------------------------------------
-
   INTEGER,ALLOCATABLE,DIMENSION(:)::avg_mw_arr !i/p Avg MW of chain types
   INTEGER,ALLOCATABLE,DIMENSION(:)::nchain_list !i/p list of num chains
   INTEGER,ALLOCATABLE,DIMENSION(:)::MolWt_arr ! Molecular wt o/p list
