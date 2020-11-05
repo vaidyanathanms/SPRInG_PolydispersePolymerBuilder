@@ -51,11 +51,16 @@ with open(sys.argv[1]) as farg:
         elif words[0] == 'disperse':
             disperflag = 1
             if words[1] == 'READ':
-                disper_fyle = words[1]; 
+                disper_fyle = words[2]; 
             elif words[1] == 'CREATE':
                 makepdifile = 1; 
+                if len(words) < 4:
+                    exit('Not enough arguments for PDI: '+line)
                 inp_pdival = float(words[2])
                 disper_fyle = words[3]
+                pditolval = 0
+                if len(words) == 5:
+                    pditolval = float(words[4])
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0] == 'num_resids':
@@ -161,16 +166,16 @@ if fl_constraint == 1 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pres)
 elif fl_constraint == 2 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pp)
-elif makepdifile == 1:
-    gencpy(srcdir,head_outdir,'SZ_dist2.f90')
 #------------------------------------------------------------------
 
 # Make monomer array for all chains
 if disperflag:
     if makepdifile == 1:
-        init_pdi_write(inp_pdival,mono_deg_poly,num_chains,head_outdir)
-        compile_and_run_pdi(head_outdir)
-        os.chdir(srcdir) #Change back to source directory
+        init_pdi_write(inp_pdival,mono_deg_poly,num_chains,disper_fyle\
+                       ,pditolval)
+        pdigenflag = compile_and_run_pdi(head_outdir)
+        if pdigenflag == -1:
+            exit()
 
     print('Polydispersity file: ', disper_fyle)
     deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)

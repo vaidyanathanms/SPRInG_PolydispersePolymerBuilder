@@ -18,6 +18,7 @@ import glob
 import random
 import collections
 import math
+import subprocess
 
 # General copy script
 def gencpy(dum_maindir,dum_destdir,fylname):
@@ -183,33 +184,35 @@ def patch_ratios(opt_graft,resdict,inpfyle):
 #---------------------------------------------------------------------
 
 # Initial PDI details if polydisperse chains are to be generated
-def init_pdi_write(pdival, avgmw, nch, destdir):
-
-    pdi_fyl = destdir + '/pdidetails.txt'
+def init_pdi_write(pdival,avgmw,nch,op_file,pditolval):
+    pdi_fyl = 'inp_genpdi.txt'
     finit   = open(pdi_fyl,'w')
-    finit.write('%s\t %s\n' %('chain_data', '#pdi mw nchains'))
+    finit.write('chain_types\n')
+    finit.write('%d\n' %(1)) # for now one chain type
+    finit.write('chain_details\n')
     finit.write('%g\t %g\t %g\n' %(pdival,avgmw,nch))
+    if pditolval != 0:
+        finit.write('tolerance\n')
+        finit.write('%g\n' %(pditolval))
+    finit.write('pdi_op_file\n')
+    finit.write('%s\n' %(op_file))
     finit.close()
 #---------------------------------------------------------------------
 
-# Compole and run PDI. 
+# Compile and run PDI. 
 def compile_and_run_pdi(destdir):
     
-    os.chdir(destdir)
-    if not os.path.exists('pdidetails.txt'):
-        print('init_pdi.txt not found')
-        return
-
-    if not os.path.exists('SZDist2.f90'):
-        print('SZDist2.f90 not found')
-        return
+    if not os.path.exists('inp_genpdi.txt'):
+        print('inp_genpdi.txt not found')
+        return -1
         
     # Generate PDI data
     print("Generating polydisperse residues...")
-    subprocess.call(["ifort","-r8","-check","-traceback",
-                     "SZDist2.f90","-o","pdiinp.o"])
+    subprocess.call(["ifort","-r8","-check","-traceback",\
+                     "pdi_dist_params.f90","pdigen.f90","-o","pdiinp.o"])
 
-    subprocess.call(["./pdiinp.o"])
+    subprocess.call(["./pdiinp.o", "inp_genpdi.txt"])
+    return 1
 #---------------------------------------------------------------------
 
 # Assign MW for polydisperse cases
@@ -220,7 +223,7 @@ def make_polydisp_resids(inpfyle, nch):
     chflag = 0
     with open(inpfyle) as fyle_pdi:
         for line in fyle_pdi:
-            line = re.split('\W+',line.strip('\n'))
+            line = re.split('\W+',line.strip())
             if chflag == 0:
                 if len(line) != 2 or line[0] != 'num_chains':
                     print('ERR: Unknown first line in: ', inpfyle)
@@ -306,9 +309,11 @@ def find_init_files(fl_constraint,fpdbflag,fnamdflag,makepdifile,\
            not os.path.exists(input_pp):
             print('One or more constraint file(s) not found \n')
             return -1
-    elif makepdifile == 1 and not os.path.exists('SZ_dist2.f90'):
-        print('Source file to generate PDIs not found')
-        return -1
+    elif makepdifile == 1:
+        if not os.path.exists('pdigen.f90') or \
+           not os.path.exists('pdi_dist_params.f90'):
+            print('Source file to generate PDIs not found')
+            return -1
     return 1
 #---------------------------------------------------------------------
 
@@ -999,6 +1004,10 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         resname1 = res_list[chnum-1][patcnt]
         resname2 = res_list[chnum-1][patcnt+1]
         patchname = patch_list[chnum-1][patcnt]
+
+        # Add extra letter to patches for consistency with topology file
+
+
 
         # Normal Case: (see create_patches)
         if (resname1 not in graft_opt) and (resname2 not in graft_opt):
