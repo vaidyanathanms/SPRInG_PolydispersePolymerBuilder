@@ -28,9 +28,9 @@ print('Input file name: ', sys.argv[1])
 
 # Set defaults
 graft_opt = []; 
-input_pdb = 'none'; input_namd = 'None'; input_prm = 'None'
+input_pdb = 'none'; input_namd = 'None'; input_prm = 'none'
 input_pres = 'none'; input_pp = 'none'
-def_res = 'none'; seg_name = 'LIG'
+def_res = 'none'; seg_name = 'LIG'; res_initiator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
     packtol = def_vals()
@@ -123,6 +123,8 @@ with open(sys.argv[1]) as farg:
             if len(words) > 3:
                 for k in range(6):
                     trans_list.append(words[3+k])            
+        elif words[0] == 'initiator':
+            res_initiator = words[1]
         else:
             exit('Unknown keyword ' + str(words[0]))
 
@@ -153,7 +155,7 @@ elif cleanslate:
     srcdir
     shutil.rmtree(head_outdir)
     os.mkdir(head_outdir)
-print('Begin analysis for: ',biomas_typ,', case_num: ', casenum)
+print('Begin analysis for: %s, casenum %d' %(biomas_typ,casenum))
 #------------------------------------------------------------------
 
 # Check initial and pdb file defaults and copy files
@@ -181,6 +183,8 @@ if disperflag:
     deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
     if pdival == 0:
         exit()
+    gencpy(srcdir,head_outdir,disper_fyle) # copy files to headdir
+
 else:
     deg_poly_all = [mono_deg_poly]*num_chains
     pdival = 1.0
@@ -253,9 +257,9 @@ patch_list = [[] for i in range(num_chains-1)]
 # Create residues and check for avg probability 
 print('Generating residues..')
 flog.write('Creating residue list..\n')
-res_list = create_segments(fresin,deg_poly_all,num_chains,seg_name,\
+res_list = create_residues(fresin,deg_poly_all,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,tol,maxatt,\
-                           flog,graft_opt,def_res)
+                           flog,graft_opt,def_res,res_initiator)
 if res_list == -1:
     exit()
 #------------------------------------------------------------------

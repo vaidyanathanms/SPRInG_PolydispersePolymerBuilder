@@ -390,8 +390,8 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
 #---------------------------------------------------------------------
     
 # Create entire list in one go so that cumulative distribution holds true
-def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,graftopt,defa_res):
+def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
+                    ,tol,maxattmpt,flog,graftopt,defa_res,res_initiator):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
@@ -442,7 +442,7 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                 ranval = random.random() #seed is current system time by default
                 findflag = 0
                 consecresflag = 0 #default: consecutive res are NOT found
-
+                initres_flag = 0 #def: no initiator res present
                 for arrcnt in range(len(cumulprobarr)):
         
                     #Only need to check the less than value because
@@ -454,11 +454,17 @@ def create_segments(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                 
                         findflag = 1   
                         resname1 = list(inp_dict.keys())[arrcnt]
+
                         if rescnt != 0: 
                             resname2 = out_list[chcnt][rescnt-1]
                             consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
-                        if consecresflag == 0:
+                            #initiator or terminator condition if present
+                            if resname1 == res_initiator and \
+                               rescnt != deg_poly_chain-1:
+                                initres_flag = 1 
+
+                        if consecresflag == 0 and initres_flag == 0:
                             flist.write(' residue\t%d\t%s\n' \
                                         %(rescnt+1,resname1))
                             out_list[chcnt].append(resname1)
@@ -900,7 +906,7 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
     return patchname,appendflag,consecpatflag
 #---------------------------------------------------------------------
 
-# Write residues/patches in one go -- OBSOLTE. 
+# Write residues/patches in one go -- OBSOLETE. 
 # Added in write_multi_segments
 def write_segments_onego(fin,nresarr,nch,chnum,segname,res_list,\
                          patch_list,graft_opt):
@@ -1005,12 +1011,17 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         resname2 = res_list[chnum-1][patcnt+1]
         patchname = patch_list[chnum-1][patcnt]
 
-        # Add extra letter to patches for consistency with topology file
-
-
-
         # Normal Case: (see create_patches)
         if (resname1 not in graft_opt) and (resname2 not in graft_opt):
+            # Add extra letter to patches for consistency with top file
+            # Only for B5 residues. May want to write it as an extra
+            # wrapper later for generic cases
+            if patchname == 'B5' and resname2 == 'GUAI':
+                patchname = 'B5G'
+            elif patchname == 'B5' and resname2 == 'PHP':
+                patchname = 'B5P'
+            elif patchname == 'B5' and resname2 == 'CAT':
+                patchname = 'B5C'
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
 
@@ -1030,6 +1041,17 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
 
             #Case 2b: patch normal between n and n+2
             else: 
+                # Add extra letter to patches for consistency with top file
+                # Only for B5 residues. May want to write it as an extra
+                # wrapper later for generic cases
+                resname3 = res_list[chnum-1][patcnt+2]
+                if patchname == 'B5' and resname3 == 'GUAI':
+                    patchname = 'B5G'
+                elif patchname == 'B5' and resname3 == 'PHP':
+                    patchname = 'B5P'
+                elif patchname == 'B5' and resname3 == 'CAT':
+                    patchname = 'B5C'
+
                 fin.write('patch  %s  %s:%d  %s:%d\n' \
                           %(patchname,segname,patcnt+1,segname,patcnt+3))
                     
