@@ -10,8 +10,8 @@ PROGRAM GENERATE_SZDIST
   CALL INIT_LOGWRITE()
   CALL RANDOM_SEED()
   DO chid = 1,nch_types
-     PRINT *, "Generating list for chain type: ", chain_id
-     WRITE(log_fid,*) "Generating list for chain type ", chain_id
+     PRINT *, "Generating list for chain type: ", chid
+     WRITE(log_fid,*) "Generating list for chain type ", chid
      CALL GENERATE_MWVALS(chid)
   END DO
   CALL WRITE_STATS()
@@ -27,7 +27,7 @@ SUBROUTINE READ_PDIINP_FILE()
   IMPLICIT NONE
 
   INTEGER :: nargs, ierr, AllocateStatus,i, chtype_flag = 0
-  INTEGER :: chcnt = 0. outflag = 0
+  INTEGER :: chcnt = 0, outflag = 0
   REAL::step ! Step size = range/maxsteps  
   CHARACTER(len=256) :: dumchar
 
@@ -122,7 +122,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   USE PDI_PARAMS
   IMPLICIT NONE
   INTEGER, INTENT(IN) :: chain_id
-  INTEGER :: i,j,chcnt
+  INTEGER :: i,j,chcnt,AllocateStatus
   REAL::inv_pdi  ! Related to PDI [k=1/(PDI-1)] 
   REAL::randnum ! random number from 0 to 1
   REAL::PDIgen ! PDI of generated FREE polymer list
@@ -134,7 +134,6 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   ! generating polymer, 0 when it has decided the M of the chain
   INTEGER::loop = 1 ! Similarly, will be equal to 1 until generated
   ! PDI is within the tolerance, then set to 0
-  CHARACTER(LEN = 256) :: out_fname
   INTEGER:: init_index,nextmw ! for systems with nchains < 8
 
   inv_pdi = 1.0/real(PDI_arr(chain_id) - 1.0)
@@ -174,7 +173,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
      ! Normalize the probability function
      DO i=1,maxsteps
-        NormalDist(i) = Prob_SZ(i)/area_val1 
+        NormalDist(i) = Prob_SZ(i)/area_val 
      END DO
 
      ! Calculate the normalized area for each slice such that the sum
@@ -200,11 +199,12 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   itercnt = 0
   MolWt_arr = 0
 
+  
   IF(ABS(PDI_arr(chain_id) - 1.0) .LT. 10**(-5)) THEN
-     
+     !Monodisperse case
      DO i = 1, nchain_list(chain_id)
         
-        MolWt_arr(i) = avg_mw_arr
+        MolWt_arr(i) = avg_mw_arr(chain_id)
         
      END DO
 
@@ -214,11 +214,13 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         Mi = Mi + Molwt_arr(chain_id)
      END DO
      
-     PDIgen = (Mi2*num_free)/(Mi**2)
-
-  ELSE IF(PDI_arr(chain_id) .GT. 1.0 .AND. chain_list(chain_id) .GE.&
+     PDIgen = (Mi2*nchain_list(chain_id))/(Mi**2)
+     
+     
+  ELSE IF(PDI_arr(chain_id) .GT. 1.0 .AND. nchain_list(chain_id) .GE.&
        & 8) THEN
      
+     !Polydisperse case with nchains >= 8
      DO WHILE(loop == 1 .AND. itercnt .LE. maxiteration)
         
         ! Reset variables
@@ -239,7 +241,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
               
               IF (randnum .LE.  0) THEN
                  subtract = 0
-                 MolWt_arr(chain_id) = INT(rat_arr(j-1)*avg_mw_arr(chain_id) 
+                 MolWt_arr(chain_id) = INT(rat_arr(j-1)*avg_mw_arr(chain_id))
               ELSE  
                  j = j + 1
                  IF(j == maxsteps+1) then
@@ -255,22 +257,21 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         END DO
         
         ! Calculate PDI of list
-        DO i=chcnt,nchain_list(chain_id)
+        DO chcnt=1,nchain_list(chain_id)
            Mi2 = Mi2 + (MolWt_arr(chcnt)**2)
            Mi = Mi + Molwt_arr(chcnt)
         END DO
         
-        PDIgen = REAL(Mi2*num_free)/real(Mi**2)
+        PDIgen = REAL(Mi2*nchain_list(chain_id))/real(Mi**2)
         
         ! Checks if generated PDI is within tolerance of desired PDI
         ! and  does  not have an Mi smaller than 2
-
         IF (ABS(PDIgen - PDI_arr(chain_id)) .LE. (PDI_arr(chain_id)&
              &*tol)) THEN
-           IF(MINVAL(MolWt1) .ge. 2) THEN ! not a solvent
-              loop = 0
+           IF(MINVAL(MolWt_arr) .GE. 2) THEN !avoid solvent
+              loop = 0 ! Conditions met
            END IF
-        END if
+        END IF
 
      END DO
 
@@ -279,6 +280,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      END IF
 
   ELSEIF(nchain_list(chain_id) .LT. 8) THEN
+     !Polydisperse case with nchains < 8
      PRINT *, "WARNING: Number of chains < 8", nchain_list(chain_id)
      PRINT *, "WARNING: Values NOT based on Schulz-Zimm distribution"
      WRITE(log_fid,*) "WARNING: Number of chains < 8",&
@@ -307,7 +309,13 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         Mi2 = Mi2 + (MolWt_arr(chcnt)**2)
         Mi = Mi + Molwt_arr(chcnt)
      END DO
-     PDIgen = REAL(Mi2*num_free)/real(Mi**2)
+     PDIgen = REAL(Mi2*nchain_list(chain_id))/real(Mi**2)
+
+  ELSE
+
+     PRINT *, "ERR: Unknown set of options"
+     PRINT *, "PDI/nchains: ", PDI_arr(chain_id),nchain_list(chain_id)
+     STOP
 
   END IF
 
@@ -315,7 +323,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
   WRITE(out_fid,*) "num_chains", nchain_list(chain_id)
   DO chcnt=1,nchain_list(chain_id)
-     write(out_fid,'(I0)') MolWt_arr(chcnt)
+     WRITE(out_fid,'(I0)') MolWt_arr(chcnt)
   END DO
 
 END SUBROUTINE GENERATE_MWVALS
@@ -334,9 +342,9 @@ SUBROUTINE WRITE_STATS(chval,m1,m2,pdival)
 
   WRITE(log_fid,*) "Chain details"
   WRITE(log_fid,*) "-------------"
-  WRITE(log_fid,*) "Type","Target PDI_val","Num of Chains","Inp Mn" &
-       &,"Out Mn", "Out Mw", "Out PDI"
-  WRITE(log_fid,*) i,PDI_arr(chval),,nchain_list(chval)&
+  WRITE(log_fid,*) "Type","Target PDI_val","Num of Chains","Inp Mn","O&
+       &ut Mn", "Out Mw", "Out PDI"
+  WRITE(log_fid,*) chval,PDI_arr(chval),nchain_list(chval)&
        &,avg_mw_arr(chval), mn, mw, pdival
    
 END SUBROUTINE WRITE_STATS
