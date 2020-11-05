@@ -76,7 +76,7 @@ SUBROUTINE READ_PDIINP_FILE()
         END IF
      ELSEIF(trim(adjustl(dumchar)) == 'tolerance') THEN
         READ(pdi_fid,*) tol        
-     ELSEIF(trim(adjustl(dumchar)) == 'op_prefix') THEN
+     ELSEIF(trim(adjustl(dumchar)) == 'pdi_op_file') THEN
         READ(pdi_fid,*) out_fname
         outflag = 1
      ELSE
@@ -270,7 +270,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         ! and  does  not have an Mi smaller than 2
         IF (ABS(PDIgen - PDI_arr(chain_id)) .LE. (PDI_arr(chain_id)&
              &*tol)) THEN
-           IF(MINVAL(MolWt_arr) .GE. 2) THEN !avoid solvent
+           IF(MINVAL(MolWt_arr) .GE. 3) THEN !minimum trimer
               loop = 0 ! Conditions met
            END IF
         END IF
@@ -297,9 +297,9 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
              &*nextmw
      END DO
      
-     ! Assign MW of 2 for MWs lesser than 2
+     ! Assign MW of 3 for MWs lesser than 3
      DO i = 1,nchain_list(chain_id)
-        IF(MolWt_arr(i) < 2) MolWt_arr(i) = 2
+        IF(MolWt_arr(i) < 3) MolWt_arr(i) = 3
      END DO
 
      ! Calculate PDI of list
