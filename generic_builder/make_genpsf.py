@@ -443,6 +443,8 @@ def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                 findflag = 0
                 consecresflag = 0 #default: consecutive res are NOT found
                 initres_flag = 0 #def: no initiator res present
+                endgraftflag = 0 #def: if last is graft, two prior
+                #residues are NOT graft
                 for arrcnt in range(len(cumulprobarr)):
         
                     #Only need to check the less than value because
@@ -455,16 +457,33 @@ def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                         findflag = 1   
                         resname1 = list(inp_dict.keys())[arrcnt]
 
+                        # Conditions for not first and last residues
                         if rescnt != 0: 
                             resname2 = out_list[chcnt][rescnt-1]
                             consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
-                            #initiator or terminator condition if present
-                            if resname1 == res_initiator and \
-                               rescnt != deg_poly_chain-1:
-                                initres_flag = 1 
 
-                        if consecresflag == 0 and initres_flag == 0:
+                            #initiator or terminator condition if present
+                            if resname1 == res_initiator:
+                                if rescnt != deg_poly_chain-1:
+                                    initres_flag = 1 #can only be at end
+                                elif rescnt == deg_poly_chain-1 and \
+                                     (resname2 in graftopt):
+                                    initres_flag = 1 #if end, previous
+                                    #cannot be graft
+
+
+                        # If the last residue is a graft, the previous
+                        # TWO resiudes cannot be graft
+                        if rescnt == deg_poly_chain-1 and \
+                           (resname1 in graftopt):
+                            resname3 = out_list[chcnt][rescnt-1]
+                            endgraftflag = is_res_cons(resname1,\
+                                                       resname3,graftopt)
+
+                        if consecresflag == 0 and initres_flag == 0 \
+                           and endgraftflag == 0:
+
                             flist.write(' residue\t%d\t%s\n' \
                                         %(rescnt+1,resname1))
                             out_list[chcnt].append(resname1)
