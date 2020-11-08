@@ -5,3 +5,8 @@ src_switchgrass/build_polymer/loukas_data/
 src_switchgrass/build_polymer/supp_createmelt_packmol.*
 src_switchgrass/build_polymer/__pycache__/
 src_switchgrass/build_polymer/casenum_*/
+generic_builder/__pycache__/
+generic_builder/a.out
+generic_builder/casenum_*/
+generic_builder/*.f90~
+generic_builder/*.o
