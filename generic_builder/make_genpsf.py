@@ -482,6 +482,17 @@ def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                             if (resname1 in graftopt):
                                 endgraftflag = 1                           
 
+#----------------------old version in master branch-----------------------
+#+                        # If the last residue is a graft, the previous
+#+                        # TWO resiudes cannot be graft
+#+                        if rescnt == deg_poly_chain-1 and \
+#+                           (resname1 in graftopt):
+#+                            resname3 = out_list[chcnt][rescnt-1]
+#+                            endgraftflag = is_res_cons(resname1,\
+#+                                                       resname3,graftopt)
+#---------------------------------------------------------------------------
+
+
                         if consecresflag == 0 and initres_flag == 0 \
                            and endgraftflag == 0:
 
