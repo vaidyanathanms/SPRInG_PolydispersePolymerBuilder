@@ -5,7 +5,7 @@ num_resids	22
 num_chains	10
 top_ipfile	top_lignin.top
 seg_name	LI5
-grafting	1	PCA	GOG	FERU	GOG
+grafting	1	PCA	GOG	FERUT	GOG
 tol	0.1
 nattempts	50
 op_style	single
