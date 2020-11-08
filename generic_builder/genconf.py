@@ -306,11 +306,13 @@ if pmolflag:
     initiate_packmol(fpack,biomas_typ,num_chains,packtol)
 #------------------------------------------------------------------
 
-# Make tcl output directory
+# Make tcl output directory and bundle.tcl
 tcldir = head_outdir + '/all_tclfiles'
 if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
-
+fbund = open(tcldir + '/bundle.tcl','w')
+fbund.write('# Combined file to generate psf files for all chains\n')
+fbund.write('# Use source bundle.tcl from Tk console to run\n')
 # Write for each chain
 for chcnt in range(num_chains):
     chnum = chcnt + 1
@@ -322,6 +324,7 @@ for chcnt in range(num_chains):
                   '_chnum_' + str(chnum) 
     tcl_fname  =  pdbpsf_name +'.tcl' 
     fmain = open(tcldir + '/' + tcl_fname,'w')
+    fbund.write('%s\t%s\n' %('source', tcl_fname))
 
     # Copy NAMD files
     if fnamdflag:
@@ -389,6 +392,7 @@ for chcnt in range(num_chains):
 #Exit and close file
 fmain.write('exit')
 fmain.close()
+fbund.close()
 #------------------------------------------------------------------
 
 #Extra PACKMOL directives
