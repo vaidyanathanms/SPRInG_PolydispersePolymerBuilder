@@ -469,17 +469,18 @@ def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                                     initres_flag = 1 #can only be at end
                                 elif rescnt == deg_poly_chain-1 and \
                                      (resname2 in graftopt):
-                                    initres_flag = 1 #if end, previous
-                                    #cannot be graft
+                                    #if end, previous cannot be graft
+                                    #(this condition is already met by
+                                    #following if statement. Just to
+                                    #be extra safe)
+                                    initres_flag = 1 
 
-
-                        # If the last residue is a graft, the previous
-                        # TWO resiudes cannot be graft
-                        if rescnt == deg_poly_chain-1 and \
-                           (resname1 in graftopt):
-                            resname3 = out_list[chcnt][rescnt-1]
-                            endgraftflag = is_res_cons(resname1,\
-                                                       resname3,graftopt)
+                        # Last residue and second last residue cannot
+                        # be grafts
+                        if rescnt == deg_poly_chain-2 or \
+                           rescnt == deg_poly_chain-1:
+                            if (resname1 in graftopt):
+                                endgraftflag = 1                           
 
                         if consecresflag == 0 and initres_flag == 0 \
                            and endgraftflag == 0:
