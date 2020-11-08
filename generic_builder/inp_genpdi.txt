@@ -1,0 +1,6 @@
+chain_types
+1
+chain_details
+1.5	 22	 10
+pdi_op_file
+polydisp.inp
