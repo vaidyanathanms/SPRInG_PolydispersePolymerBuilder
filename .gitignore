@@ -11,3 +11,4 @@ generic_builder/casenum_*/
 generic_builder/*.f90~
 generic_builder/*.o
 generic_builder/*.mod
+/*~
