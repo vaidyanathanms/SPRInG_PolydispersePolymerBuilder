@@ -1136,3 +1136,40 @@ def make_packmol(fpin,structname,nrepeats,trans_list):
     fpin.write('\n')
 #---------------------------------------------------------------------
 
+def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname):
+    # bundle.tcl for generating all psf in one go
+    fbund = open(tcldir + '/bundle.tcl','w')
+    fbund.write('# Combined file to generate psf files for all chains\n')
+    fbund.write('# Use source bundle.tcl from Tk console to run\n')
+    
+    # run_ligbuild.tcl to run ligninbuilder
+    flbd = open(tcldir + '/run_ligbuild.tcl','w')
+    flbd.write('# Run LigninBuilder using this script\n')
+    flbd.write('# Requires psf files in the folder\n')
+    flbd.write('# Use source run_ligbuild.tcl from Tkconsole to run\n')
+    flbd.write('package require ligninbuilder\n')
+    flbd.write('::ligninbuilder::makelignincoordinates . . \n')
+    flbd.close()
+
+    # combine_psf.tcl() to combine psf/pdb files
+    outname = pref_pdbpsf + '_nch_' + str(nch)
+    inpname = pref_pdbpsf + '_chnum_' 
+    topinp = '../' + topname
+    fcomb = open(tcldir + '/combine_all.tcl','w')
+    fcomb.write('# To generate combined psf/pdb file..\n')    
+    fcomb.write('package require psfgen\n')
+    fcomb.write('%s %s %s\n' %('set','name',outname))
+    fcomb.write('%s %s\n' %('topology',topinp))
+    fcomb.write('\n')
+    fcomb.write('%s %s %s\n' %('for {set i 0} {$i < ', str(nch), \
+                             ' }  {incr i} {'))
+    fcomb.write('%s %s\n' %('readpsf', inpname+str('i.psf')))
+    fcomb.write('%s %s\n' %('coordpdb', inpname+str('i.pdb')))
+    fcomb.write('}\n')
+    fcomb.write('writepdb $name.pdb\n')
+    fcomb.write('writepdb $name.psf\n')
+    fcomb.write('exit\n')
+    fcomb.close()
+    
+    return fbund
+#---------------------------------------------------------------------

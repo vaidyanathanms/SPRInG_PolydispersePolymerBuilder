@@ -127,8 +127,9 @@ with open(sys.argv[1]) as farg:
             res_initiator = words[1]
         else:
             exit('Unknown keyword ' + str(words[0]))
+#----------------------------------------------------------------------
 
-
+# Basic flag checks
 outflag = check_all_flags(casenum,fresflag,fpatflag,disperflag,\
                           mono_deg_poly,num_chains,fnamdflag,fpdbflag,\
                           ftopflag)
@@ -163,6 +164,9 @@ allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,makepdifile,\
                                input_top,input_pdb,input_pres,input_pp)
 if allinitflags == -1:
     exit()
+gencpy(srcdir,head_outdir,sys.argv[1])
+gencpy(srcdir,head_outdir,resinpfyle)
+gencpy(srcdir,head_outdir,patinpfyle)
 gencpy(srcdir,head_outdir,input_top)
 if fl_constraint == 1 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pres)
@@ -306,13 +310,13 @@ if pmolflag:
     initiate_packmol(fpack,biomas_typ,num_chains,packtol)
 #------------------------------------------------------------------
 
-# Make tcl output directory and bundle.tcl
+# Make tcl output directory and auxiliary files
 tcldir = head_outdir + '/all_tclfiles'
 if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
-fbund = open(tcldir + '/bundle.tcl','w')
-fbund.write('# Combined file to generate psf files for all chains\n')
-fbund.write('# Use source bundle.tcl from Tk console to run\n')
+fbund = make_auxiliary_files(tcldir,biomas_typ,num_chains,input_top)
+#------------------------------------------------------------------
+
 # Write for each chain
 for chcnt in range(num_chains):
     chnum = chcnt + 1
@@ -320,8 +324,7 @@ for chcnt in range(num_chains):
     print('Writing chain number: ', chnum)
 
     #prefix for pdb/psf/tcl files
-    pdbpsf_name = biomas_typ + '_case_' + str(casenum) + \
-                  '_chnum_' + str(chnum) 
+    pdbpsf_name = biomas_typ + '_chnum_' + str(chnum) 
     tcl_fname  =  pdbpsf_name +'.tcl' 
     fmain = open(tcldir + '/' + tcl_fname,'w')
     fbund.write('%s\t%s\n' %('source', tcl_fname))
