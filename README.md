@@ -137,6 +137,7 @@ Example:
 ```num_chains 10```
 
 * disperse (*Optional*)
+
 This keyword dictates the polydispersity of the system. Chains will be
 drawn from a Schulz-Zimm distribution. There are two options (and
 suboptions) for this case. Usage:
@@ -150,39 +151,39 @@ the chains from a file. Arguments for each option are elaboratoed
 below.
 
    * `CREATE` 
-   For this case a new file will be generated according to the
-   polydispersity value and the number of chains/number of residues
-   per chain. If the option is `CREATE`, it should come *after*
-   specifying `num_chains` and `num_resids`. Usage for this option is
-   as follows:
+    For this case a new file will be generated according to the
+    polydispersity value and the number of chains/number of residues
+    per chain. If the option is `CREATE`, it should come *after*
+    specifying `num_chains` and `num_resids`. Usage for this option is
+    as follows:
 
-  ```disperse CREATE PDIval Outputfile tolerance```
+    ```disperse CREATE PDIval Outputfile tolerance```
 
-  `PDIval` and `Outputfile` corresponds to the target polydispersity
-  value and the output file containing the molecular weights (degree
-  of polymerization) of each chain. `PDIval` is the target dispersity
-  index and is defined as the ratio between the weight average
-  molecular weight and number average molecular weight. This number
-  **should* be greater than 1.0. `Outputfile` is the name of the file
-  that is generated where the degree of polymerization of each chain
-  is written out.
+    `PDIval` and `Outputfile` corresponds to the target polydispersity
+    value and the output file containing the molecular weights (degree
+    of polymerization) of each chain. `PDIval` is the target dispersity
+    index and is defined as the ratio between the weight average
+    molecular weight and number average molecular weight. This number
+    **should* be greater than 1.0. `Outputfile` is the name of the file
+    that is generated where the degree of polymerization of each chain
+    is written out.
 
-  User can also specify an optional tolerance value (0-100). This
-  corresponds to the maximum relative error (in %) between the target
-  PDI  value and the simulated PDI. Different combinations will be
-  tried to obtain either the target PDI value of the system exits
-  after 50000 trials. Default value is 10. For all practical purposes
-  values between 5 and 15 yield good output distribution if the number
-  of chains in the system is less than 20. This argument is optional.
+    User can also specify an optional tolerance value (0-100). This
+    corresponds to the maximum relative error (in %) between the target
+    PDI  value and the simulated PDI. Different combinations will be
+    tried to obtain either the target PDI value of the system exits
+    after 50000 trials. Default value is 10. For all practical purposes
+    values between 5 and 15 yield good output distribution if the number
+    of chains in the system is less than 20. This argument is optional.
   
-  Examples:
+    Examples:
 
-  ```disperse CREATE 1.50 polydisp.inp```
-  ```disperse CREATE 1.50 polydisp.inp 8.0```
+     ```disperse CREATE 1.50 polydisp.inp```
+     ```disperse CREATE 1.50 polydisp.inp 8.0```
 
-  If this option is used, after running the program, a file with the
-  name 'geninp_pdistruct.txt' will be generated and it will contain
-  the details of the inputs.
+    If this option is used, after running the program, a file with the
+    name 'geninp_pdistruct.txt' will be generated and it will contain
+    the details of the inputs.
 
   * `READ`
   Users can also specify a file where the degree of polymerization of
