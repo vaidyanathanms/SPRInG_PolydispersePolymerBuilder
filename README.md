@@ -3,9 +3,9 @@
 This code will generate polydisperse residues according to Schulz-Zimm
 distribution. The generated `.psf` files can be used directly with
 LigninBuilder to generate starting `.psf`, `.pdb` and `.prm` files for
-running with `NAMD` or `GROMACS`. Although this code is primarily used
-to generate input files for various types of biomass, it can be used
-with any protein or polymer complex. 
+running with *NAMD* or *GROMACS* software. Although this code is
+primarily used to generate input files for various types of biomass,
+it can be used with any protein or polymer complex. 
 
 ## Input Requirements
 
@@ -86,10 +86,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    case_num caseID
    ```
 
-   `caseID` should be a positive integer. This will create a folder of the
-   name `casenum_caseID` where all the output files will be
+   `caseID` should be a positive integer. This will create a folder of
+   the name `casenum_caseID` where all the output files will be
    present. Default value for `caseID` is 1.
-
 
    Example:
 
@@ -147,8 +146,8 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    num_chains nch
    ```
 
-   where `nch` corresponds to the number of chains in the system (integer
-   value). 
+   where `nch` corresponds to the number of chains in the system
+   (integer value). 
 
    Example:
 
@@ -158,19 +157,19 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 5. disperse (*Optional*)
 
-   This keyword dictates the polydispersity of the system. Chains will be
-   drawn from a Schulz-Zimm distribution. There are two options (and
-   suboptions) for this case. Usage:
+   This keyword dictates the polydispersity of the system. Chains will
+   be drawn from a Schulz-Zimm distribution. There are two options
+   (and suboptions) for this case. Usage:
 
    ```
    disperse maketype optarg1 optarg2
    ```
 
-   `maketype` can be either `CREATE` or `READ`. `CREATE` corresponds to
-   generating a set of polydisperse chains from scratch. `READ`
-   corresponds to the molecular weights (degree of polymerization) of all
-   the chains from a file. Arguments for each option are elaboratoed
-   below.
+   `maketype` can be either `CREATE` or `READ`. `CREATE` corresponds
+   to generating a set of polydisperse chains from scratch. `READ`
+   corresponds to the molecular weights (degree of polymerization) of
+   all the chains from a file. Arguments for each option are
+   elaborated below.
 
   * `CREATE` 
     For this case a new file will be generated according to the
@@ -193,12 +192,13 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     is written out.
 
     User can also specify an optional tolerance value (0-100). This
-    corresponds to the maximum relative error (in %) between the target
-    PDI  value and the simulated PDI. Different combinations will be
-    tried to obtain either the target PDI value of the system exits
-    after 50000 trials. Default value is 10. For all practical purposes
-    values between 5 and 15 yield good output distribution if the number
-    of chains in the system is less than 20. This argument is optional.
+    corresponds to the maximum relative error (in %) between the
+    target PDI  value and the simulated PDI. Different combinations
+    will be tried to obtain either the target PDI value of the system
+    exits after 50000 trials. Default value is 10. For all practical
+    purposes values between 5 and 15 yield good output distribution if
+    the number of chains in the system is less than 20. This argument
+    is optional.
   
     Examples:
 
@@ -212,9 +212,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     the details of the inputs.
 
   * `READ`
-    Users can also specify a file where the degree of polymerization of
-    each chain is specified. In this case, the program will directly
-    read this file and create the segments. Usage:
+    Users can also specify a file where the degree of polymerization
+    of each chain is specified. In this case, the program will
+    directly read this file and create the segments. Usage:
 
     ```
     disperse READ  inpfilename
@@ -224,17 +224,63 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     should have the following structure. First line **should* have the
     structure: 
 
-    ```num_chains nchains```
+    ```
+    num_chains nchains
+    ```
 
-    where nchains correspond to the number of chains in the system. This
-    **should** be consistent with the `num_chains` in the input file
-    used to run `genconf.py`. The next `n` lines should correspond to
-    the degree of polymerization of the `n` different chains.
+    where nchains correspond to the number of chains in the
+    system. This **should** be consistent with the `num_chains` in the
+    input file used to run `genconf.py`. The next `n` lines should
+    correspond to the degree of polymerization of the `n` different
+    chains.
 
 6. top_ipfile
 
+   Mandatory keyword and the argument corresponds to the path to the
+   topology file. It is the user's responsibility to check whether the
+   residues generated have their monomer structure in the topology
+   file. User should also provide the full path to the topology
+   file. Default assumption is that the file is present in the path
+   from which `genconf.py` is called. Usage:
 
+   ```
+   top_ipfile filename
+   ```
 
+   Example:
+   ```
+   top_ipfile	top_lignin.top
+   ```
+
+7. resid_inp
+
+   Mandatory keyword and the argument corresponds to the average
+   probability of each residue in the system. It should be provided in
+   a file with each line corresponding to the residue name and the
+   average probability. Users **should** make sure that the residue
+   name matches with the residue name in the topology file. Usage:
+
+   ```
+   resid_inp filename
+   ```
+
+   Example for formatting filename:
+
+   ```
+   SYR	0.4
+   TRCN	0.05
+   GUAI	0.3
+   PCA	0.15
+   FERUT 0.1
+   ```
+
+   **NOTE**: The sum of the probabilities need not be one. Code
+     internally makes the sum to be one. However, a warning will be
+     issued if the sum is not one. The inputs should contain the
+     details for the branch (graft) monomers or else the code will not
+     recongnize any branch monomer.
+
+8. patch_inp
 
 
 
