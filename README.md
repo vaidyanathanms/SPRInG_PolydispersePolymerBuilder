@@ -150,7 +150,7 @@ corresponds to the molecular weights (degree of polymerization) of all
 the chains from a file. Arguments for each option are elaboratoed
 below.
 
-   * `CREATE` 
+  * `CREATE` 
     For this case a new file will be generated according to the
     polydispersity value and the number of chains/number of residues
     per chain. If the option is `CREATE`, it should come *after*
@@ -186,22 +186,22 @@ below.
     the details of the inputs.
 
   * `READ`
-  Users can also specify a file where the degree of polymerization of
-  each chain is specified. In this case, the program will directly
-  read this file and create the segments. Usage:
+    Users can also specify a file where the degree of polymerization of
+    each chain is specified. In this case, the program will directly
+    read this file and create the segments. Usage:
 
-  ```disperse READ  inpfilename```
+    ```disperse READ  inpfilename```
 
-  where `inpfilename` is the name of the file. The `inpfilename`
-  should have the following structure. First line **should* have the
-  structure: 
+    where `inpfilename` is the name of the file. The `inpfilename`
+    should have the following structure. First line **should* have the
+    structure: 
 
-  ```num_chains nchains```
+    ```num_chains nchains```
 
-  where nchains correspond to the number of chains in the system. This
-  **should** be consistent with the `num_chains` in the input file
-  used to run `genconf.py`. The next `n` lines should correspond to
-  the degree of polymerization of the `n` different chains.
+    where nchains correspond to the number of chains in the system. This
+    **should** be consistent with the `num_chains` in the input file
+    used to run `genconf.py`. The next `n` lines should correspond to
+    the degree of polymerization of the `n` different chains.
 
 * top_ipfile
 
