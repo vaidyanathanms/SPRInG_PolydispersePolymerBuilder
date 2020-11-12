@@ -46,8 +46,8 @@ the four files above to a new folder or run from the directory
 ## Making Inputs to PRIG
 
 `inputsforpsfgen.inp` is a sample input file containing all the input
-keywords to PRIG. We will look at the keywords in detail in the next
-section (PRIG Keywords). For running PRIG, use:
+keywords to PRIG. We will look at the keywords in detail in the *PRIG
+Keywords* section. For running PRIG, use:
 
 ```python
 python genconf.py inputsforpsfgen.inp
@@ -61,6 +61,9 @@ of `tcl` files, you are all set.
 Several things can go wrong including compiler compatibilities and
 incompatible input constraints (see PRIG Keywords). If you find an
 error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
+
+## Combining PRIG with LigninBuilder to Generate Structures
+
 
 ## PRIG Keywords
 
@@ -282,5 +285,42 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 8. patch_inp
 
+   Mandatory keyword and the argument corresponds to the average
+   probability of each patch in the system. It should be provided in
+   a file with each line corresponding to the residue name and the
+   average probability. Users **should** make sure that the patch
+   name matches with the patch name in the topology file. Usage:
+
+   ```
+   resid_inp filename
+   ```
+
+   Example for formatting filename:
+
+   ```
+   BO4 0.8
+   B5 0.1
+   BB 0.05
+   AO4 0.05
+   ```
+   
+   **NOTES**:
+
+	1.1  The sum of the probabilities need not be one. Code
+	     internally makes the sum to be one. However, a warning
+	      will be issued if the sum is not one. 
+
+	1.2  The inputs should *NOT* contain the details for the
+	     branch (graft) patches. DO NOT provide patch details for
+	     branch monomers here
+
+	1.3  If you are using PRIG with LigninBuilder, please be aware
+	     that residues for which there exists equal probability
+	     for the tacticities (e.g. BO4R and BO4L for BO4), DO NOT
+	     give separate probabilities for each
+	     stereoisomer. Provide the overall
+	     probability. LigninBuilder will make sure that all the
+	     stereoisomers have equal probability. 
+   
 
 
