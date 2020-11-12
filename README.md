@@ -17,14 +17,14 @@ platforms. `Python3.0+` and `ifort` compilers are required.
 Dowloading and unzipping the directory can be done using:
 ```
 git clone https://github.com/vaidyanathanms/files_lignin.git
-tar cvzf files_lignin.tar.gz
+tar xvzf files_lignin.tar.gz
 ```
 
 The above commands should generate a folder files_lignin with three
 sub-folders:
--generic_builder
--src_switchgrass
--src_poplar
+*generic_builder
+*src_switchgrass
+*src_poplar
 
 `src_switchgrass` and `src_poplar` contains `psf` and `pdb` files
 specific to switchgrass and poplar wood. We *recommend* using
@@ -72,29 +72,40 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 #### Keyword list
 
--case_num (*Optional*)
+*case_num (*Optional*)
 
 All input files can start with an *optional* `case_num` keyword. If
 this is used as a keyword, it should be the **first** keyword in the
-input file. 
+input file. Usage:
+```case_num caseID```
+`caseID` should be a positive integer. This will create a folder of the
+name `casenum_caseID` where all the output files will be
+present. Default value for `caseID` is 1.
 
-Usage: `case_num *arg_1*`
-
-`arg_1` should be a positive integer. This will create a folder of the
-name `casenum_arg1` where all the output files will be
-present. Default value for `arg_1` is 1.
-
--biomass_type
+*biomass_type
 
 This is a mandatory keyword and corresponds to the prefix for output
-file. 
-
-Usage: `biomass_type *arg_1*`
-
-The final tcl files generated will be of the form arg1_1_nch.tcl`,
+file. Usage: 
+```biomass_type argname```
+The final tcl files generated will be of the form argname_1_nch.tcl`,
 where `nch` corresponds to number of chains in the system.
 
 
+*num_resids
+This is a mandatory keyword and corresponds to the average number of
+residues per chain (segment). Usage:
+```num_resids nres```
+where `nres` corresponds to the average number of residues per chain
+(segment). Should be an integer value.
+
+*num_chains
+Mandatory keyword corresponding to the number of chains in the
+system. Usage:
+```num_chains nch```
+where `nch` corresponds to the number of chains in the system (integer
+value). 
+
+*disperse (*Optional*)
 
 
 
