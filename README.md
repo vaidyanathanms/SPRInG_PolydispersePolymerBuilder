@@ -74,71 +74,71 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 #### Keyword list
 
-* case_num (*Optional*)
+1. case_num (*Optional*)
 
-All input files can start with an *optional* `case_num` keyword. If
-this is used as a keyword, it should be the **first** keyword in the
-input file. Usage:
+   All input files can start with an *optional* `case_num` keyword. If
+   this is used as a keyword, it should be the **first** keyword in the
+   input file. Usage:
 
-```case_num caseID```
+   ```case_num caseID```
 
-`caseID` should be a positive integer. This will create a folder of the
-name `casenum_caseID` where all the output files will be
-present. Default value for `caseID` is 1.
-
-
-Example:
-
-```case_num 1```
+   `caseID` should be a positive integer. This will create a folder of the
+   name `casenum_caseID` where all the output files will be
+   present. Default value for `caseID` is 1.
 
 
-* biomass_type
+   Example:
 
-This is a mandatory keyword and corresponds to the prefix for output
-file. Usage: 
-
-```biomass_type argname```
-
-The final tcl files generated will be of the form argname_1_nch.tcl`,
-where `nch` corresponds to number of chains in the system.
+   ```case_num 1```
 
 
-Example:
+2. biomass_type
 
-```biomass_type switchgrass```
+   This is a mandatory keyword and corresponds to the prefix for output
+   file. Usage: 
 
+   ```biomass_type argname```
 
-* num_resids
-
-This is a mandatory keyword and corresponds to the average number of
-residues per chain (segment). Usage:
-
-```num_resids nres```
-
-where `nres` corresponds to the average number of residues per chain
-(segment). Should be an integer value.
+   The final tcl files generated will be of the form argname_1_nch.tcl`,
+   where `nch` corresponds to number of chains in the system.
 
 
-Example:
+   Example:
 
-```num_resids 20```
+   ```biomass_type switchgrass```
 
 
-* num_chains
+3. num_resids
 
-Mandatory keyword corresponding to the number of chains in the
-system. Usage:
+   This is a mandatory keyword and corresponds to the average number of
+   residues per chain (segment). Usage:
 
-```num_chains nch```
+   ```num_resids nres```
 
-where `nch` corresponds to the number of chains in the system (integer
-value). 
+   where `nres` corresponds to the average number of residues per chain
+   (segment). Should be an integer value.
 
-Example:
 
-```num_chains 10```
+   Example:
 
-* disperse (*Optional*)
+   ```num_resids 20```
+
+
+4. num_chains
+
+   Mandatory keyword corresponding to the number of chains in the
+   system. Usage:
+
+   ```num_chains nch```
+
+   where `nch` corresponds to the number of chains in the system (integer
+   value). 
+
+   Example:
+
+   ```num_chains 10```
+
+5. disperse (*Optional*)
 
 This keyword dictates the polydispersity of the system. Chains will be
 drawn from a Schulz-Zimm distribution. There are two options (and
