@@ -179,7 +179,7 @@ below.
     Examples:
 
      ```disperse CREATE 1.50 polydisp.inp
-        disperse CREATE 1.50 polydisp.inp 8.0```
+     disperse CREATE 1.50 polydisp.inp 8.0```
 
     If this option is used, after running the program, a file with the
     name 'geninp_pdistruct.txt' will be generated and it will contain
