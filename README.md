@@ -47,7 +47,9 @@ the four files above to a new folder or run from the directory
 keywords to PRIG. We will look at the keywords in detail in the next
 section (PRIG Keywords). For running PRIG, use:
 
-```python genconf.py inputsforpsfgen.inp```
+```python
+python genconf.py inputsforpsfgen.inp
+```
 
 `inputsforpsfgen.inp` can be substituted with the name of the input
 file you are creating. If this generates a folder with `casenum_1` and
@@ -178,8 +180,10 @@ below.
   
     Examples:
 
-     ```disperse CREATE 1.50 polydisp.inp
-     disperse CREATE 1.50 polydisp.inp 8.0```
+     ```
+     disperse CREATE 1.50 polydisp.inp
+     disperse CREATE 1.50 polydisp.inp 8.0
+     ```
 
     If this option is used, after running the program, a file with the
     name 'geninp_pdistruct.txt' will be generated and it will contain
