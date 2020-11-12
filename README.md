@@ -22,19 +22,21 @@ tar xvzf files_lignin.tar.gz
 
 The above commands should generate a folder files_lignin with three
 sub-folders:
-*generic_builder
-*src_switchgrass
-*src_poplar
+
+* generic_builder
+* src_switchgrass
+* src_poplar
 
 `src_switchgrass` and `src_poplar` contains `psf` and `pdb` files
 specific to switchgrass and poplar wood. We *recommend* using
 `generic_builder` for generating a structure from scratch. Inside
 `generic_builder` folder, you should see the following python and
 FORTRAN files:
--make_genpsf.py
--genconf.py
--pdi_gen.f90
--pdi_dist_params.f90
+
+- make_genpsf.py
+- genconf.py
+- pdi_gen.f90
+- pdi_dist_params.f90
 
 If the files are present, you are set to generate a new structure.
 There are two ways to generate initial structure. You can either copy
@@ -80,7 +82,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    this is used as a keyword, it should be the **first** keyword in the
    input file. Usage:
 
-   ```case_num caseID```
+   ```
+   case_num caseID
+   ```
 
    `caseID` should be a positive integer. This will create a folder of the
    name `casenum_caseID` where all the output files will be
@@ -89,7 +93,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
    Example:
 
-   ```case_num 1```
+   ```
+   case_num 1
+   ```
 
 
 2. biomass_type
@@ -97,7 +103,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    This is a mandatory keyword and corresponds to the prefix for output
    file. Usage: 
 
-   ```biomass_type argname```
+   ```
+   biomass_type argname
+   ```
 
    The final tcl files generated will be of the form argname_1_nch.tcl`,
    where `nch` corresponds to number of chains in the system.
@@ -105,7 +113,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
    Example:
 
-   ```biomass_type switchgrass```
+   ```
+   biomass_type switchgrass
+   ```
 
 
 3. num_resids
@@ -113,7 +123,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    This is a mandatory keyword and corresponds to the average number of
    residues per chain (segment). Usage:
 
-   ```num_resids nres```
+   ```
+   num_resids nres
+   ```
 
    where `nres` corresponds to the average number of residues per chain
    (segment). Should be an integer value.
@@ -121,7 +133,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
    Example:
 
-   ```num_resids 20```
+   ```
+   num_resids 20
+   ```
 
 
 4. num_chains
@@ -129,14 +143,18 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    Mandatory keyword corresponding to the number of chains in the
    system. Usage:
 
-   ```num_chains nch```
+   ```
+   num_chains nch
+   ```
 
    where `nch` corresponds to the number of chains in the system (integer
    value). 
 
    Example:
 
-   ```num_chains 10```
+   ```
+   num_chains 10
+   ```
 
 5. disperse (*Optional*)
 
@@ -144,7 +162,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    drawn from a Schulz-Zimm distribution. There are two options (and
    suboptions) for this case. Usage:
 
-   ```disperse maketype optarg1 optarg2```
+   ```
+   disperse maketype optarg1 optarg2
+   ```
 
    `maketype` can be either `CREATE` or `READ`. `CREATE` corresponds to
    generating a set of polydisperse chains from scratch. `READ`
@@ -159,7 +179,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     specifying `num_chains` and `num_resids`. Usage for this option is
     as follows:
 
-    ```disperse CREATE PDIval Outputfile tolerance```
+    ```
+    disperse CREATE PDIval Outputfile tolerance
+    ```
 
     `PDIval` and `Outputfile` corresponds to the target polydispersity
     value and the output file containing the molecular weights (degree
@@ -194,7 +216,9 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     each chain is specified. In this case, the program will directly
     read this file and create the segments. Usage:
 
-    ```disperse READ  inpfilename```
+    ```
+    disperse READ  inpfilename
+    ```
 
     where `inpfilename` is the name of the file. The `inpfilename`
     should have the following structure. First line **should* have the
