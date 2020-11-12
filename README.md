@@ -306,23 +306,23 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    
     **NOTES**:
 
-	8.1  The sum of the probabilities need not be one. Code
-	     internally makes the sum to be one. However, a warning
-	     will be issued if the sum is not one. 
+	8.  The sum of the probabilities need not be one. Code
+	    internally makes the sum to be one. However, a warning
+	    will be issued if the sum is not one. 
 
-	8.2  The inputs should **NOT** contain the details for the
-	     branch (graft) patches. DO NOT provide patch details for
-	     branch monomers here. This is different from inputting
-	     residues where the name of the branched residue should be
-	     present. 
+	8.  The inputs should **NOT** contain the details for the
+	    branch (graft) patches. DO NOT provide patch details for
+	    branch monomers here. This is different from inputting
+	    residues where the name of the branched residue should be
+	    present. 
 
-	8.3  If you are using PRIG with LigninBuilder, please be aware
-	     that residues for which there exists equal probability
-	     for the tacticities (e.g. BO4R and BO4L for BO4), DO NOT
-	     give separate probabilities for each
-	     stereoisomer. Provide the overall
-	     probability. LigninBuilder will make sure that all the
-	     stereoisomers have equal probability. 
+	8.  If you are using PRIG with LigninBuilder, please be aware
+	    that residues for which there exists equal probability
+	    for the tacticities (e.g. BO4R and BO4L for BO4), DO NOT
+	    give separate probabilities for each
+	    stereoisomer. Provide the overall
+	    probability. LigninBuilder will make sure that all the
+	    stereoisomers have equal probability. 
    
 
 9.  seg_name
