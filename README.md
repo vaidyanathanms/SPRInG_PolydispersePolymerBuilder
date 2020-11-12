@@ -160,9 +160,11 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 1.  disperse (*Optional*)
 
-    This keyword dictates the polydispersity of the system. Chains will
-    be drawn from a Schulz-Zimm distribution. There are two options
-    (and suboptions) for this case. Usage:
+    This keyword dictates the polydispersity of the system. If this
+    option is not provided, chains are assumed as monodisperse by
+    default. If the option is provided, chains will be drawn from a
+    Schulz-Zimm distribution. There are two options (and suboptions)
+    for this case. Usage:
 
     ```
     disperse maketype optarg1 optarg2
