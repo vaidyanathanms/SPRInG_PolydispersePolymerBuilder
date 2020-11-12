@@ -306,15 +306,17 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    
    **NOTES**:
 
-	1.1  The sum of the probabilities need not be one. Code
+	8.1  The sum of the probabilities need not be one. Code
 	     internally makes the sum to be one. However, a warning
-	      will be issued if the sum is not one. 
+	     will be issued if the sum is not one. 
 
-	1.2  The inputs should *NOT* contain the details for the
+	8.2  The inputs should **NOT** contain the details for the
 	     branch (graft) patches. DO NOT provide patch details for
-	     branch monomers here
+	     branch monomers here. This is different from inputting
+	     residues where the name of the branched residue should be
+	     present. 
 
-	1.3  If you are using PRIG with LigninBuilder, please be aware
+	8.3  If you are using PRIG with LigninBuilder, please be aware
 	     that residues for which there exists equal probability
 	     for the tacticities (e.g. BO4R and BO4L for BO4), DO NOT
 	     give separate probabilities for each
@@ -323,4 +325,24 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 	     stereoisomers have equal probability. 
    
 
+9. seg_name
+
+   Mandatory keyword which corresponds to the name of the
+   segment. Except for one case (see NOTE below), this will serve as
+   the prefix for segment names for different chains in the `psf`
+   file output. Usage:
+
+   ```
+   seg_name argname
+   ```
+   
+   The output `psf` name will have segment names of the form
+   `argname_chainID` where `chainID` is an integer varying from 1 to
+   number of chains in the system. 
+
+   **NOTE**: In case, an input PDB file is given to generate the PDB
+     file using `genconf.py` and **NOT** LigninBuilder, users must
+     make sure that the segment name matches the segment name in the
+     input PDB file that is used to generate the initial guesses for
+     the initial coordinates (ICs). 
 
