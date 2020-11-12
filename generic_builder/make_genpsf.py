@@ -274,7 +274,8 @@ def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
     flog.write('Tot res/pat: %d\t%d\n' %(sum(Marr),sum(Marr)-len(Marr)))
     flog.write('Res/patch inputs: %s\t%s\n' %(resfyle,patfyle))
     flog.write('Input Topology file file: %s\n' %(tfile))
-    flog.write('Segment name: %s\n' %(segname))
+    flog.write('Segment name in input (or output prefix): %s\n' \
+               %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
     if fl_constraint != 0 :
         flog.write('Patch/residue constraints: Yes\n')
@@ -390,7 +391,7 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
 #---------------------------------------------------------------------
     
 # Create entire list in one go so that cumulative distribution holds true
-def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
+def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                     ,tol,maxattmpt,flog,graftopt,defa_res,res_initiator):
 
     # Write list to a separate file
@@ -426,6 +427,7 @@ def create_residues(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
         out_list = [[] for i in range(nch)] #reset every attempt
    
         for chcnt in range(nch):
+            segname = segpref + str(chcnt+1)
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(' segment %s {\n' %(segname))
             # first is default residue if present
@@ -634,7 +636,7 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 # Rule 4: if last resiudue is a graft. graft_patch m between n/n-1; no
 # checks required
 
-def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
+def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                    ,tol,maxattmpt,flog,ctr_flag,pres_fyle,residlist,\
                    patforbid,graft_opt):
 
@@ -675,6 +677,7 @@ def create_patches(flist,nresarr,nch,segname,inp_dict,cumulprobarr\
                 break #move to next attempt
 
             chcnt += 1
+            segname = segpref + str(chcnt+1)
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(';# -- Begin patches for %s ---\n' %(segname))
 
@@ -1000,7 +1003,7 @@ def write_segments_onego(fin,nresarr,nch,chnum,segname,res_list,\
 
 # Write residues/patches iteration by iteration
 def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
-                         segname,res_list,patch_list,graft_opt,\
+                         segpref,res_list,patch_list,graft_opt,\
                          maxnummons):
 
     # Extra condition to account for the graft monomer happening at
@@ -1024,6 +1027,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         fin.write('\n')
 
 
+    segname = segpref + str(chnum)
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
 
