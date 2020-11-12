@@ -140,17 +140,17 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 5. disperse (*Optional*)
 
-This keyword dictates the polydispersity of the system. Chains will be
-drawn from a Schulz-Zimm distribution. There are two options (and
-suboptions) for this case. Usage:
+   This keyword dictates the polydispersity of the system. Chains will be
+   drawn from a Schulz-Zimm distribution. There are two options (and
+   suboptions) for this case. Usage:
 
-```disperse maketype optarg1 optarg2```
+   ```disperse maketype optarg1 optarg2```
 
-`maketype` can be either `CREATE` or `READ`. `CREATE` corresponds to
-generating a set of polydisperse chains from scratch. `READ`
-corresponds to the molecular weights (degree of polymerization) of all
-the chains from a file. Arguments for each option are elaboratoed
-below.
+   `maketype` can be either `CREATE` or `READ`. `CREATE` corresponds to
+   generating a set of polydisperse chains from scratch. `READ`
+   corresponds to the molecular weights (degree of polymerization) of all
+   the chains from a file. Arguments for each option are elaboratoed
+   below.
 
   * `CREATE` 
     For this case a new file will be generated according to the
@@ -207,7 +207,7 @@ below.
     used to run `genconf.py`. The next `n` lines should correspond to
     the degree of polymerization of the `n` different chains.
 
-* top_ipfile
+6. top_ipfile
 
 
 
