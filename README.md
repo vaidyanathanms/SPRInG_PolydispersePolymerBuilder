@@ -100,7 +100,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     ```
 
 
-2.  biomass_type
+1.  biomass_type
 
     This is a mandatory keyword and corresponds to the prefix for output
     file. Usage: 
@@ -120,7 +120,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     ```
 
 
-3.  num_resids
+1.  num_resids
 
     This is a mandatory keyword and corresponds to the average number of
     residues per chain (segment). Usage:
@@ -140,7 +140,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     ```
 
 
-4.  num_chains
+1.  num_chains
 
     Mandatory keyword corresponding to the number of chains in the
     system. Usage:
@@ -158,7 +158,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     num_chains 10
     ```
 
-5.  disperse (*Optional*)
+1.  disperse (*Optional*)
 
     This keyword dictates the polydispersity of the system. Chains will
     be drawn from a Schulz-Zimm distribution. There are two options
@@ -237,7 +237,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
       should correspond to the degree of polymerization of the `n`
       different chains.
 
-6.  top_ipfile
+1.  top_ipfile
 
     Mandatory keyword and the argument corresponds to the path to the
     topology file. It is the user's responsibility to check whether the
@@ -255,7 +255,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     top_ipfile	top_lignin.top
     ```
 
-7.  resid_inp
+1.  resid_inp
 
     Mandatory keyword and the argument corresponds to the average
     probability of each residue in the system. It should be provided in
@@ -283,7 +283,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
      details for the branch (graft) monomers or else the code will not
      recongnize any branch monomer.
 
-8.  patch_inp
+1.  patch_inp
 
     Mandatory keyword and the argument corresponds to the average
     probability of each patch in the system. It should be provided in
@@ -306,17 +306,17 @@ ignored. However, `#` *cannot* be used in the middle of a line.
    
     **NOTES**:
 
-	8.  The sum of the probabilities need not be one. Code
+	1.  The sum of the probabilities need not be one. Code
 	    internally makes the sum to be one. However, a warning
 	    will be issued if the sum is not one. 
 
-	8.  The inputs should **NOT** contain the details for the
+	1.  The inputs should **NOT** contain the details for the
 	    branch (graft) patches. DO NOT provide patch details for
 	    branch monomers here. This is different from inputting
 	    residues where the name of the branched residue should be
 	    present. 
 
-	8.  If you are using PRIG with LigninBuilder, please be aware
+	1.  If you are using PRIG with LigninBuilder, please be aware
 	    that residues for which there exists equal probability
 	    for the tacticities (e.g. BO4R and BO4L for BO4), DO NOT
 	    give separate probabilities for each
@@ -325,7 +325,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 	    stereoisomers have equal probability. 
    
 
-9.  seg_name
+1.  seg_name
 
     Mandatory keyword which corresponds to the name of the
     segment. Except for one case (see NOTE below), this will serve as
@@ -341,10 +341,10 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     number of chains in the system. 
 
     **NOTE**: In case, an input PDB file is given to generate the PDB
-     file using `genconf.py` and **NOT** LigninBuilder, users must
-     make sure that the segment name matches the segment name in the
-     input PDB file that is used to generate the initial guesses for
-     the initial coordinates (ICs). 
+    file using `genconf.py` and **NOT** LigninBuilder, users must
+    make sure that the segment name matches the segment name in the
+    input PDB file that is used to generate the initial guesses for
+    the initial coordinates (ICs). 
 
-10.  grafting 
+1.  grafting 
 
