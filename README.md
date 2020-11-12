@@ -72,7 +72,7 @@ ignored. However, `#` *cannot* be used in the middle of a line.
 
 #### Keyword list
 
-*case_num (*Optional*)
+* case_num (*Optional*)
 
 All input files can start with an *optional* `case_num` keyword. If
 this is used as a keyword, it should be the **first** keyword in the
@@ -82,30 +82,39 @@ input file. Usage:
 name `casenum_caseID` where all the output files will be
 present. Default value for `caseID` is 1.
 
-*biomass_type
+* biomass_type
 
 This is a mandatory keyword and corresponds to the prefix for output
 file. Usage: 
+
 ```biomass_type argname```
+
 The final tcl files generated will be of the form argname_1_nch.tcl`,
 where `nch` corresponds to number of chains in the system.
 
 
 *num_resids
+
 This is a mandatory keyword and corresponds to the average number of
 residues per chain (segment). Usage:
+
 ```num_resids nres```
+
 where `nres` corresponds to the average number of residues per chain
 (segment). Should be an integer value.
 
 *num_chains
+
 Mandatory keyword corresponding to the number of chains in the
 system. Usage:
+
 ```num_chains nch```
+
 where `nch` corresponds to the number of chains in the system (integer
 value). 
 
 *disperse (*Optional*)
+
 
 
 
