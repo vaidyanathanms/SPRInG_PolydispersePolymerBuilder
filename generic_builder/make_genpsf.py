@@ -1171,7 +1171,7 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname):
     fcomb.write('%s %s\n' %('coordpdb', inpname+str('i.pdb')))
     fcomb.write('}\n')
     fcomb.write('writepdb $name.pdb\n')
-    fcomb.write('writepdb $name.psf\n')
+    fcomb.write('writepsf $name.psf\n')
     fcomb.write('exit\n')
     fcomb.close()
     
