@@ -1165,6 +1165,7 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname):
     fcomb.write('%s %s %s\n' %('set','name',outname))
     fcomb.write('%s %s\n' %('topology',topinp))
     fcomb.write('\n')
+    fcomb.write('resetpsf\n')
     fcomb.write('%s %s %s\n' %('for {set i 0} {$i < ', str(nch), \
                              ' }  {incr i} {'))
     fcomb.write('%s %s\n' %('readpsf', inpname+str('i.psf')))
