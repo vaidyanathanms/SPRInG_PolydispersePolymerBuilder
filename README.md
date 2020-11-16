@@ -348,5 +348,77 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     input PDB file that is used to generate the initial guesses for
     the initial coordinates (ICs). 
 
-1.  grafting 
+1.  grafting (*Optional*)
 
+    To define branching of main chain. Branches are single monomer
+    long in the current mode. The program can manage multiple types of
+    branches. Usage:
+
+    ```
+    grafting 1 branch1 patch1 branch2 patch2 ...
+    ```
+
+    The keyword `grafting` should be followed by an integer 1 or 0. 1
+    corresponds to turning on the branch and 0 corresponds to no
+    branch. This gives the user to toggle between branched and
+    non-branched system easily. 
+
+    The branch1/patch1 pair corresponds to the name of the branch
+    residue and the patch connecting the branch with the backbone. The
+    inputs should always be given as pairs. Users must make sure that
+    the residue names are already present in the input list for
+    residues. 
+
+    Example:
+    
+    ```
+    grafting 1 PCA GOG FERUT GOG
+    ```
+
+    **NOTE**: Since, by construction, the number of patches equal to
+      the number of residues in the system, the final probabilities
+      for the patch values may not reflect the input values.
+
+1.  nattempts (*Optional*)
+
+    Number of attempts to achieve a random configuration that
+    corresponds to the input probabilities for residues and
+    patches. Each time a better target configuration (smaller residual
+    error) is found, the program saves that configuration. In case,
+    the target residual error is not met within `nattempts`, the best
+    configuration along with the residual error will be generated as
+    output. Usage:
+
+    ```
+    nattempts intvalue
+    ```
+
+    where intvalue is the number of attempts. A value between 50 and
+    200 for an average degree of polymerization of 30 works generates
+    a target onfiguration in a few minutes. 
+
+    Example:
+    
+    ```
+    nattempts 60
+    ```
+
+    Default value for `nattempts` is 50.
+
+1.  tol (*Optional*)
+
+    Relative tolerance between the input probabilities for
+    residues/patches and averaged output values for
+    residues/patches. L2norm is used to calculate the relative
+    error. Program runs until the error is less than tolerance value
+    or the number of attempts exceeds `nattempts`. Usage:
+
+    ```
+    tol	tolval
+    ```
+
+    where `tolval` is a number between 0 and 1. Nominal values are
+    between 0.05 and 0.15. Default value is 0.1.
+
+1.  initiator (*Optional*)
+    
