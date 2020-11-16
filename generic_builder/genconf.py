@@ -33,7 +33,7 @@ input_pres = 'none'; input_pp = 'none'
 def_res = 'none'; seg_name = 'SEG'; res_initiator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
-    packtol = def_vals()
+    packtol,maxatt,conftol = def_vals()
 #------------------------------------------------------------------
 
 # Read from file
@@ -77,7 +77,7 @@ with open(sys.argv[1]) as farg:
                 for wcnt in range(len(words)-2):
                     graft_opt.append(words[wcnt+2])
         elif words[0] == 'tol':
-            tol = float(words[1])
+            conftol = float(words[1])
         elif words[0] == 'nattempts':
             maxatt = int(words[1])
         elif words[0] == 'op_style':
@@ -200,7 +200,7 @@ print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top,\
-              seg_name,num_chains,maxatt,tol,itertype,fl_constraint,\
+              seg_name,num_chains,maxatt,conftol,itertype,fl_constraint,\
               resinpfyle,patinpfyle,disperflag,pdival)
 #------------------------------------------------------------------
 
@@ -262,7 +262,7 @@ patch_list = [[] for i in range(num_chains-1)]
 print('Generating residues..')
 flog.write('Creating residue list..\n')
 res_list = create_residues(fresin,deg_poly_all,num_chains,seg_name,\
-                           resperc_dict,cumul_resarr,tol,maxatt,\
+                           resperc_dict,cumul_resarr,conftol,maxatt,\
                            flog,graft_opt,def_res,res_initiator)
 if res_list == -1:
     exit()
@@ -283,7 +283,7 @@ else:
 print('Generating patches..')
 flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
-                            patchperc_dict,cumul_patcharr,tol,\
+                            patchperc_dict,cumul_patcharr,conftol,\
                             maxatt,flog,fl_constraint,input_pres,\
                             res_list,ppctr_list,graft_opt)
 
