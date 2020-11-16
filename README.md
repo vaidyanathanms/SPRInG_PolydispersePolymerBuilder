@@ -70,12 +70,19 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 In this section, we look at the different keywords that are needed to
 generate a polydisperse input structure. 
 
-#### Rules for input keywords
-Some keywords are optional and are prefixed with (*Optional*) while
-introducing the keyword. A space/tab should be present between the
-keywords and arguments or between arguments. A line **cannot** be left
-empty. A new line can start with an optional `#`. These lines will be
-ignored. However, `#` *cannot* be used in the middle of a line.
+#### Rules for input file
+
+-  Some keywords are optional and are prefixed with (*Optional*) while
+   introducing the keyword. 
+-  A space/tab should be present between the keywords and arguments or
+   between arguments. 
+-  All keywords are case-sensitive. 
+-  A line **cannot** be left empty (blank). 
+-  A new line can start with an optional `#`. These lines will be
+   ignored. However, `#` *cannot* be used in the middle of a line.
+-  The input file name (and file names used as arguments) cannot be
+   specified as `None` or `none`. These are reserved keywords within
+   the program.
 
 #### Keyword list
 
@@ -348,6 +355,39 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     input PDB file that is used to generate the initial guesses for
     the initial coordinates (ICs). 
 
+1.  op_style (*Optional*)
+
+    Keyword dictating the output style. There are two argument options
+    -- `single` and `multi`. Usage:
+
+    ```
+    op_style single
+    op_style multi 4
+    ```
+
+    For the argument `single`, a single ouput `tcl` file will be
+    generated per chain. On running this with `VMD` or
+    `LigninBuilder`, you can produce the final structure. However, the
+    final structure may have unphysical bonds. It is the user's
+    responsibility to check this. If the user is combining this code
+    with `LigninBuilder` please use `single` option since
+    `LigninBuilder` has capabilities to *untangle* unphysical bonds.
+
+    For the argument `multi`, the program breaks down the `tcl` files
+    into *smaller* `tcl` files. This requires an extra integer
+    argument. Let us say that we are creating a polymer with degree of
+    polymerization 20 and the extra argument is 4, the `tcl` file
+    corresponding to this chain will have 5 different builds. First,
+    the first four segments of the chain are built. Then NAMD is
+    called to minimize the structure. The minimized structure is then
+    used as an input to generate the next 4 residues -- so on and so
+    forth. This requires `NAMD` path to be added correctly or else
+    running `tcl` file may encounter errors.
+
+    **NOTE**: Use the option `single` with `LigninBuilder`. Default is
+      `single`.
+
+
 1.  grafting (*Optional*)
 
     To define branching of main chain. Branches are single monomer
@@ -421,4 +461,25 @@ ignored. However, `#` *cannot* be used in the middle of a line.
     between 0.05 and 0.15. Default value is 0.1.
 
 1.  initiator (*Optional*)
+    
+    Use this option to make sure that certain fraction of the chains
+    start (end) with this type of residue. This residue *should* be
+    present in the input residue list. The final fraction of this
+    residue will have an average probability closer to the value input
+    to the program. Usage:
+
+    ```
+    initiator resname
+    ```
+
+    where `resname` is the name of the residue.
+
+    Example
+
+    ```
+    initiator TRCN
+    ```
+
+1.  
+
     
