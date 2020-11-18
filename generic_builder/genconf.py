@@ -1,4 +1,4 @@
---------------------------------------------------------------
+#------------------------------------------------------------------
 # Ver: Sept-04-2020
 # Author: Vaidyanathan Sethuraman
 # To generate the initial configuration file for lignin topology
@@ -322,6 +322,8 @@ if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
 fbund = make_auxiliary_files(tcldir,biomas_typ,num_chains,input_top,\
                              flbdflag,input_lbd)
+if flbdflag == 1:
+    gencpy(srcdir,tcldir,input_lbd)
 #------------------------------------------------------------------
 
 # Write for each chain

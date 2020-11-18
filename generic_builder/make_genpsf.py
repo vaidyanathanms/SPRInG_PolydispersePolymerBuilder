@@ -1144,8 +1144,11 @@ def make_packmol(fpin,structname,nrepeats,trans_list):
     fpin.write('\n')
 #---------------------------------------------------------------------
 
+# Make auxiliary files for NAMD/LigninBuilder/GROMACS
 def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
                          input_lbd):
+
+
     # bundle.tcl for generating all psf in one go
     fbund = open(tcldir + '/bundle.tcl','w')
     fbund.write('# Combined file to generate psf files for all chains\n')
@@ -1168,12 +1171,12 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
     fcomb = open(tcldir + '/combine_all.tcl','w')
     fcomb.write('# To generate combined psf/pdb file..\n')    
     fcomb.write('package require psfgen\n')
-    if flbdlfag == 1:
-        fcomb.write('package require topotools')
+    if flbdflag == 1:
+        fcomb.write('package require topotools\n')
     fcomb.write('%s %s %s\n' %('set','name',outname))
     fcomb.write('%s %s\n' %('topology',topinp))
-    fcomb.write('\n')
     fcomb.write('resetpsf\n')
+    fcomb.write('\n')
     fcomb.write('%s %s %s\n' %('for {set i 1} {$i <= ', str(nch), \
                              ' }  {incr i} {'))
     fcomb.write('%s %s\n' %('readpsf', inpname+str('$i.psf')))
@@ -1184,11 +1187,13 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
 
     if flbdflag == 1:
         gmx_out = outname + '.top'
+        fcomb.write('\n')
+        fcomb.write('# Generate GROMACS *.top file \n')
         fcomb.write('mol new $name.psf\n')
         fcomb.write('mol addfile $name.pdb\n')
         fcomb.write('%s %s %s %s %s %s\n' %('topo','writegmxtop'\
-                                            gmx_out,'[ list ',\
-                                            input_lbd,' ]'))
+                                            ,gmx_out,'[list ',\
+                                            input_lbd,']'))
 
     fcomb.write('exit\n')
     fcomb.close()
