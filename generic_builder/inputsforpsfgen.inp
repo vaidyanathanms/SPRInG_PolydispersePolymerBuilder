@@ -16,5 +16,6 @@ patch_inp	inpprob_pat.dat
 gen_packmol	DEF	DEF	0.0	0.0	0.0	0.0	0.0	0.0
 clean_directories	Y
 initiator	TRCN
+LigninBuilder	lignin.prm
 # optional: namd_inp	mini_pyconf.conf lignin.prm
 # optional: pdb_ipfile	single_G.pdb GUAI

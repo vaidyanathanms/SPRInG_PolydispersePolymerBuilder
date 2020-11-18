@@ -34,7 +34,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 #---------------------------------------------------------------------
 # Set defaults
 def def_vals():
-    return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 50,0.1
+    return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 50, 0.1
 #---------------------------------------------------------------------
 
 # Check all flags 
@@ -288,12 +288,16 @@ def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
 #---------------------------------------------------------------------
 
 # Check initial files
-def find_init_files(fl_constraint,fpdbflag,fnamdflag,makepdifile,\
+def find_init_files(fl_constraint,fpdbflag,fnamdflag,flbdflag,makepdifile,\
                     input_top='none',input_pdb='none',input_pres='none',\
-                    input_pp='none'):
+                    input_pp='none',input_lbd='none'):
     # Read defaults and throw exceptions
     if not os.path.exists(input_top):
         print('Topology file not found \n', input_top)
+        return -1
+    elif not os.path.exists(input_lbd):
+        print('Parameter file for LigninBuilder not found \n',\
+              input_lbd)
         return -1
     elif fnamdflag:
         if fpdbflag and not os.path.exists(input_pdb):
@@ -1140,7 +1144,8 @@ def make_packmol(fpin,structname,nrepeats,trans_list):
     fpin.write('\n')
 #---------------------------------------------------------------------
 
-def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname):
+def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
+                         input_lbd):
     # bundle.tcl for generating all psf in one go
     fbund = open(tcldir + '/bundle.tcl','w')
     fbund.write('# Combined file to generate psf files for all chains\n')
@@ -1155,13 +1160,16 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname):
     flbd.write('::ligninbuilder::makelignincoordinates . . \n')
     flbd.close()
 
-    # combine_psf.tcl() to combine psf/pdb files
+    # combine_psf.tcl() to combine psf/pdb files and write GROMACS
+    # generator if neeeded
     outname = pref_pdbpsf + '_nch_' + str(nch)
     inpname = pref_pdbpsf + '_chnum_' 
     topinp = '../' + topname
     fcomb = open(tcldir + '/combine_all.tcl','w')
     fcomb.write('# To generate combined psf/pdb file..\n')    
     fcomb.write('package require psfgen\n')
+    if flbdlfag == 1:
+        fcomb.write('package require topotools')
     fcomb.write('%s %s %s\n' %('set','name',outname))
     fcomb.write('%s %s\n' %('topology',topinp))
     fcomb.write('\n')
@@ -1173,6 +1181,15 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname):
     fcomb.write('}\n')
     fcomb.write('writepdb $name.pdb\n')
     fcomb.write('writepsf $name.psf\n')
+
+    if flbdflag == 1:
+        gmx_out = outname + '.top'
+        fcomb.write('mol new $name.psf\n')
+        fcomb.write('mol addfile $name.pdb\n')
+        fcomb.write('%s %s %s %s %s %s\n' %('topo','writegmxtop'\
+                                            gmx_out,'[ list ',\
+                                            input_lbd,' ]'))
+
     fcomb.write('exit\n')
     fcomb.close()
     

@@ -1,4 +1,4 @@
-#------------------------------------------------------------------
+--------------------------------------------------------------
 # Ver: Sept-04-2020
 # Author: Vaidyanathan Sethuraman
 # To generate the initial configuration file for lignin topology
@@ -28,13 +28,13 @@ print('Input file name: ', sys.argv[1])
 
 # Set defaults
 graft_opt = []; 
-input_pdb = 'none'; input_namd = 'None'; input_prm = 'none'
-input_pres = 'none'; input_pp = 'none'
+input_pdb = 'none'; input_namd = 'none'; input_prm = 'none'
+input_pres = 'none'; input_pp = 'none'; input_lbd = 'none'
 itertype = 'single'
 def_res = 'none'; seg_name = 'SEG'; res_initiator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
-    packtol,maxatt,conftol = def_vals()
+    flbdflag,packtol,maxatt,conftol = def_vals()
 #------------------------------------------------------------------
 
 # Read from file
@@ -104,6 +104,8 @@ with open(sys.argv[1]) as farg:
             resinpfyle = words[1]; fresflag = 1
         elif words[0] == 'patch_inp':
             patinpfyle = words[1]; fpatflag = 1
+        elif words[0] == 'LigninBuilder':
+            input_lbd = words[1]; flbdflag = 1
         elif words[0] == 'namd_inp':
             if len(words) != 3:
                 exit('Unknown number of arguments: ' + line)
@@ -161,8 +163,9 @@ print('Begin analysis for: %s, casenum %d' %(biomas_typ,casenum))
 #------------------------------------------------------------------
 
 # Check initial and pdb file defaults and copy files
-allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,makepdifile,\
-                               input_top,input_pdb,input_pres,input_pp)
+allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,flbdflag,\
+                               makepdifile,input_top,input_pdb,
+                               input_pres,input_pp,input_lbd)
 if allinitflags == -1:
     exit()
 gencpy(srcdir,head_outdir,sys.argv[1])
@@ -173,6 +176,8 @@ if fl_constraint == 1 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pres)
 elif fl_constraint == 2 or fl_constraint == 3:
     gencpy(srcdir,head_outdir,input_pp)
+if flbdflag == 1:
+    gencpy(srcdir,head_outdir,input_lbd)
 #------------------------------------------------------------------
 
 # Make monomer array for all chains
@@ -315,7 +320,8 @@ if pmolflag:
 tcldir = head_outdir + '/all_tclfiles'
 if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
-fbund = make_auxiliary_files(tcldir,biomas_typ,num_chains,input_top)
+fbund = make_auxiliary_files(tcldir,biomas_typ,num_chains,input_top,\
+                             flbdflag,input_lbd)
 #------------------------------------------------------------------
 
 # Write for each chain
