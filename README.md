@@ -64,6 +64,82 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
 ## Combining PRIG with LigninBuilder to Generate Structures
 
+   Outputs from PRIG can be directly fed into LigninBuilder to
+   generate the input structure for `GROMACS` using the following
+   three steps. Make sure to follow the order.
+
+   1.  *Step 1*: If PRIG ran correctly, users should see a folder
+       `casenum_ID`, where `ID` is an integer value given as input to
+       PRIG (see PRIG Keywords). Navigate to this directory using
+
+       ```
+       cd <casenum_ID>
+       ```
+
+       Within this directory, the inputs given to PRIG, topology
+       inputs and a folder `all_tclfiles` should be present. Navigate
+       to `all_tclfiles` using
+       ```
+       cd all_tclfiles
+       ```
+
+       Inside the folder users should see several tcl files *viz.,*
+	
+	-  bundle.tcl
+	-  lbd.tcl
+	-  combine_all.tcl
+	-  gen_params.tcl
+	-  inpfile_chnum_ID.tcl
+
+       where `inpfile_nch_ID.tcl` are a set of *N* tcl files with *N*
+       corresponding to the number of chains (`ID` goes from 1 to *N*)
+       in the system and *inpfile* corresponds to the name of the
+       input system (see PRIG Keywords). If all of these files are
+       present, Step 1 is complete. 
+
+   2.  *Step 2*: Within `all_tclfiles` directory, execute the
+       following:
+       ```
+       vmd -dispdev text -e bundle.tcl
+       ```
+       Make sure the path to `vmd` is added to `$BIN` or is given
+       correctly. If the command runs smoothly, this should generate
+       `psf` files for each chain structure. 
+
+       Following the generation of `psf` files, issue
+       ```
+       vmd -dispdev text -e lbd.tcl
+       ```
+       This should generate `pdb` files corresponding to the `psf`
+       files within the directory. This requires `LigninBuilder` to be
+       added in `~\.vmdrc` (see `LigninBuilder` on how to do this). 
+	
+       If the `pdb` file(s) is (are) not generated, please see the
+       input constraints. Most likely a particular residue (or patch)
+       is incompatible. Please make sure that `LigninBuilder` is added
+       to `~\.vmdrc` before executing this command.
+
+    3. *Step 3*: If all the `psf` and `pdb` files are present, issue
+
+       ```
+       vmd -dispdev text -e combine_all.tcl
+       ```
+
+       If this command runs smoothly, this should provide an
+       output file  of the form `inpfile_nch_N.tcl` where *inpfile* is
+       the name of the input system (see PRIG Keywords) and *N*
+       corresponds to the number of chains in the system. Further, it
+       should generate an output `top` file of the form
+       `inpfile_nch_N.top`. Make sure the `prm` file is in the
+       *superfolder* (*casenum_ID*) for this command to run.
+
+   
+    Once the `top` file is generated, these can be used as inputs to
+    GROMACS. It is the user's responsibility to check whether the
+    parameters match the atomnames (atomtypes) in the `psf`/`pdb` files.
+   
+
+
 
 ## PRIG Keywords
 
