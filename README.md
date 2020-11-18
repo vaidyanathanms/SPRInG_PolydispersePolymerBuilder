@@ -53,7 +53,7 @@ Keywords* section. For running PRIG, use:
 python genconf.py <filename>
 ```
 
-where `<filename>' is the name of the input file to `genconf.py`.
+where `<filename>` is the name of the input file to `genconf.py`.
 If this generates a folder with `casenum_ID` and sub-folder
 `all_tclfiles` (within `casenum_ID`) which contain a number
 of `tcl` files, you are all set. Here, *ID* refers to an integer value
