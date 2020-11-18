@@ -86,11 +86,11 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
        Inside the folder users should see several tcl files *viz.,*
 	
-	-  bundle.tcl
-	-  lbd.tcl
-	-  combine_all.tcl
-	-  gen_params.tcl
-	-  inpfile_chnum_ID.tcl
+	 -bundle.tcl
+	 -lbd.tcl
+	 -combine_all.tcl
+	 -gen_params.tcl
+	 -inpfile_chnum_ID.tcl
 
        where `inpfile_nch_ID.tcl` are a set of *N* tcl files with *N*
        corresponding to the number of chains (`ID` goes from 1 to *N*)
