@@ -127,6 +127,10 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
    3.  *Step 3*: If all the `psf` and `pdb` files are present, issue
 
+       ```
+       vmd -dispdev text -e combine_all.tcl
+       ```
+
        If this command runs smoothly, this should provide an
        output file  of the form `inpfile_nch_N.tcl` where *inpfile* is
        the name of the input system (see PRIG Keywords) and *N*
