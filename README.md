@@ -125,7 +125,7 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        is incompatible. Please make sure that `LigninBuilder` is added
        to `~\.vmdrc` before executing this command.
 
-    3. *Step 3*: If all the *psf* and *pdb* files are present, issue
+   3.  *Step 3*: If all the `psf` and `pdb` files are present, issue
 
        If this command runs smoothly, this should provide an
        output file  of the form `inpfile_nch_N.tcl` where *inpfile* is
@@ -136,9 +136,9 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        *superfolder* (*casenum_ID*) for this command to run.
 
    
-    Once the `top` file is generated, these can be used as inputs to
-    GROMACS. It is the user's responsibility to check whether the
-    parameters match the atomnames (atomtypes) in the `psf`/`pdb` files.
+   Once the `top` file is generated, these can be used as inputs to
+   `GROMACS`. It is the user's responsibility to check whether the
+   parameters match the atomnames (atomtypes) in the `psf`/`pdb` files.
    
 
 
