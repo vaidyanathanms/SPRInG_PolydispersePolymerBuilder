@@ -88,9 +88,8 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        Inside the folder users should see several tcl files *viz.,*
 
        - bundle.tcl
-       - lbd.tcl
+       - run_ligbuild.tcl
        - combine_all.tcl
-       - gen_params.tcl
        - inpfile_chnum_ID.tcl
 
        where `inpfile_nch_ID.tcl` are a set of *N* tcl files with *N*
@@ -562,6 +561,50 @@ generate a polydisperse input structure.
     initiator TRCN
     ```
 
-1.  
+1.  LigninBuilder (*Optional*)
+
+    Use this option to generate output files that can be used in
+    conjunction with `LigninBuilder` software to generate `*.top`
+    files for `GROMACS` software. Usage:
+
+    ```
+    LigninBuilder filename
+    ```
+
+    where `filename` corresponds to the file that contains the details
+    of the potentials. Usually this will have a `.prm`
+    extension. Please make sure to provide the full path to the fil
+    unless it is in same directory as `genconf.py`.
+
+    Example:
+
+    ```
+    LigninBuilder par_lignin.prm
+    ```
+
+1.  clean_directories (*Optional*)
+
+    Use this option to clean the existing output directory
+    (`casenum_ID`) and replace with new files. Usage:
+
+    ```
+    clean_directories Y
+    ```
+
+    Arguments can be `Y` (yes) or `N` (no). Default is `N`.
+
+    **WARNING**: All files will be deleted before the new output files
+      are written into the directory.
+
+1.  patch_patch_constraint
+
+1.  patch_res_constraint
+
+1.  gen_packmol
+
+1.  namd_inp
+
+1.  pdb_ipfile
+    
 
     
