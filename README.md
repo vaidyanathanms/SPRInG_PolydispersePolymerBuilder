@@ -79,6 +79,7 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        Within this directory, the inputs given to PRIG, topology
        inputs and a folder `all_tclfiles` should be present. Navigate
        to `all_tclfiles` using
+
        ```
        cd all_tclfiles
        ```
@@ -99,17 +100,21 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
    2.  *Step 2*: Within `all_tclfiles` directory, execute the
        following:
+
        ```
        vmd -dispdev text -e bundle.tcl
        ```
+
        Make sure the path to `vmd` is added to `$BIN` or is given
        correctly. If the command runs smoothly, this should generate
        `psf` files for each chain structure. 
 
        Following the generation of `psf` files, issue
+
        ```
        vmd -dispdev text -e lbd.tcl
        ```
+
        This should generate `pdb` files corresponding to the `psf`
        files within the directory. This requires `LigninBuilder` to be
        added in `~\.vmdrc` (see `LigninBuilder` on how to do this). 
