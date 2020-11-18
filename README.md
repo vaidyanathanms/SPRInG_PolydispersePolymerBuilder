@@ -50,13 +50,14 @@ keywords to PRIG. We will look at the keywords in detail in the *PRIG
 Keywords* section. For running PRIG, use:
 
 ```python
-python genconf.py inputsforpsfgen.inp
+python genconf.py <filename>
 ```
 
-`inputsforpsfgen.inp` can be substituted with the name of the input
-file you are creating. If this generates a folder with `casenum_1` and
-sub-folder `all_tclfiles` (within `casenum_1`) which contain a number
-of `tcl` files, you are all set. 
+where `<filename>' is the name of the input file to `genconf.py`.
+If this generates a folder with `casenum_ID` and sub-folder
+`all_tclfiles` (within `casenum_ID`) which contain a number
+of `tcl` files, you are all set. Here, *ID* refers to an integer value
+given as input (see PRIG Keywords).
 
 Several things can go wrong including compiler compatibilities and
 incompatible input constraints (see PRIG Keywords). If you find an
@@ -85,12 +86,12 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        ```
 
        Inside the folder users should see several tcl files *viz.,*
-	
-	 -bundle.tcl
-	 -lbd.tcl
-	 -combine_all.tcl
-	 -gen_params.tcl
-	 -inpfile_chnum_ID.tcl
+
+       - bundle.tcl
+       - lbd.tcl
+       - combine_all.tcl
+       - gen_params.tcl
+       - inpfile_chnum_ID.tcl
 
        where `inpfile_nch_ID.tcl` are a set of *N* tcl files with *N*
        corresponding to the number of chains (`ID` goes from 1 to *N*)
