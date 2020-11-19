@@ -1,4 +1,4 @@
-# PolydisperseResidueInputGenerator (PRIG)
+# Simple Polydisperse Residue Input Generator (SPRInG)
 
 This code will generate polydisperse residues according to Schulz-Zimm
 distribution. The generated `.psf` files can be used directly with
@@ -43,11 +43,11 @@ There are two ways to generate initial structure. You can either copy
 the four files above to a new folder or run from the directory
 `generic_builder`. 
 
-## Making Inputs to PRIG
+## Making Inputs to SPRInG
 
 `inputsforpsfgen.inp` is a sample input file containing all the input
-keywords to PRIG. We will look at the keywords in detail in the *PRIG
-Keywords* section. For running PRIG, use:
+keywords to SPRInG. We will look at the keywords in detail in the *SPRInG
+Keywords* section. For running SPRInG, use:
 
 ```python
 python genconf.py <filename>
@@ -57,27 +57,27 @@ where `<filename>` is the name of the input file to `genconf.py`.
 If this generates a folder with `casenum_ID` and sub-folder
 `all_tclfiles` (within `casenum_ID`) which contain a number
 of `tcl` files, you are all set. Here, *ID* refers to an integer value
-given as input (see PRIG Keywords).
+given as input (see SPRInG Keywords).
 
 Several things can go wrong including compiler compatibilities and
-incompatible input constraints (see PRIG Keywords). If you find an
+incompatible input constraints (see SPRInG Keywords). If you find an
 error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
-## Combining PRIG with LigninBuilder to Generate Structures
+## Combining SPRInG with LigninBuilder to Generate Structures
 
-   Outputs from PRIG can be directly fed into LigninBuilder to
+   Outputs from SPRInG can be directly fed into LigninBuilder to
    generate the input structure for `GROMACS` using the following
    three steps. Make sure to follow the order.
 
-   1.  *Step 1*: If PRIG ran correctly, users should see a folder
+   1.  *Step 1*: If SPRInG ran correctly, users should see a folder
        `casenum_ID`, where `ID` is an integer value given as input to
-       PRIG (see PRIG Keywords). Navigate to this directory using
+       SPRInG (see SPRInG Keywords). Navigate to this directory using
 
        ```
        cd <casenum_ID>
        ```
 
-       Within this directory, the inputs given to PRIG, topology
+       Within this directory, the inputs given to SPRInG, topology
        inputs and a folder `all_tclfiles` should be present. Navigate
        to `all_tclfiles` using
 
@@ -95,7 +95,7 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        where `inpfile_nch_ID.tcl` are a set of *N* tcl files with *N*
        corresponding to the number of chains (`ID` goes from 1 to *N*)
        in the system and *inpfile* corresponds to the name of the
-       input system (see PRIG Keywords). If all of these files are
+       input system (see SPRInG Keywords). If all of these files are
        present, Step 1 is complete. 
 
    2.  *Step 2*: Within `all_tclfiles` directory, execute the
@@ -132,7 +132,7 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
        If this command runs smoothly, this should provide an
        output file  of the form `inpfile_nch_N.tcl` where *inpfile* is
-       the name of the input system (see PRIG Keywords) and *N*
+       the name of the input system (see SPRInG Keywords) and *N*
        corresponds to the number of chains in the system. Further, it
        should generate an output `top` file of the form
        `inpfile_nch_N.top`. Make sure the `prm` file is in the
@@ -146,7 +146,7 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
 
 
-## PRIG Keywords
+## SPRInG Keywords
 
 In this section, we look at the different keywords that are needed to
 generate a polydisperse input structure. 
@@ -406,7 +406,7 @@ generate a polydisperse input structure.
 	    residues where the name of the branched residue should be
 	    present. 
 
-	1.  If you are using PRIG with LigninBuilder, please be aware
+	1.  If you are using SPRInG with LigninBuilder, please be aware
 	    that residues for which there exists equal probability
 	    for the tacticities (e.g. BO4R and BO4L for BO4), DO NOT
 	    give separate probabilities for each
@@ -596,7 +596,14 @@ generate a polydisperse input structure.
     **WARNING**: All files will be deleted before the new output files
       are written into the directory.
 
-1.  patch_patch_constraint
+1.  patch_patch_constraint (*Optional*)
+
+    Optional argument to specify the constraints between adjacent
+    patches. This is useful to let the program know that patches
+    (linkers) cannot be next to each other. For instance, a patch
+    (linker) of type $\beta$
+
+    
 
 1.  patch_res_constraint
 
