@@ -1,8 +1,6 @@
 #---------------------------------------------------------------------------
 # Supporting scripts for making a general psf/pdb file
-
 # 'None' is a keyword reserved - DONT USE IT for PDB/PSF filenames.
-
 # Import modules
 
 import os
