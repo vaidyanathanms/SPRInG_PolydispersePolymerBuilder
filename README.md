@@ -3,14 +3,15 @@
 This code will generate polydisperse residues according to Schulz-Zimm
 distribution. The generated `.psf` files can be used directly with
 LigninBuilder to generate starting `.psf`, `.pdb` and `.prm` files for
-running with *NAMD* or *GROMACS* software. Although this code is
-primarily used to generate input files for various types of biomass,
-it can be used with any protein or polymer complex. 
+running with [https://www.ks.uiuc.edu/Research/namd/](*NAMD*) or
+[http://www.gromacs.org/](*GROMACS*) software. Although this code was
+primarily designed to generate input files for various types of
+biomass, it can be used with any protein or polymer complex. 
 
 ## Input Requirements
 
 This code works on a combination of `Python` and `FORTRAN90`
-platforms. `Python3.0+` and `ifort` compilers are required.
+platforms. `Python3.0+` and `ifort`/`gfortran` compilers are required.
 
 ## Installation
 
@@ -112,7 +113,7 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        Following the generation of `psf` files, issue
 
        ```
-       vmd -dispdev text -e lbd.tcl
+       vmd -dispdev text -e run_ligbuild.tcl
        ```
 
        This should generate `pdb` files corresponding to the `psf`
