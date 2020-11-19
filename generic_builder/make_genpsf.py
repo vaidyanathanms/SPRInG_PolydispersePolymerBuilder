@@ -1,11 +1,7 @@
 #---------------------------------------------------------------------------
 # Supporting scripts for making a general psf/pdb file
-# Switchgrass variety: Alamo switchgrass
 
 # 'None' is a keyword reserved - DONT USE IT for PDB/PSF filenames.
-
-# H:G:S = 26:42:32 (A); G:S = 0.75 - 0.78, H = 2 (B)
-# pCA:FA = 1 (A); pCA:FA = 6:32 (B)
 
 # Import modules
 
@@ -208,8 +204,15 @@ def compile_and_run_pdi(destdir):
         
     # Generate PDI data
     print("Generating polydisperse residues...")
-    subprocess.call(["ifort","-r8","-check","-traceback",\
+
+    if shutil.which("ifort") != None:
+        subprocess.call(["ifort","-r8","-check","-traceback",\
                      "pdi_dist_params.f90","pdigen.f90","-o","pdiinp.o"])
+    elif shutil.which("gfortran") != None:
+       subprocess.call(["gfortran",\
+                    "pdi_dist_params.f90","pdigen.f90","-o","pdiinp.o"])
+    else:
+        raise RuntimeError("No Fortran 90 compiler found!")
 
     subprocess.call(["./pdiinp.o", "inp_genpdi.txt"])
     return 1
