@@ -2,12 +2,14 @@
 
 This code will generate polydisperse residues according to Schulz-Zimm
 distribution. The generated `.psf` files can be used directly with
-[https://github.com/jvermaas/LigninBuilder/tree/master/LigninBuilderPlugin](LigninBuilder)
+[LigninBuilder](https://github.com/jvermaas/LigninBuilder/tree/master/LigninBuilderPlugin)
 to generate starting `.psf`, `.pdb` and `.prm` files for 
-running with [https://www.ks.uiuc.edu/Research/namd/](*NAMD*) or
-[http://www.gromacs.org/](*GROMACS*) software. Although this code was
-primarily designed to generate input files for various types of
-biomass, it can be used with any protein or polymer complex. 
+running with [NAMD](https://www.ks.uiuc.edu/Research/namd/) or
+[GROMACS](http://www.gromacs.org/) software. 
+
+Although this code was primarily designed to generate input files for
+various types of biomass, it can be used with any protein or polymer
+complex. 
 
 ## Input Requirements
 
