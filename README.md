@@ -601,11 +601,106 @@ generate a polydisperse input structure.
     Optional argument to specify the constraints between adjacent
     patches. This is useful to let the program know that patches
     (linkers) cannot be next to each other. For instance, a patch
-    (linker) of type $\beta$
+    (linker) of type $\beta$-5 cannot be followed by a 55 patch
+    (linker) since the 5th position is already occupied. The
+    constraints need to be specified in a separate file. Usage:
 
+    ```
+    patch_patch_constraint <filename>
+    ```
+
+    where `<filename>` contains the patch and the constraints. A
+    sample example of this file will be as follows:
+
+    ```
+    B5L	55	5BR	5BL
+    B5R	55	5BR	5BL
+    55	55	B5L	B5R	5BR	5BL
+    ```
+
+    The first entry of each row should be the first of the two
+    consecutive patches. Next 'n' entries of the row should contain
+    all the patches that are incompatible with the first
+    entry. 
+
+    **NOTES**
+
+    -  Each row is independent. In other words, if `pat_2` is
+       incompatible with `pat_1` **does not** mean that `pat_1` is
+       incompatible with `pat_2`. This incompatibility (if necessary)
+       should be specified in separate rows.
+
+    -  The patch names should *exactly* match the names of the patches
+       in the input patch list given using `patch_inp`. If the patch
+       name in the input does not match what is given in the list, it
+       will be ignored. However, it is OK for this file to have the
+       name of the patches that is not present in the input given
+       using `patch_inp`. 
+
+    -  Although this is an optional argument, almost always there will
+       be restrictions for real sytems. It is the user's responsiblity
+       to make sure that all the constraints are given to the system.
     
-
 1.  patch_res_constraint
+
+    Optional argument to specify the constraints between a patch
+    (linker) and a residue. This is useful to let the program know
+    that certain patches cannot succeed (or precede) a certain
+    residue. For instance, a `55` patch can neither precede nor
+    succeed a syringyl residue. However, `405` can precede a syringyl
+    residue whereas it cannot succeed a syringyl residue. Similar to
+    the `patch_patch_constraint` input, the incompatibility data
+    should be input as a file. Usage
+
+    ```
+    patch_res_constraint <filename>
+    ```
+
+    where `<filename>` corresponds to the name of the file comprising
+    the incompatibilities. There are certain keywords that *should* be
+    present in this file. Keywords are case-sensitive.
+
+    Example:
+
+    ```
+    patch	restrict_before	restrict_after
+    55		SYR		SYR
+    B5		None		SYR
+    55		TRCN		TRCN
+    B5		TRCN		TRCN
+    ```
+
+    **NOTES**
+
+    -  The first line of this file **should** have the following
+       keywords: `patch`, `restrict_before` and `restrict_after`.
+
+    -  Each row should contain only 3 entries. The first entry is the
+       name of the patch. The entry under `restrict_before` should
+       correspond to the restriction that the patch cannot precede a
+       residue and the entry below `restrict_after` should correspond
+       to the restriction that the patch cannot succeed a residue. In
+       the above example `55` can neither precede nor succeed a `SYR`
+       residue. Similarly `B5` can neither precede nor succeed a
+       `TRCN` residue. However, `B5` can come before `SYR` where as it
+       cannot come after `SYR`.
+
+    -  Use `None` keyword (case-sensitive), if a patch can precede
+       (but not succeed) or viceversa a given residue. By default,
+       there are no restrictions. In other words, for all the patches
+       mentioned in the input will have `None` as default argument for
+       incompatibility.
+
+    -  If a patch cannot come before (or after) two residues, it
+       should be specified in two separate lines. For instance, in the
+       example above, patch `55` should be repeated twice for the
+       program to know that it has incompatibility with both `SYR` and
+       `TRCN`.
+
+    -  Although this is an optional argument, almost always there will
+       be restrictions for real sytems. It is the user's responsiblity
+       to make sure that all the constraints are given to the system.
+
 
 1.  gen_packmol
 

@@ -13,9 +13,9 @@ patch_res_constraint	respatconstraints.inp
 patch_patch_constraint	patch_incomp.inp
 resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
-gen_packmol	DEF	DEF	0.0	0.0	0.0	0.0	0.0	0.0
 clean_directories	Y
 initiator	TRCN
 LigninBuilder	par_lignin.prm
 # optional: namd_inp	mini_pyconf.conf lignin.prm
 # optional: pdb_ipfile	single_G.pdb GUAI
+# optional: gen_packmol	DEF	DEF	0.0	0.0	0.0	0.0	0.0	0.0
