@@ -2,7 +2,8 @@
 
 This code will generate polydisperse residues according to Schulz-Zimm
 distribution. The generated `.psf` files can be used directly with
-LigninBuilder to generate starting `.psf`, `.pdb` and `.prm` files for
+[https://github.com/jvermaas/LigninBuilder/tree/master/LigninBuilderPlugin](LigninBuilder)
+to generate starting `.psf`, `.pdb` and `.prm` files for 
 running with [https://www.ks.uiuc.edu/Research/namd/](*NAMD*) or
 [http://www.gromacs.org/](*GROMACS*) software. Although this code was
 primarily designed to generate input files for various types of
