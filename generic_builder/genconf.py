@@ -317,7 +317,7 @@ if pmolflag:
 #------------------------------------------------------------------
 
 # Make tcl output directory and auxiliary files
-tcldir = head_outdir + '/all_tclfiles'
+tcldir = head_outdir
 if not os.path.isdir(tcldir):
     os.mkdir(tcldir)
 fbund = make_auxiliary_files(tcldir,biomas_typ,num_chains,input_top,\
@@ -335,8 +335,8 @@ for chcnt in range(num_chains):
     #prefix for pdb/psf/tcl files
     pdbpsf_name = biomas_typ + '_chnum_' + str(chnum) 
     tcl_fname  =  pdbpsf_name +'.tcl' 
-    fmain = open(tcldir + '/' + tcl_fname,'w')
-    fbund.write('%s\t%s\n' %('source', tcl_fname))
+    #fmain = open(tcldir + '/' + tcl_fname,'w')
+    #fbund.write('%s\t%s\n' %('source', tcl_fname))
 
     # Copy NAMD files
     if fnamdflag:
@@ -349,14 +349,15 @@ for chcnt in range(num_chains):
         gencpy(srcdir,tcldir,'mini.conf')
 
     deg_poly_this_chain = deg_poly_all[chcnt]
-
+    psfgen_headers(fbund,input_top,pdbpsf_name)
     if itertype == 'single':
-        psfgen_headers(fmain,input_top,pdbpsf_name)
+        fbund.write('%s\t %s\n' %('set outputname', pdbpsf_name))
+        
         flog.write('Writing config for  %d chains\n' %(num_chains))
-        write_multi_segments(fmain,-1,deg_poly_this_chain,num_chains,chnum,\
+        write_multi_segments(fbund,-1,deg_poly_this_chain,num_chains,chnum,\
                              seg_name,res_list,patch_list,graft_opt,\
                              deg_poly_this_chain)
-        psfgen_postprocess(fmain,itertype,0,seg_name,fnamdflag,input_pdb)
+        psfgen_postprocess(fbund,itertype,0,seg_name,fnamdflag,input_pdb)
 
     elif itertype == 'multi':
         flog.write('Iteration increment counter %d\n' %(iterinc))
@@ -365,13 +366,12 @@ for chcnt in range(num_chains):
         nmonsthisiter = iterinc
     
         while nmonsthisiter <= deg_poly_this_chain:
-            if iter_num == 1:
-                psfgen_headers(fmain,input_top,pdbpsf_name)
+            fbund.write('%s\t %s\n' %('set outputname', pdbpsf_name))
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
-            write_multi_segments(fmain,iter_num,nmonsthisiter,num_chains,\
+            write_multi_segments(fbund,iter_num,nmonsthisiter,num_chains,\
                                  chnum,seg_name,res_list,patch_list,\
                                  graft_opt,deg_poly_this_chain)
-            psfgen_postprocess(fmain,itertype,iter_num,seg_name,\
+            psfgen_postprocess(fbund,itertype,iter_num,seg_name,\
                                fnamdflag,input_pdb)
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
@@ -381,13 +381,14 @@ for chcnt in range(num_chains):
 
         # Write the rest in one go
         if deg_poly_this_chain%iterinc != 0:
+            fbund.write('%s\t %s\n' %('set outputname', pdbpsf_name))
             flog.write('Writing config for n-segments: %d\n' \
                        %(deg_poly_this_chain))
             iter_num += 1
-            write_multi_segments(fmain,iter_num,deg_poly_this_chain,\
+            write_multi_segments(fbund,iter_num,deg_poly_this_chain,\
                                  num_chains,chnum,seg_name,res_list,\
                                  patch_list,graft_opt,deg_poly_this_chain)
-            psfgen_postprocess(fmain,itertype,iter_num,seg_name,\
+            psfgen_postprocess(fbund,itertype,iter_num,seg_name,\
                                fnamdflag,input_pdb)
 
             if fnamdflag == 1:
@@ -400,10 +401,12 @@ for chcnt in range(num_chains):
     if pmolflag:
         make_packmol(fpack,pdbpsf_name,1,trans_list)
 #------------------------------------------------------------------
-
+fbund.write('package require ligninbuilder\n')
+fbund.write('::ligninbuilder::makelignincoordinates . . \n')
+fbund.write('exit\n')
 #Exit and close file
-fmain.write('exit')
-fmain.close()
+#fmain.write('exit')
+#fmain.close()
 fbund.close()
 #------------------------------------------------------------------
 
