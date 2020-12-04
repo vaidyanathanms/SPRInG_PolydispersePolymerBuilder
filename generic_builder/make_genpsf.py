@@ -629,16 +629,20 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 #---------------------------------------------------------------------
 
 # Generate patch rules: patch - m, residues - n
+# Structure: RESn-PATm-RESn+1-PATm+1...
 # Rule 1: (a)patch "m" between resids n/n+1; check is_forbid_pat(m,m-1)
 # (b) check constraints for m between n/n+1
 # Rule 2: res_n = graft; (a) graft_patch m between n/(n+1); check
-# is_forbid_pat(m-1,m+1). 
+# is_forbid_pat(m-1,m+1); 
 # Rule 3: if res_n+1 = graft, patch m between n/n+2; check
 # is_forbid_pat(m, m-1) => same as rule 1 (VERY IMP); check constrants
-# between n and n+2: VERY IMP
+# between n and n+2 (VERY IMP); and is_forbid_pat(m-1,m). Josh
+# suggested that GOG-BB (graft-normalpatch) is not compatible.
 # Rule 4: if last resiudue is a graft. graft_patch m between n/n-1; no
 # checks required
-
+# For left and right residues, reference "n" corresponds to left
+# residue. For examples in comments, S/G/H are normal resids, F/PCA
+# are branch residue. 
 def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                    ,tol,maxattmpt,flog,ctr_flag,pres_fyle,residlist,\
                    patforbid,graft_opt):
@@ -691,6 +695,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
             # aflag: for checking res-pat-res constraints
             # cflag: for checking pat1-pat2 adjancency
+            # cflag2: for checking graftpat-backbonepat adjacency
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
             innerpatattempt = 0
@@ -745,7 +750,9 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                 # next residue. But rule 2 written above the function
                 # defintion needs to be checked. Therefore don't
                 # update patchname_L. Next "normal" patch will be
-                # compared alongside patchname_L
+                # compared alongside patchname_L. Check for cflag
+                # between patch m and m-1 to make sure that certain
+                # branch-backbone patches are not allowed (for eg: GOG-BB)
                 elif resname1 in graft_opt:
                     resindex   = graft_opt.index(resname1)
                     patchname  = graft_opt[resindex+1]
@@ -760,11 +767,17 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                 # Special Case 2: "right RES" of the patch is a graft
                 # monomer. 
                 elif resname2 in graft_opt:
+                    if patcnt > 0:
+                        resname0 = residlist[chcnt][patcnt-1]
+                    else:
+                        resname0 = 'None'
                     # Case 2a: last RES is graft. Patch graft between
                     # n and n+1. graft_at_n is irrelevant here,
                     # because resname1 and resname2 cannot be
                     # simultaneously grafts. Again dont update
                     # patchname_L. It is irrelevant
+                    # UPDATE: This condition cannot happen for the
+                    # current system.
                     if patcnt == deg_poly_chain-2: 
                         resindex  = graft_opt.index(resname2)
                         patchname = graft_opt[resindex+1]
@@ -775,12 +788,25 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                         patcnt += 1
                         continue # continue to while loop/next chain
 
-                    #Case 2b: patch normal between n and n+2. But
+                    #Case 2b: (a) patch normal between n and n+2. But
                     #check patch constraints with the previous
-                    #"normal" patch. For ex: H-1-G-2-PCA-3-G-4-PCA-5;
-                    #normal checks will be between 2,4
+                    #"normal" patch. (b) Also check graft-backbone
+                    #patch incompatibility like Josh suggested - for
+                    #instance BB-GOG.
+                    #Ex ref: S1-P1-G2-P2-F3-P3-G4-P4-F5-P5-G6...;
+                    #Consider G4-F5 as reference. P3 and P5 are fixed
+                    #because of grafts. patname_L will take care of
+                    #case (a) whether it has to be P2 or P3 depending
+                    #upon residue on the left
+                    # (b1) check is_forbid_pat(P4,P5) or (Pn,Pn+1)
+                    # if res(n-1) == normal 
+                      #(a)  Check is_forbid_pat(P4,P3)  
+                    # else res(n-1) == graft
+                      #(a) Check is_forbid_pat(P4,P2) 
+                      #(b2) Check is_forbid_pat(P4,P3)  or (Pn,Pn-1)
                     else: 
                         resname3 = residlist[chcnt][patcnt+2]
+                        # get patchname that satisfies condition (a)
                         patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
                                                                    inp_dict,\
                                                                    resname1,\
@@ -794,17 +820,35 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                                                                    chcnt,\
                                                                    patname_L)
 
+
                         if patchname == 'ERR':
                             return -1 
 
-                        # Update list if conditions are met
-                        if aflag == 1 and cflag == 0: 
-                            out_list[chcnt].append(patchname)
-                            flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
-                                        %(patcnt+1,patchname,\
-                                          segname,patcnt+1,segname,patcnt+3))
-                            patname_L = patchname # update "normal" patch
-                            patcnt += 1 # update counter
+                        # feed patchname from condition (a) as left
+                        # patch to condition (b1)/(b2)
+                        if aflag == 1 and cflag == 0:
+                            #check (Pn,Pn+1)
+                            resindex  = graft_opt.index(resname2)
+                            gr_patname = graft_opt[resindex+1]
+                            cflag2 = is_forbid_patch(patchname,\
+                                                     gr_patname,\patforbid)
+
+                            #check (Pn,Pn-1) if n-1 is graft
+                            cflag3 = 0
+                            if resname0 in graftopt:
+                                resindex = graft_opt.index(resname0)
+                                gr_patname = graft_opt[resindex+1]
+                                cflag3 = is_forbid_patch(patchname,\
+                                                         gr_patname,patforbid)
+
+                            if cflag2 == 0 and cflag3 == 0: 
+                                out_list[chcnt].append(patchname)
+                                flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
+                                            %(patcnt+1,patchname,\
+                                              segname,patcnt+1,\
+                                              segname,patcnt+3))
+                                patname_L = patchname # update "normal" patch
+                                patcnt += 1 # update counter
 
 
                 else: # Unknown condition
