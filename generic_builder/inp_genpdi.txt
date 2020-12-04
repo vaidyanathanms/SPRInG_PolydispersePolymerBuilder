@@ -1,6 +1,6 @@
 chain_types
 1
 chain_details
-1.5	 22	 10
+1.5	 8	 40
 pdi_op_file
 polydisp.inp

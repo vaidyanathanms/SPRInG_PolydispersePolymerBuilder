@@ -59,7 +59,6 @@ def psfgen_headers(fin,topname,outname):
     fin.write('package require psfgen \n')
     topinp = '../' + topname
     fin.write('%s\t %s\n' %('topology',topinp))
-    fin.write('%s\t %s\n' %('set outputname', outname))
 #---------------------------------------------------------------------              
 # Details for closing input files
 def psfgen_postprocess(fin,writetype,iter_num,segname,fnamdflag,\
@@ -544,7 +543,6 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
             print('Found optimal residue configuration..')
             flag_optimal = 1
             return out_list
-            break
         elif normval < normold:
             if oneconfigflag == -1:
                 oneconfigflag = 1
@@ -653,7 +651,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
     sum_of_res = sum(nresarr)
     sum_of_pat = sum_of_res - nch
-    flist.write('; Total number of patches\t%d\n' %(sum_of_pat))
+    flist.write(';# Total number of patches\t%d\n' %(sum_of_pat))
 
     flog.write('Probabilities for each attempt\n')
     flog.write('Attempt#\t')
@@ -1151,25 +1149,25 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
 
 
     # bundle.tcl for generating all psf in one go
-    fbund = open(tcldir + '/bundle.tcl','w')
+    fbund = open(tcldir + '/step1.tcl','w')
     fbund.write('# Combined file to generate psf files for all chains\n')
-    fbund.write('# Use source bundle.tcl from Tk console to run\n')
+    fbund.write('# Use source step1.tcl from Tk console to run\n')
     
     # run_ligbuild.tcl to run ligninbuilder
-    flbd = open(tcldir + '/run_ligbuild.tcl','w')
-    flbd.write('# Run LigninBuilder using this script\n')
-    flbd.write('# Requires psf files in the folder\n')
-    flbd.write('# Use source run_ligbuild.tcl from Tkconsole to run\n')
-    flbd.write('package require ligninbuilder\n')
-    flbd.write('::ligninbuilder::makelignincoordinates . . \n')
-    flbd.close()
+    # flbd = open(tcldir + '/step2.tcl','w')
+    # flbd.write('# Run LigninBuilder using this script\n')
+    # flbd.write('# Requires psf files in the folder\n')
+    # flbd.write('# Use source run_ligbuild.tcl from Tkconsole to run\n')
+    # flbd.write('package require ligninbuilder\n')
+    # flbd.write('::ligninbuilder::makelignincoordinates . . \n')
+    # flbd.close()
 
     # combine_psf.tcl() to combine psf/pdb files and write GROMACS
     # generator if neeeded
     outname = pref_pdbpsf + '_nch_' + str(nch)
     inpname = pref_pdbpsf + '_chnum_' 
     topinp = '../' + topname
-    fcomb = open(tcldir + '/combine_all.tcl','w')
+    fcomb = open(tcldir + '/step2.tcl','w')
     fcomb.write('# To generate combined psf/pdb file..\n')    
     fcomb.write('package require psfgen\n')
     if flbdflag == 1:
