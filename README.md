@@ -276,7 +276,7 @@ generate a polydisperse input structure.
       is as follows:
 
       ```
-      disperse CREATE PDIval Outputfile tolerance
+      disperse CREATE PDIval Outputfile ntrials tolerance
       ```
 
       `PDIval` and `Outputfile` corresponds to the target
@@ -287,6 +287,9 @@ generate a polydisperse input structure.
       average molecular weight. This number **should* be greater than
       1.0. `Outputfile` is the name of the file that is generated
       where the degree of polymerization of each chain is written out.
+      `ntrials` correspond to the number of trials the program attempts
+      to generate the polymer chains within the PDI tolerance limit.
+      Values between 1000-10000 should be enough for most cases.
 
       User can also specify an optional tolerance value (0-100). This
       corresponds to the maximum relative error (in %) between the
@@ -300,8 +303,8 @@ generate a polydisperse input structure.
       Examples:
 
       ```
-      disperse CREATE 1.50 polydisp.inp
-      disperse CREATE 1.50 polydisp.inp 8.0
+      disperse CREATE 1.50 polydisp.inp 10000
+      disperse CREATE 1.50 polydisp.inp 1000 8.0
       ```
 
       If this option is used, after running the program, a file with the
