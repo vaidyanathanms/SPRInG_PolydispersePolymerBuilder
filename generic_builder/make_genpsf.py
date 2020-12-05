@@ -177,13 +177,15 @@ def patch_ratios(opt_graft,resdict,inpfyle):
 #---------------------------------------------------------------------
 
 # Initial PDI details if polydisperse chains are to be generated
-def init_pdi_write(pdival,avgmw,nch,op_file,pditolval):
+def init_pdi_write(pdival,avgmw,nch,op_file,npdiatt,pditolval):
     pdi_fyl = 'inp_genpdi.txt'
     finit   = open(pdi_fyl,'w')
     finit.write('chain_types\n')
     finit.write('%d\n' %(1)) # for now one chain type
     finit.write('chain_details\n')
     finit.write('%g\t %g\t %g\n' %(pdival,avgmw,nch))
+    finit.write('max_attempts\n')
+    finit.write('%d\n' %(npdiatt))
     if pditolval != 0:
         finit.write('tolerance\n')
         finit.write('%g\n' %(pditolval))
@@ -200,17 +202,18 @@ def compile_and_run_pdi(destdir):
         return -1
         
     # Generate PDI data
-    print("Generating polydisperse residues...")
-
+    print("Compiling program to generate polydisperse chains...")
+    print("Takes about 10 seconds..")
     if shutil.which("ifort") != None:
-        subprocess.call(["ifort","-r8","-check","-traceback",\
-                     "pdi_dist_params.f90","pdigen.f90","-o","pdiinp.o"])
+        subprocess.call(["ifort","-r8","pdi_dist_params.f90","pdigen.f90",\
+                         "-o","pdiinp.o"])
     elif shutil.which("gfortran") != None:
-       subprocess.call(["gfortran",\
+       subprocess.call(["gfortran","-freal-4-real-8",\
                     "pdi_dist_params.f90","pdigen.f90","-o","pdiinp.o"])
     else:
         raise RuntimeError("No Fortran 90 compiler found!")
 
+    print("Compilation successful..")
     subprocess.call(["./pdiinp.o", "inp_genpdi.txt"])
     return 1
 #---------------------------------------------------------------------
@@ -831,11 +834,11 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                             resindex  = graft_opt.index(resname2)
                             gr_patname = graft_opt[resindex+1]
                             cflag2 = is_forbid_patch(patchname,\
-                                                     gr_patname,\patforbid)
+                                                     gr_patname,patforbid)
 
                             #check (Pn,Pn-1) if n-1 is graft
                             cflag3 = 0
-                            if resname0 in graftopt:
+                            if resname0 in graft_opt:
                                 resindex = graft_opt.index(resname0)
                                 gr_patname = graft_opt[resindex+1]
                                 cflag3 = is_forbid_patch(patchname,\
