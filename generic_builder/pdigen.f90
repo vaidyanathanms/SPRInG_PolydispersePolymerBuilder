@@ -12,6 +12,7 @@ PROGRAM GENERATE_SZDIST
   DO chid = 1,nch_types
      PRINT *, "Generating list for chain type: ", chid
      WRITE(log_fid,*) "Generating list for chain type ", chid
+     CALL INIT_WARNINGS(chid)
      CALL GENERATE_MWVALS(chid)
   END DO
   CALL CLOSE_AND_DEALLOCATE()
@@ -44,6 +45,9 @@ SUBROUTINE READ_PDIINP_FILE()
 
   END IF
 
+  PRINT *, "*******************************************************"
+  PRINT *, "Reading input data for generating polydisperse chains"
+
   ! Read from file
 
   DO
@@ -74,6 +78,8 @@ SUBROUTINE READ_PDIINP_FILE()
            PRINT *, "ERR: Not all chain types are present"
            STOP
         END IF
+     ELSEIF(trim(adjustl(dumchar)) == 'max_attempts') THEN
+        READ(pdi_fid,*) maxiteration       
      ELSEIF(trim(adjustl(dumchar)) == 'tolerance') THEN
         READ(pdi_fid,*) tol        
      ELSEIF(trim(adjustl(dumchar)) == 'pdi_op_file') THEN
@@ -112,10 +118,6 @@ SUBROUTINE INIT_LOGWRITE()
   WRITE(log_fid,*) "************************************************"
   WRITE(log_fid,*) 
 
-  PRINT *, "*******************************************************"
-  PRINT *, "Drawing molecular weights from Schulz-Zimm distribution"
-  
-
 END SUBROUTINE INIT_LOGWRITE
 !---------------------------------------------------------------------
 
@@ -137,7 +139,11 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   INTEGER::loop = 1 ! Similarly, will be equal to 1 until generated
   ! PDI is within the tolerance, then set to 0
   INTEGER:: init_index,nextmw ! for systems with nchains < 8
+  INTEGER:: twntyfiveperc ! For user output
 
+  twntyfiveperc = INT(0.25*maxiteration) ! For user output
+
+  ! Compute inverse of pdi
   inv_pdi = 1.0/real(PDI_arr(chain_id) - 1.0) !1/(PDI-1)
 
   ! Initialize all arrays to zero
@@ -150,15 +156,18 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
   ! Allocate MW list for each chain type
   ALLOCATE(MolWt_arr(1:nchain_list(chain_id)), stat=AllocateStatus)
-  IF(AllocateStatus /= 0) STOP "ERR: Did not allocate MolWt_arr"
-
-  ! Sigma (S) is on the range of 0 to infinity but will only count to
-  ! "range" where sigma is assumed to be zero         
-  DO i=1,maxsteps
-     rat_arr(i) = (range/REAL(maxsteps))*REAL(i)
-  END DO
+  IF(AllocateStatus /= 0) STOP "ERR: Did not allocate MolWt_arr" 
 
   IF(PDI_arr(chain_id) .GT. 1.0) THEN
+
+     PRINT*, "Computing cumulative probability distribution.."
+
+     ! Sigma (S) is on the range of 0 to infinity but will only count to
+     ! "range" where sigma is assumed to be zero         
+     DO i=1,maxsteps
+        rat_arr(i) = (range/REAL(maxsteps))*REAL(i)
+     END DO
+
      ! Calculate probability function
      DO i=1,maxsteps
         Prob_SZ(i) = (inv_pdi**inv_pdi)*(GAMMA(rat_arr(i))**-1.0)&
@@ -184,7 +193,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      IntNormalDist(1) = 0.5*NormalDist(1)*(range/REAL(maxsteps)) ! definte
      ! IntNormal(1) so that it doesnt index out of bounds for first
      ! calculation
-     
+
      DO i=2,maxsteps
         IntNormalDist(i)=0.5*(NormalDist(i)+NormalDist(i-1))*(range&
              &/REAL(maxsteps))
@@ -200,8 +209,10 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   Mi2 = 0
   itercnt = 0
   MolWt_arr = 0
-  
-  IF(ABS(PDI_arr(chain_id) - 1.0) .LT. 10**(-5)) THEN
+
+  PRINT *, "Drawing molecular weights from Schulz-Zimm distribution.."  
+
+  IF(ABS(PDI_arr(chain_id) - 1.0) .LT. 10**(-6)) THEN
      !Monodisperse case
      DO i = 1, nchain_list(chain_id)
         
@@ -230,6 +241,14 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         Mi2 = 0
         MolWt_arr = 0
 
+        IF(itercnt == 1) PRINT *, "Attempting ", itercnt , " of",&
+             & maxiteration, "iterations..."
+        IF(MOD(itercnt,twntyfiveperc) == 0 .AND. INT(itercnt&
+             &/twntyfiveperc) .GE. 1) THEN
+           PRINT *, "Attempting ", itercnt , " of", maxiteration, "ite&
+                &rations..."
+        END IF
+
         ! ====== Generates polymer list using subtraction method =====
         DO i=1,nchain_list(chain_id)
 
@@ -238,15 +257,18 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
            j = 1
            
            DO WHILE (subtract == 1) 
+              !VMS comment: this is equivalent to drawing random
+              !numbers from a cumulative distribution
               randnum = randnum - IntNormalDist(j)
               
-              !MW of ith monomer in nchain_list(chain_id)
+              !MW of ith chain in nchain_list(chain_id)
               IF (randnum .LE.  0) THEN
                  subtract = 0
                  MolWt_arr(i) = INT(rat_arr(j-1)*avg_mw_arr(chain_id))
               ELSE  
                  j = j + 1
                  IF(j == maxsteps+1) then
+                    print *, j, maxsteps, MolWt_arr(i), avg_mw_arr(chain_id)
                     PRINT *, 'ERR: Array out of bounds error imminent'
                     loop = 0
                     EXIT
@@ -277,8 +299,17 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
      END DO
 
-     IF(loop == 1) then
-        PRINT*, "WARNING: Not converged before maximum iteration"
+     IF(loop == 1) THEN
+        PRINT *, "WARNING: Not converged before maximum iteration.."
+        PRINT *, "WARNING: Using the last generated configuration.."
+        IF(MINVAL(MolWt_arr) .LT. 3) THEN
+           PRINT *, "Smallest molecular weight of the chain from the l&
+                &ast iteration is ", MINVAL(MolWt_arr), "; this value &
+                & may be incompatabile with SPRInG."
+           PRINT *, "Try increasing the number of attempts for PDI gen&
+                &eration or the number of chains/avg_mw_wt"
+        END IF
+
      END IF
 
   ELSEIF(nchain_list(chain_id) .LT. 8) THEN
@@ -327,6 +358,32 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   DEALLOCATE(MolWt_arr) ! Deallocate for new chain system
 
 END SUBROUTINE GENERATE_MWVALS
+!---------------------------------------------------------------------
+
+SUBROUTINE INIT_WARNINGS(chid)
+
+  USE PDI_PARAMS
+  IMPLICIT NONE
+  INTEGER, INTENT(IN)::chid
+
+  !If the avg molecular weight is less than 10 and PDI > 1.0, issue a
+  !warning
+  print *, chid, PDI_arr(chid), avg_mw_arr(chid)
+  IF(PDI_arr(chid) .GT. 1.0 .AND. avg_mw_arr(chid) .LE. 10) THEN
+     PRINT *, "*****************WARNINGS*****************************"
+     PRINT *, "1. Number average molecular weight is too small for the&
+          & system to converge to the PDI value of", PDI_arr(chid)
+     PRINT *, "2. Some chains will have molecular weight less than 3 w&
+          &hich will be incompatible with SPRInG generation"
+     PRINT *, "--Consider changing number average molecular weight--"
+  END IF
+
+  IF(nchain_list(chid) .GT. 50 .OR. maxiteration .GT. 10000) THEN
+     PRINT *, "CAUTION: It may take longer time for generating the ini&
+          &tial configuration..."
+  END IF
+
+END SUBROUTINE INIT_WARNINGS
 !---------------------------------------------------------------------
 
 SUBROUTINE WRITE_STATS(chval,m1,m2,pdival)
