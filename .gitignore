@@ -12,3 +12,8 @@ generic_builder/*.f90~
 generic_builder/*.o
 generic_builder/*.mod
 /*~
+src_switchgrass/
+cellulose/
+LigninBuilder-master/
+src_poplar/
+hemicellulose/
