@@ -7,8 +7,8 @@ MODULE PDI_PARAMS
 
   !--------Input parameters------------------------------------------
   INTEGER,PARAMETER::maxsteps = 100000 ! Integration steps
-  INTEGER,PARAMETER::maxiteration = 10000 ! Iteration counts
   REAL,PARAMETER::range = 5 ! Max value of Sigma
+  INTEGER::maxiteration = 10000 ! Iteration counts
   REAL :: tol = 5 ! Tolerance value for PDI(%). Value between 1-100
   INTEGER :: nch_types = 1 ! Number of chain types
 
