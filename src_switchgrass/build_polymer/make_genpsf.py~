@@ -1,8 +1,0 @@
-#---------------------------------------------------------------------------
-# Supporting scripts for making a general psf/pdb file
-
-# Define headers for psf files
-
-def fun_headers(fyle_id):
-    
-    
