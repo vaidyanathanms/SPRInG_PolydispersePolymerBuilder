@@ -55,13 +55,14 @@ with open(sys.argv[1]) as farg:
                 disper_fyle = words[2]; 
             elif words[1] == 'CREATE':
                 makepdifile = 1; 
-                if len(words) < 4:
+                if len(words) < 5:
                     exit('Not enough arguments for PDI: '+line)
                 inp_pdival = float(words[2])
                 disper_fyle = words[3]
+                npdiatt = int(words[4])
                 pditolval = 0
-                if len(words) == 5:
-                    pditolval = float(words[4])
+                if len(words) == 6:
+                    pditolval = float(words[5])
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0] == 'num_resids':
@@ -90,7 +91,7 @@ with open(sys.argv[1]) as farg:
             fl_constraint = 1
             input_pres = words[1] 
         elif words[0] == 'patch_patch_constraint':
-            fl_constraint == 3 if fl_constraint == 1 else 2
+            fl_constraint = 3 if fl_constraint == 1 else 2
             input_pp = words[1] 
         elif words[0] == 'pdb_ipfile':
             if len(words) != 3:
@@ -183,8 +184,9 @@ if flbdflag == 1:
 # Make monomer array for all chains
 if disperflag:
     if makepdifile == 1:
+        print("Making chains with target polydispersity...")
         init_pdi_write(inp_pdival,mono_deg_poly,num_chains,disper_fyle\
-                       ,pditolval)
+                       ,npdiatt,pditolval)
         pdigenflag = compile_and_run_pdi(head_outdir)
         if pdigenflag == -1:
             exit()
