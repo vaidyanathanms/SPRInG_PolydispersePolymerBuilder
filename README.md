@@ -709,11 +709,11 @@ generate a polydisperse input structure.
        to make sure that all the constraints are given to the system.
 
 
-1.  gen_packmol
+1.  gen_packmol (to be added)
 
-1.  namd_inp
+1.  namd_inp (to be added)
 
-1.  pdb_ipfile
+1.  pdb_ipfile (to be added)
     
 
     
