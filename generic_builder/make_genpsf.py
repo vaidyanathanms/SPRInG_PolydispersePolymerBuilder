@@ -6,7 +6,6 @@
 #---------------------------------------------------------------------------
 
 # Import modules
-
 import os
 import sys
 import numpy
@@ -17,6 +16,7 @@ import random
 import collections
 import math
 import subprocess
+#---------------------------------------------------------------------------
 
 # General copy script
 def gencpy(dum_maindir,dum_destdir,fylname):
@@ -30,6 +30,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
     desfyl = dum_destdir + '/' + fylname
     shutil.copy2(srcfyl,desfyl)
 #---------------------------------------------------------------------
+
 # Set defaults
 def def_vals():
     return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 50, 0.1
