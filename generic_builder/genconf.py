@@ -1,10 +1,12 @@
 #------------------------------------------------------------------
-# Ver: Sept-04-2020
+# SPRInG-Simple Polydisperse Residue Input Generator
+# Ver: Dec-07-2020
 # Author: Vaidyanathan Sethuraman
-# To generate the initial configuration file for lignin topology
+# To generate the initial configuration file for polydisperse chains
 # Use NAMD and LigninBuilder to run the script
+# Auxiliary functions are given in make_genpsf.py
 
-# 'None' is a keyword reserved - DONT USE IT for PDB/PSF filenames.
+# 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames.
 #------------------------------------------------------------------
 
 # Import modules

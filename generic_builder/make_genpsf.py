@@ -1,6 +1,10 @@
 #---------------------------------------------------------------------------
-# Supporting scripts for making a general psf/pdb file
-# 'None' is a keyword reserved - DONT USE IT for PDB/PSF filenames.
+# Supporting scripts for SPRInG
+# This file contains auxiliary function definitions
+# Main file: genconf.py
+# 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames
+#---------------------------------------------------------------------------
+
 # Import modules
 
 import os
