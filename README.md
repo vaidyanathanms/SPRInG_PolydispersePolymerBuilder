@@ -20,8 +20,7 @@ platforms. `Python3.0+` and `ifort`/`gfortran` compilers are required.
 
 Dowloading and unzipping the directory can be done using:
 ```
-git clone https://github.com/vaidyanathanms/files_lignin.git
-tar xvzf files_lignin.tar.gz
+git clone https://github.com/vaidyanathanms/SPRInG_PolydispersePolymerBuilder.git
 ```
 
 The above commands should generate a folder files_lignin with three
