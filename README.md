@@ -547,16 +547,16 @@ generate a polydisperse input structure.
     where `tolval` is a number between 0 and 1. Nominal values are
     between 0.05 and 0.15. Default value is 0.1.
 
-1.  initiator (*Optional*)
+1.  terminator (*Optional*)
     
     Use this option to make sure that certain fraction of the chains
-    start (end) with this type of residue. This residue *should* be
+    end with this type of residue. This residue *should* be
     present in the input residue list. The final fraction of this
     residue will have an average probability closer to the value input
     to the program. Usage:
 
     ```
-    initiator resname
+    terminator resname
     ```
 
     where `resname` is the name of the residue.
@@ -564,7 +564,7 @@ generate a polydisperse input structure.
     Example
 
     ```
-    initiator TRCN
+    terminator TRCN
     ```
 
 1.  LigninBuilder (*Optional*)

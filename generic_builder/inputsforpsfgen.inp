@@ -14,7 +14,7 @@ patch_patch_constraint	patch_incomp.inp
 resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
 clean_directories	Y
-initiator	TRCN
+terminator	TRCN
 LigninBuilder	par_lignin.prm
 # optional: namd_inp	mini_pyconf.conf lignin.prm
 # optional: pdb_ipfile	single_G.pdb GUAI
