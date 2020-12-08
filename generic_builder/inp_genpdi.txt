@@ -3,6 +3,6 @@ chain_types
 chain_details
 1.5	 20	 100
 max_attempts
-5000
+3000
 pdi_op_file
 polydisp.inp
