@@ -404,7 +404,7 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
     
 # Create entire list in one go so that cumulative distribution holds true
 def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,graftopt,defa_res,res_initiator):
+                    ,tol,maxattmpt,flog,graftopt,defa_res,res_terminator):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
@@ -477,8 +477,8 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                             consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
 
-                            #initiator or terminator condition if present
-                            if resname1 == res_initiator:
+                            #terminator condition if present
+                            if resname1 == res_terminator:
                                 if rescnt != deg_poly_chain-1:
                                     initres_flag = 1 #can only be at end
                                 elif rescnt == deg_poly_chain-1 and \
@@ -523,19 +523,19 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
             
             flist.write(' }\n')
 
-        # After going through all the chains, count occurence of each res/patch
+        # After going through the chains, count each residue
         outdist = []
         for key in inp_dict:
             outdist.append(sum([i.count(key) for i in out_list]))
 
-        #normalize
+        # Sum and normalize
         sumval = sum(outdist)
         if sumval != sum_of_res:
             print('Sum from distn,sum_of_res:',sumval,sum_of_res)
             exit('ERROR: Sum not equal to the total # of residues')
         normlist = [x/sumval for x in outdist]
 
-        #extract target probabilities and compare
+        # Extract target probabilities and compare
         targ_probs = list(inp_dict.values())
         normval = numpy.linalg.norm(numpy.array(normlist) \
                                     - numpy.array(targ_probs))

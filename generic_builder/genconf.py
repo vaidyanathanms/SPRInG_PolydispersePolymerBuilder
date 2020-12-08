@@ -33,7 +33,7 @@ graft_opt = [];
 input_pdb = 'none'; input_namd = 'none'; input_prm = 'none'
 input_pres = 'none'; input_pp = 'none'; input_lbd = 'none'
 itertype = 'single'
-def_res = 'none'; seg_name = 'SEG'; res_initiator = 'none'
+def_res = 'none'; seg_name = 'SEG'; res_terminator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
     fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
     flbdflag,packtol,maxatt,conftol = def_vals()
@@ -129,8 +129,8 @@ with open(sys.argv[1]) as farg:
             if len(words) > 3:
                 for k in range(6):
                     trans_list.append(words[3+k])            
-        elif words[0] == 'initiator':
-            res_initiator = words[1]
+        elif words[0] == 'terminator':
+            res_terminator = words[1]
         else:
             exit('Unknown keyword ' + str(words[0]))
 #----------------------------------------------------------------------
@@ -233,9 +233,9 @@ resperc_dict = residue_ratios(resinpfyle)
 if not bool(resperc_dict):
     exit('ERROR: Check input residue file \n')
 if graft_opt[0] == 1:
-    flog.write('Grafting incorporated while building the chains\n')
+    flog.write('Building branched chains...\n')
 else:
-    flog.write('Linear chains are built\n')
+    flog.write('Building linear chains...\n')
 #------------------------------------------------------------------
 
 # patches %dict mode
@@ -273,7 +273,7 @@ print('Generating residues..')
 flog.write('Creating residue list..\n')
 res_list = create_residues(fresin,deg_poly_all,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,conftol,maxatt,\
-                           flog,graft_opt,def_res,res_initiator)
+                           flog,graft_opt,def_res,res_terminator)
 if res_list == -1:
     exit()
 #------------------------------------------------------------------
