@@ -25,6 +25,7 @@ if len(sys.argv) != 2:
     print('Unknown number of arguments: ', len(sys.argv),\
           str(sys.argv))
     exit()
+print('*****************SPRInG_V1.0****************************')
 print('Input file name: ', sys.argv[1])
 #------------------------------------------------------------------
 
@@ -35,8 +36,8 @@ input_pres = 'none'; input_pp = 'none'; input_lbd = 'none'
 itertype = 'single'
 def_res = 'none'; seg_name = 'SEG'; res_terminator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
-    fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
-    flbdflag,packtol,maxatt,conftol = def_vals()
+fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
+flbdflag,packtol,maxatt,conftol = def_vals()
 #------------------------------------------------------------------
 
 # Read from file
@@ -162,7 +163,8 @@ elif cleanslate:
     srcdir
     shutil.rmtree(head_outdir)
     os.mkdir(head_outdir)
-print('Begin analysis for: %s, casenum %d' %(biomas_typ,casenum))
+print('Beginning chain generation..')
+print('Polymer type/Casenumber: %s, %d' %(biomas_typ,casenum))
 #------------------------------------------------------------------
 
 # Check initial and pdb file defaults and copy files
