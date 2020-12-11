@@ -34,7 +34,7 @@ graft_opt = [0];
 input_pdb = 'none'; input_namd = 'none'; input_prm = 'none'
 input_pres = 'none'; input_pp = 'none'; input_lbd = 'none'
 itertype = 'single'
-def_res = 'none'; seg_name = 'SEG'; res_terminator = 'none'
+def_res = 'none'; seg_name = 'S'; res_terminator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
 fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
 flbdflag,packtol,maxatt,conftol = def_vals()

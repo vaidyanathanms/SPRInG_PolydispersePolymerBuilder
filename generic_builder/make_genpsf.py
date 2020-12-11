@@ -439,7 +439,7 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
         out_list = [[] for i in range(nch)] #reset every attempt
    
         for chcnt in range(nch):
-            segname = segpref + str(chcnt+1)
+            segname = ret_segname(segpref,chcnt+1)
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(' segment %s {\n' %(segname))
             # first is default residue if present
@@ -605,6 +605,20 @@ def check_constraints(inpfyle,patchname,resname1,resname2):
         return 1
 #---------------------------------------------------------------------
 
+# return segment name according to the length of segpref
+def ret_segname(seginp,chval):
+    if len(seginp) + len(str(chval)) > 4:
+        print('WARNING: Renaming segment names')
+        lval = 4-len(str(chval))
+        if lval >= 0:
+            segout = seginp[0:lval] + str(chval)
+        else:
+            segout = str(chval)
+    else:
+        segout = seginp + str(chval)
+    return segout
+#---------------------------------------------------------------------
+
 # check consecutive residues - cannot have graft residue in
 # consecutive positions
 def is_res_cons(resname1,resname2,graftopt):
@@ -692,7 +706,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                 break #move to next attempt
 
             chcnt += 1
-            segname = segpref + str(chcnt+1)
+            segname = ret_segname(segpref,chcnt+1)
             flist.write(';# chain number:\t%d\n' %(chcnt+1))
             flist.write(';# -- Begin patches for %s ---\n' %(segname))
 
@@ -1082,7 +1096,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         fin.write('\n')
 
 
-    segname = segpref + str(chnum)
+    segname = ret_segname(segpref,chnum)
     fin.write(' resetpsf \n')
     fin.write(' segment %s {\n' %(segname))
 
