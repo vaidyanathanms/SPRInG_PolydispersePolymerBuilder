@@ -1232,7 +1232,7 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
     # generator if neeeded
     outname = pref_pdbpsf + '_nch_' + str(nch)
     inpname = pref_pdbpsf + '_chnum_' 
-    topinp = '../' + topname
+    topinp  = topname
     fcomb = open(tcldir + '/step2.tcl','w')
     fcomb.write('# To generate combined psf/pdb file..\n')    
     fcomb.write('package require psfgen\n')
