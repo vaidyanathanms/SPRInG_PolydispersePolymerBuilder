@@ -51,7 +51,7 @@ def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
     elif fpatflag == 0:
         print('ERR: Patch not entered'); outflag = -1
     elif ftopflag == 0:
-        print('WARNING: Topology file not found')
+        print('ERR: Topology file not found'); outflag = -1
     elif fnamd != 0 and fpdbflag == 0:
         print('ERR: To run NAMD, input PDB/top files are required')
         outflag = -1
