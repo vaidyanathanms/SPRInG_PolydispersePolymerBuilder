@@ -23,8 +23,7 @@ Dowloading and unzipping the directory can be done using:
 git clone https://github.com/vaidyanathanms/SPRInG_PolydispersePolymerBuilder.git
 ```
 
-The above commands should generate a folder files_lignin with three
-sub-folders:
+The above commands should generate a folder of the name:
 
 * generic_builder
 
