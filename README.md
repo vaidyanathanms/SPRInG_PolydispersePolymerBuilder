@@ -27,14 +27,16 @@ The above commands should generate a folder files_lignin with three
 sub-folders:
 
 * generic_builder
-* src_switchgrass
-* src_poplar
 
-`src_switchgrass` and `src_poplar` contains `psf` and `pdb` files
-specific to switchgrass and poplar wood. We *recommend* using
-`generic_builder` for generating a structure from scratch. Inside
-`generic_builder` folder, you should see the following python and
-FORTRAN files:
+Navigate to `generic_builder` for generating a structure from scratch
+using
+
+```
+cd generic_builder
+```
+
+. Inside `generic_builder` folder, you should see the following python
+and FORTRAN files:
 
 - make_genpsf.py
 - genconf.py
@@ -672,7 +674,7 @@ generate a polydisperse input structure.
        be restrictions for real sytems. It is the user's responsiblity
        to make sure that all the constraints are given to the system.
     
-1.  patch_res_constraint
+1.  patch_res_constraint (*Optional*)
 
     Optional argument to specify the constraints between a patch
     (linker) and a residue. This is useful to let the program know
