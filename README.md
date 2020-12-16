@@ -80,72 +80,97 @@ error, please report to [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
        cd <casenum_ID>
        ```
 
-       Within this directory, the inputs given to SPRInG, topology
-       inputs and a folder `all_tclfiles` should be present. Navigate
-       to `all_tclfiles` using
+       Inside the folder users should see several files *viz.,*
 
-       ```
-       cd all_tclfiles
-       ```
+       - step1.tcl
+       - step2.tcl
+       - patchlist_ID.tcl, reslist_ID.tcl
+       - log_ID.txt       
+       - step3.tcl (Optional)
 
-       Inside the folder users should see several tcl files *viz.,*
-
-       - bundle.tcl
-       - run_ligbuild.tcl
-       - combine_all.tcl
-       - inpfile_chnum_ID.tcl
-
-       where `inpfile_nch_ID.tcl` are a set of *N* tcl files with *N*
-       corresponding to the number of chains (`ID` goes from 1 to *N*)
-       in the system and *inpfile* corresponds to the name of the
-       input system (see SPRInG Keywords). If all of these files are
+       where `ID` corresponds to the `casenum_ID`. The directory will
+       also contain the user specified input files for the
+       residue/patch probabilities. If all of these files are
        present, Step 1 is complete. 
 
-   2.  *Step 2*: Within `all_tclfiles` directory, execute the
-       following:
+   2.  *Step 2*: Execute the following from command terminal:
 
        ```
-       vmd -dispdev text -e bundle.tcl
+       vmd -dispdev text -e step1.tcl
        ```
 
        Make sure the path to `vmd` is added to `$BIN` or is given
-       correctly. If the command runs smoothly, this should generate
-       `psf` files for each chain structure. 
+       correctly. 
 
-       Following the generation of `psf` files, issue
+       Alternatively, users can open `VMD` and open `Tk Console` and
+       issue 
+
+       ```tcl
+       source step1.tcl
+       ```
+
+       If either of the commands run smoothly, this should generate
+       `psf` files for each chain structure.  This should also
+       generate `pdb` files corresponding to the `psf` files within
+       the directory. This requires `LigninBuilder` to be added in
+       `~\.vmdrc` (see `LigninBuilder` on how to do this). 
+
+       Following the generation of `psf`\`pdb` files, from command
+       terminal, issue
 
        ```
-       vmd -dispdev text -e run_ligbuild.tcl
+       vmd -dispdev text -e step2.tcl
        ```
 
-       This should generate `pdb` files corresponding to the `psf`
-       files within the directory. This requires `LigninBuilder` to be
-       added in `~\.vmdrc` (see `LigninBuilder` on how to do this). 
-	
+       OR
+
+       from `Tk Console` in `VMD` issue
+
+       ```tcl
+       source step2.tcl
+       ```
+
+       This should provide output files  of the form
+       `inpfile_nch_N.psf`,`inpfile_nch_N.pdb` where *inpfile* is
+       the name of the input system (see SPRInG Keywords) and *N*
+       corresponds to the number of chains in the system. If
+       LigninBuilder flag is ON, it should also generate an output
+       `top` file of the form `inpfile_nch_N.top`. Make sure the `prm`
+       file is in the folder (*casenum_ID*) for generating `top`
+       files.
+
+
        If the `pdb` file(s) is (are) not generated, please see the
        input constraints. Most likely a particular residue (or patch)
        is incompatible. Please make sure that `LigninBuilder` is added
-       to `~\.vmdrc` before executing this command.
+       to `~\.vmdrc` before executing this command. 
 
-   3.  *Step 3*: If all the `psf` and `pdb` files are present, issue
+   3.  *Step 3*: If the intent of the user is to generate an initial
+       structure which do not have overlapping atoms, then the
+       `minimizestructure` module in `LigninBuilder` is necessary. To this
+       end, issue from command line,
 
        ```
-       vmd -dispdev text -e combine_all.tcl
+       vmd -dispdev text -e step3.tcl 
        ```
 
-       If this command runs smoothly, this should provide an
-       output file  of the form `inpfile_nch_N.tcl` where *inpfile* is
-       the name of the input system (see SPRInG Keywords) and *N*
-       corresponds to the number of chains in the system. Further, it
-       should generate an output `top` file of the form
-       `inpfile_nch_N.top`. Make sure the `prm` file is in the
-       *superfolder* (*casenum_ID*) for this command to run.
+       OR
 
-   
-   Once the `top` file is generated, these can be used as inputs to
-   `GROMACS`. It is the user's responsibility to check whether the
-   parameters match the atomnames (atomtypes) in the `psf`/`pdb` files.
-   
+       from `Tk Console` in `VMD` issue
+
+       ```tcl
+       source step3.tcl
+       ```
+
+       For some cases, the codes would require to use
+       `findmissingterms.py` in LigninBuilder (see `LigninBuilder`
+       module for more details). If the run is succesful, this will
+       generate a `pdb` and `psf` file which are compatible with
+       `GROMACS`/`NAMD`
+
+   NOTE: It is the user's responsibility to check whether the
+   parameters match the atomnames (atomtypes) in the `psf`/`pdb`
+   files.  
 
 
 
