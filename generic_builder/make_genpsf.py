@@ -51,9 +51,9 @@ def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
     elif fpatflag == 0:
         print('ERR: Patch not entered'); outflag = -1
     elif ftopflag == 0:
-        print('ERROR: Topology file not found')
+        print('WARNING: Topology file not found')
     elif fnamd != 0 and fpdbflag == 0:
-        print('ERROR: To run NAMD, input PDB/top files are required')
+        print('ERR: To run NAMD, input PDB/top files are required')
         outflag = -1
     return outflag
 #---------------------------------------------------------------------
@@ -1235,6 +1235,7 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
     topinp  = topname
     fcomb = open(tcldir + '/step2.tcl','w')
     fcomb.write('# To generate combined psf/pdb file..\n')    
+    fcomb.write('# Use source step2.tcl from Tk console to run\n')
     fcomb.write('package require psfgen\n')
     if flbdflag == 1:
         fcomb.write('package require topotools\n')
@@ -1260,8 +1261,22 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
                                             ,gmx_out,'[list ',\
                                             input_lbd,']'))
 
+
     fcomb.write('exit\n')
     fcomb.close()
+    
+    if flbdflag == 1: #step3.tcl
+        fextra = open(tcldir + '/extraparameters.prm','w')
+        fextra.write('! Extra parameters')
+        fextra.close()
+        fminim = open(tcldir + '/step3.tcl','w')
+        fminim.write('# Remove overlapping/pathological structures\n')
+        fminim.write('# Use source step3.tcl from Tk console to run\n')
+        fminim.write('package require ligninbuilder')
+        fminim.write('::ligninbuilder::minimizestructure . namd2 +p8'\
+                     + '   "parameters extraparameters.prm" \n')
+        fminim.write('exit\n')
+        fminim.close()
     
     return fbund
 #---------------------------------------------------------------------

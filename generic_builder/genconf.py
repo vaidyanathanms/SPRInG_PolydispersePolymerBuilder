@@ -341,8 +341,6 @@ for chcnt in range(num_chains):
     #prefix for pdb/psf/tcl files
     pdbpsf_name = biomas_typ + '_chnum_' + str(chnum) 
     tcl_fname  =  pdbpsf_name +'.tcl' 
-    #fmain = open(tcldir + '/' + tcl_fname,'w')
-    #fbund.write('%s\t%s\n' %('source', tcl_fname))
 
     # Copy NAMD files
     if fnamdflag:
@@ -381,7 +379,7 @@ for chcnt in range(num_chains):
                                fnamdflag,input_pdb)
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
-                run_namd(fmain,'namd2','mini.conf',out_namd)
+                run_namd(fbund,'namd2','mini.conf',out_namd)
             iter_num  += 1
             nmonsthisiter = nmonsthisiter + iterinc
 
@@ -399,7 +397,7 @@ for chcnt in range(num_chains):
 
             if fnamdflag == 1:
                 out_namd = 'mini' + str(iter_num) + '.out'
-                run_namd(fmain,'namd2','mini.conf',out_namd)
+                run_namd(fbund,'namd2','mini.conf',out_namd)
 
     else:
         exit('ERROR: Unknown output write style option: ' + itertype)
@@ -410,10 +408,7 @@ for chcnt in range(num_chains):
 fbund.write('package require ligninbuilder\n')
 fbund.write('::ligninbuilder::makelignincoordinates . . \n')
 fbund.write('exit\n')
-#Exit and close file
-#fmain.write('exit')
-#fmain.close()
-fbund.close()
+fbund.close() #Exit and close file
 #------------------------------------------------------------------
 
 #Extra PACKMOL directives
