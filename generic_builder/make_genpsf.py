@@ -120,7 +120,7 @@ def residue_ratios(inpfyle):
     return frac_res
 #---------------------------------------------------------------------
 
-# Define patch ratios from literature
+# Define patch ratios from input file
 def patch_ratios(opt_graft,resdict,inpfyle):
 
     frac_patch = collections.OrderedDict()
@@ -142,24 +142,27 @@ def patch_ratios(opt_graft,resdict,inpfyle):
         return frac_patch
 
     elif opt_graft[0] == 1:
+        sumrestot = 0
+        for rescnt in range(len(resdict)):
+            sumrestot += list(resdict.values())[rescnt]
         newfrac_patch = collections.OrderedDict() #create new dict
-        grcnt = 1
+        grcnt = 1; graft_prob = 0
         while grcnt < len(opt_graft):
             gr_resname = opt_graft[grcnt]
             gr_patname = opt_graft[grcnt+1]
-            resflag = 0; graft_prob = 0
+            resflag = 0
             for rescnt in range(len(resdict)):
                 if list(resdict.keys())[rescnt] == gr_resname:
                     resflag = 1
                     graft_prob += list(resdict.values())[rescnt]
                     frac_patch[gr_patname] = graft_prob
                     newfrac_patch[gr_patname] = graft_prob
-                    
             grcnt = grcnt + 2 
             if resflag == 0:
                 print('ERROR: Could not find ', str(gr_resname))
                 return 0
-
+        #sum of norm graft res prob = sum of norm graft patch prob
+        graft_prob = graft_prob/sumrestot # normalize graft probs
         # Renormalize if grafts are present and create new dict
         sumprob = 0
         for patcnt in range(len(frac_patch)):
@@ -173,6 +176,7 @@ def patch_ratios(opt_graft,resdict,inpfyle):
                 newprob = list(frac_patch.values())[patcnt]/normval
                 keyval = list(frac_patch.keys())[patcnt]
                 newfrac_patch[keyval] = newprob
+
         return newfrac_patch
 
     else:
