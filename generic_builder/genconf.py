@@ -36,8 +36,8 @@ input_pres = 'none'; input_pp = 'none'; input_lbd = 'none'
 itertype = 'single'
 def_res = 'none'; seg_name = 'S'; res_terminator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
-fl_constraint,disperflag,makepdifile,fnamdflag,pmolflag,cleanslate,\
-flbdflag,packtol,maxatt,conftol = def_vals()
+fpres_constraint,fpp_constraint,disperflag,makepdifile,fnamdflag,\
+pmolflag,cleanslate,flbdflag,packtol,maxatt,conftol = def_vals()
 #------------------------------------------------------------------
 
 # Read from file
@@ -91,10 +91,10 @@ with open(sys.argv[1]) as farg:
                 iterinc = int(words[2]) if len(words) == 3 \
                           else exit('Args for multi not found: '+line)
         elif words[0] == 'patch_res_constraint':
-            fl_constraint = 1
+            fpres_constraint = 1
             input_pres = words[1] 
         elif words[0] == 'patch_patch_constraint':
-            fl_constraint = 3 if fl_constraint == 1 else 2
+            fpp_constraint = 1
             input_pp = words[1] 
         elif words[0] == 'pdb_ipfile':
             if len(words) != 3:
@@ -135,7 +135,6 @@ with open(sys.argv[1]) as farg:
         else:
             exit('Unknown keyword ' + str(words[0]))
 #----------------------------------------------------------------------
-
 # Basic flag checks
 outflag = check_all_flags(casenum,fresflag,fpatflag,disperflag,\
                           mono_deg_poly,num_chains,fnamdflag,fpdbflag,\
@@ -168,8 +167,9 @@ print('Polymer type/Casenumber: %s, %d' %(biomas_typ,casenum))
 #------------------------------------------------------------------
 
 # Check initial and pdb file defaults and copy files
-allinitflags = find_init_files(fl_constraint,fpdbflag,fnamdflag,flbdflag,\
-                               makepdifile,input_top,input_pdb,
+allinitflags = find_init_files(fpres_constraint,fpp_constraint,\
+                               fpdbflag,fnamdflag,flbdflag,\
+                               makepdifile,input_top,input_pdb,\
                                input_pres,input_pp,input_lbd)
 if allinitflags == -1:
     exit()
@@ -177,9 +177,9 @@ gencpy(srcdir,head_outdir,sys.argv[1])
 gencpy(srcdir,head_outdir,resinpfyle)
 gencpy(srcdir,head_outdir,patinpfyle)
 gencpy(srcdir,head_outdir,input_top)
-if fl_constraint == 1 or fl_constraint == 3:
+if fpres_constraint == 1:
     gencpy(srcdir,head_outdir,input_pres)
-elif fl_constraint == 2 or fl_constraint == 3:
+if fpp_constraint == 2:
     gencpy(srcdir,head_outdir,input_pp)
 if flbdflag == 1:
     gencpy(srcdir,head_outdir,input_lbd)
@@ -212,8 +212,9 @@ print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
 # Open log file
 flog = open(head_outdir + '/' + log_fname,'w')
 init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top,\
-              seg_name,num_chains,maxatt,conftol,itertype,fl_constraint,\
-              resinpfyle,patinpfyle,disperflag,pdival)
+              seg_name,num_chains,maxatt,conftol,itertype,\
+              fpres_constraint,fpp_constraint,resinpfyle,patinpfyle\
+              ,disperflag,pdival)
 #------------------------------------------------------------------
 
 # Check NAMD inputs and pdb file checks
@@ -280,9 +281,8 @@ if res_list == -1:
     exit()
 #------------------------------------------------------------------
 
-# Create patches with constraints and check for avg probability 
-if fl_constraint == 2 or fl_constraint == 3:
-    # Read patch-patch constraints (in one go)
+# Read patch-patch constraints (in one go)
+if fpp_constraint == 1:
     print('Reading patch-patch constraints..')
     flog.write('Reading patch-patch constraints..\n')
     flog.write('All constraints \n')
@@ -291,13 +291,15 @@ if fl_constraint == 2 or fl_constraint == 3:
                     '\n' for ival in ppctr_list)
 else:
     ppctr_list = [[]]
+#------------------------------------------------------------------
 
+# Create patches with constraints
 print('Generating patches..')
 flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
                             patchperc_dict,cumul_patcharr,conftol,\
-                            maxatt,flog,fl_constraint,input_pres,\
-                            res_list,ppctr_list,graft_opt)
+                            maxatt,flog,fpres_constraint,fpp_constraint,\
+                            input_pres,res_list,ppctr_list,graft_opt)
 
 if patch_list == -1:
     exit()

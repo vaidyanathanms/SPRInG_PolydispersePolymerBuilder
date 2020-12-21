@@ -33,7 +33,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 
 # Set defaults
 def def_vals():
-    return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 50, 0.1
+    return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 50, 0.1
 #---------------------------------------------------------------------
 
 # Check all flags 
@@ -272,8 +272,8 @@ def make_polydisp_resids(inpfyle, nch):
 
 # Initiate log file
 def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
-              nch,att,tol,opstyle,fl_constraint,resfyle,patfyle,\
-              disflag,pdiinp):
+                  nch,att,tol,opstyle,fpres_constraint,fpp_constraint,\
+                  resfyle,patfyle,disflag,pdiinp):
     flog.write('Case number: %d\n' %(casenum))
     flog.write('Creating TCL file for %s\n' %(bmtype))
 
@@ -292,20 +292,24 @@ def init_logwrite(flog,casenum,bmtype,Marr,tfile,segname,\
     flog.write('Segment name in input (or output prefix): %s\n' \
                %(segname))
     flog.write('#attempts/Tolerance: %d\t%g\n' %(att,tol))
-    if fl_constraint != 0 :
-        flog.write('Patch/residue constraints: Yes\n')
+    if fpres_constraint != 0 :
+        flog.write('Patch-residue constraints: Yes\n')
     else:
-        flog.write('Patch/residue constraints: No\n')
-
+        flog.write('Patch-residue constraints: No\n')
+    if fpp_constraint != 0:
+        flog.write('Patch-patch constraints: Yes\n')
+    else:
+        flog.write('Patch-patch constraints: No\n')
     flog.write('Output style: %s\n' %(opstyle))
     
     flog.write('Analysis beginning ..\n')
 #---------------------------------------------------------------------
 
 # Check initial files
-def find_init_files(fl_constraint,fpdbflag,fnamdflag,flbdflag,makepdifile,\
-                    input_top='none',input_pdb='none',input_pres='none',\
-                    input_pp='none',input_lbd='none'):
+def find_init_files(fpres_constraint,fpp_constraint,fpdbflag,\
+                    fnamdflag,flbdflag,makepdifile,input_top='none',\
+                    input_pdb='none',input_pres='none',input_pp='none',\
+                    input_lbd='none'):
     # Read defaults and throw exceptions
     if not os.path.exists(input_top):
         print('Topology file not found \n', input_top)
@@ -318,17 +322,12 @@ def find_init_files(fl_constraint,fpdbflag,fnamdflag,flbdflag,makepdifile,\
         if fpdbflag and not os.path.exists(input_pdb):
             print('Initial structure file not found \n', input_pdb)
             return -1
-    elif fl_constraint == 1 and not os.path.exists(input_pres):
+    elif fpres_constraint == 1 and not os.path.exists(input_pres):
         print('Patch-residue constraint file not found', input_pres)
         return -1
-    elif fl_constraint == 2 and not os.path.exists(input_pp): 
+    elif fpp_constraint == 1 and not os.path.exists(input_pp): 
         print('Patch-patch constraint file not found', input_pp)
         return -1
-    elif fl_constraint == 3:
-        if not os.path.exists(input_pres) or \
-           not os.path.exists(input_pp):
-            print('One or more constraint file(s) not found \n')
-            return -1
     elif makepdifile == 1:
         if not os.path.exists('pdigen.f90') or \
            not os.path.exists('pdi_dist_params.f90'):
@@ -484,17 +483,17 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                             consecresflag = is_res_cons(resname1,resname2\
                                                         ,graftopt)
 
-                            #terminator condition if present
-                            if resname1 == res_terminator:
-                                if rescnt != deg_poly_chain-1:
-                                    initres_flag = 1 #can only be at end
-                                elif rescnt == deg_poly_chain-1 and \
-                                     (resname2 in graftopt):
-                                    #if end, previous cannot be graft
-                                    #(this condition is already met by
-                                    #following if statement. Just to
-                                    #be extra safe)
-                                    initres_flag = 1 
+                        #terminator condition if present
+                        if resname1 == res_terminator:
+                            if rescnt != deg_poly_chain-1:
+                                initres_flag = 1 #can only be at end
+                            elif rescnt == deg_poly_chain-1 and \
+                               (resname2 in graftopt):
+                                #if end, previous cannot be graft
+                                #(this condition is already met by
+                                #following if statement. Just to
+                                #be extra safe)
+                                initres_flag = 1 
 
                         # Last residue and second last residue cannot
                         # be grafts
@@ -589,7 +588,7 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 # THIS IS CONSTRAINT FOR RESIDUE1-PATCH-RESIDUE2 combination
 def check_constraints(inpfyle,patchname,resname1,resname2):
     
-    bef_flag = 1; aft_flag = 1 # keep as true
+    bef_flag = 1; aft_flag = 1 # keep as true; default: OK
     with open(inpfyle,'r') as fctr: 
         for line in fctr:
             line = line.rstrip('\n')
@@ -601,10 +600,16 @@ def check_constraints(inpfyle,patchname,resname1,resname2):
             if all_words[0] == patchname:
                 if all_words[1] == resname1:
                     bef_flag = 0
-                elif all_words[2] == resname2:
+                if all_words[2] == resname2:
                     aft_flag = 0
 
 
+    if resname1 == 'SYR' and patchname == '55':
+        if bef_flag != 0:
+            print("ERRRR:", bef_flag)
+    if resname2 == 'SYR' and patchname == '55':
+        if aft_flag != 0:
+            print("ERRRRR:", aft_flag)
     # Return 0 if any flags are 0, else return 1
     if bef_flag == 0 or aft_flag == 0:
         return 0
@@ -643,20 +648,6 @@ def read_patch_incomp(fname):
     return result
 #---------------------------------------------------------------------
 
-# check forbidden consecutive patches
-# THIS IS FOR RES1-PATCH1-RES2-PATCH2 combination
-# Only patch1 and patch2 are important. rest is checked in
-# check_constraints: patname1 - leftpatch, patname2 - rightpatch
-def is_forbid_patch(patchname1,patchname2,patforbid):
-    flag = 0 # default not forbidden
-    for i in range(len(patforbid)):
-        if patforbid[i][0] == patchname1:
-            if any(patchname2 in st for st in patforbid[i]):
-                flag = 1
-        
-    return flag
-#---------------------------------------------------------------------
-
 # Generate patch rules: patch - m, residues - n
 # Structure: RESn-PATm-RESn+1-PATm+1...
 # Rule 1: (a)patch "m" between resids n/n+1; check is_forbid_pat(m,m-1)
@@ -673,8 +664,8 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 # residue. For examples in comments, S/G/H are normal resids, F/PCA
 # are branch residue. 
 def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
-                   ,tol,maxattmpt,flog,ctr_flag,pres_fyle,residlist,\
-                   patforbid,graft_opt):
+                   ,tol,maxattmpt,flog,fpresflag,fppflag,pres_fyle,\
+                   residlist,patforbid,graft_opt):
 
     # Write list to a separate file
     flist.write(';# Entire patch list\n')
@@ -724,7 +715,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
             # aflag: for checking res-pat-res constraints
             # cflag: for checking pat1-pat2 adjancency
-            # cflag2/cflag3: for checking graftpat-backbonepat adjacency
+            # cflag2/cflag3/cflag4: for checking graftpat-backbonepat
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
             innerpatattempt = 0
@@ -745,7 +736,8 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                                                                inp_dict,\
                                                                resname1,\
                                                                resname2,\
-                                                               ctr_flag,\
+                                                               fpresflag,
+                                                               fppflag,\
                                                                patcnt,\
                                                                pres_fyle,\
                                                                patforbid,\
@@ -757,30 +749,49 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                     if patchname == 'ERR':
                         return -1 
 
-                    # One extra condition to identify: if resname1 is
-                    # connected to a graft, then the graft-resname1
+                    # Some of the following conditions maybe redundant
+                    # but it is OK.
+                    # Two extra conditions to identify: 1) if resname1
+                    # is connected to a graft, then the graft-resname1
                     # patch should be compatabile with
+                    # resname1-resname2 patch. 2) if resname2 is
+                    # connected to a graft, then the graft-resname2
+                    # patch should be compatible with
                     # resname1-resname2 patch. Feed patchname from
-                    # first condition
-                    cflag2 = 0
-                    if patcnt > 0:
+                    # first condition.
+                    #Condition 1 and 2 cannot be simultaneously true
+                    cflag4 = 0
+                    if patcnt > 0: # Condition 1
                         if (residlist[chcnt][patcnt-1] in graft_opt):
                             resname0  = residlist[chcnt][patcnt-1]
                             resindex  = graft_opt.index(resname0)
                             gr_patname = graft_opt[resindex+1]
-                            cflag2 = is_forbid_patch(patchname,\
+                            cflag4 = is_forbid_patch(gr_patname,\
+                                                     patchname,patforbid)
+                    if (patcnt+2) <= deg_poly_chain - 1: #Condition 2
+                        if (residlist[chcnt][patcnt+2] in graft_opt):
+                            resname3  = residlist[chcnt][patcnt+2]
+                            resindex  = graft_opt.index(resname3)
+                            gr_patname = graft_opt[resindex+1]
+                            cflag4 = is_forbid_patch(patchname,\
                                                      gr_patname,patforbid)
 
-
+                            
                     # Update list if conditions are met
-                    if aflag == 1 and cflag == 0 and cflag2 == 0: 
-
+                    if aflag == 1 and cflag == 0 and cflag4 == 0:
                         out_list[chcnt].append(patchname)
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                     %(patcnt+1,patchname,\
                                       segname,patcnt+1,segname,patcnt+2))
+                        if patchname == '55' and resname1 == 'SYR':
+                            print("ERR:3 respat constraint",\
+                                  aflag, c1flag,cflag4) 
+                        if patchname == '55' and resname2 == 'SYR':
+                            print("ERR:4 respat constraint",\
+                                  aflag, c1flag, cflag4)
                         patname_L = patchname # update left "normal" patch
                         patcnt += 1 # update counter
+
 
                     elif aflag == -2: #pres_fyle format is wrong
                         return 
@@ -856,7 +867,8 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                                                                    inp_dict,\
                                                                    resname1,\
                                                                    resname3,\
-                                                                   ctr_flag,\
+                                                                   fpresflag,
+                                                                   fppflag,\
                                                                    patcnt,\
                                                                    pres_fyle,\
                                                                    patforbid,\
@@ -968,8 +980,8 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
 # Find patch for Case 1: when RES1 and RES2 are normal residues.
 def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
-                       ctr_flag,patincnt,presctrfyle,ppctrlist,\
-                       graft_opt,curpat_list,chcnt,patchname_L):
+                       fpresflag,fppflag,patincnt,presctrfyle,ppctrlist\
+                       ,graft_opt,curpat_list,chcnt,patchname_L):
 
     ranval = random.random() #seed is current system time by default    
     findflag = 0
@@ -995,23 +1007,24 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
             #so that if constraints are not there, it will
             #be appended. consec flag has to be 0 for true
             appendflag = 1; consecpatflag = 0 
-            if ctr_flag != 0:
-                if patincnt == 0:
-                    resname_L = 'None'
-                else:
-                    resname_L = resname1
-                        
+            if fpresflag != 0 or fppflag != 0:
+                resname_L = resname1
+
                 # end if patcnt == 0
                 resname_R = resname2
-                if ctr_flag == 1 or ctr_flag == 3:
+                if fpresflag:
                     appendflag = check_constraints(presctrfyle,patchname,\
                                                    resname_L,resname_R)
-                elif ctr_flag == 2 or ctr_flag == 3:
+                    if resname1 == 'SYR' and patchname == '55':
+                        if appendflag != 0:
+                            print("appendflag", appendflag, patincnt,\
+                                  fpresflag, resname_L)
+                if fppflag:
                     consecpatflag =is_forbid_patch(patchname_L,\
                                                    patchname,ppctrlist)
                 # patchname cannot follow patchname_L
 
-                # end if ctr_flag==1
+                # end if fpresflag == 1 or fppflag == 1
 
             break
 
@@ -1028,8 +1041,26 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
         print('Error: Did not find a random residue\n')
         patchname = 'ERR'
     # end if find flag
+
+    if patchname_L == 'B5' and patchname == '55' and \
+       consecpatflag == 0:
+        print("ERRORRRR",fpresflag,fppflag)
     
     return patchname,appendflag,consecpatflag
+#---------------------------------------------------------------------
+
+# check forbidden consecutive patches
+# THIS IS FOR RES1-PATCH1-RES2-PATCH2 combination
+# Only patch1 and patch2 are important. rest is checked in
+# check_constraints: patname1 - leftpatch, patname2 - rightpatch
+def is_forbid_patch(patchname1,patchname2,patforbid):
+    flag = 0 # default not forbidden
+    for i in range(len(patforbid)):
+        if patforbid[i][0] == patchname1:
+            if any(patchname2 in st for st in patforbid[i]):
+                flag = 1
+        
+    return flag
 #---------------------------------------------------------------------
 
 # Write residues/patches in one go -- OBSOLETE. 
