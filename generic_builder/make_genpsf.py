@@ -60,6 +60,7 @@ def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
 
 # Define headers for psf files
 def psfgen_headers(fin,topname,outname):
+    fin.write('; ##*********New Molecule/Segment*********##')
     fin.write(';# headers and inputs \n')
     fin.write('package require psfgen \n')
     topinp = '../' + topname
@@ -96,6 +97,8 @@ def psfgen_postprocess(fin,writetype,iter_num,segname,fnamdflag,\
 
 
     fin.write('writepsf $outputname.psf \n')
+    fin.write('; #--------- End of Molecule/Segment ----------#\n')
+    fin.write('\n')
     if writetype == 'multi':
         fin.write('writepdb ${outputname}_${count}.psf \n')
 #---------------------------------------------------------------------
