@@ -63,7 +63,7 @@ def psfgen_headers(fin,topname,outname):
     fin.write('; ##*********New Molecule/Segment*********##')
     fin.write(';# headers and inputs \n')
     fin.write('package require psfgen \n')
-    topinp = '../' + topname
+    topinp = topname
     fin.write('%s\t %s\n' %('topology',topinp))
 #---------------------------------------------------------------------              
 # Details for closing input files
