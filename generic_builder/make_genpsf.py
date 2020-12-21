@@ -60,7 +60,7 @@ def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
 
 # Define headers for psf files
 def psfgen_headers(fin,topname,outname):
-    fin.write('; ##*********New Molecule/Segment*********##')
+    fin.write('; ##*********New Molecule/Segment*********##\n')
     fin.write(';# headers and inputs \n')
     fin.write('package require psfgen \n')
     topinp = topname
@@ -724,7 +724,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
             # aflag: for checking res-pat-res constraints
             # cflag: for checking pat1-pat2 adjancency
-            # cflag2: for checking graftpat-backbonepat adjacency
+            # cflag2/cflag3: for checking graftpat-backbonepat adjacency
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
             innerpatattempt = 0
@@ -757,8 +757,24 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                     if patchname == 'ERR':
                         return -1 
 
+                    # One extra condition to identify: if resname1 is
+                    # connected to a graft, then the graft-resname1
+                    # patch should be compatabile with
+                    # resname1-resname2 patch. Feed patchname from
+                    # first condition
+                    cflag2 = 0
+                    if patcnt > 0:
+                        if (residlist[chcnt][patcnt-1] in graft_opt):
+                            resname0  = residlist[chcnt][patcnt-1]
+                            resindex  = graft_opt.index(resname0)
+                            gr_patname = graft_opt[resindex+1]
+                            cflag2 = is_forbid_patch(patchname,\
+                                                     gr_patname,patforbid)
+
+
                     # Update list if conditions are met
-                    if aflag == 1 and cflag == 0: 
+                    if aflag == 1 and cflag == 0 and cflag2 == 0: 
+
                         out_list[chcnt].append(patchname)
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                     %(patcnt+1,patchname,\

@@ -405,7 +405,7 @@ for chcnt in range(num_chains):
     if pmolflag:
         make_packmol(fpack,pdbpsf_name,1,trans_list)
 #------------------------------------------------------------------
-if flbdlfag == 1:
+if flbdflag == 1:
     fbund.write(';# Using LigninBuilder to generate init config\n')
     fbund.write('package require ligninbuilder\n')
     fbund.write('::ligninbuilder::makelignincoordinates . . \n')
