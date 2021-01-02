@@ -1308,27 +1308,25 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
     if flbdflag == 1:
         gmx_out = outname + '.top'
         fcomb.write('\n')
+        fcomb.write("# Generate extraparameters.prm\nexec python3 ../findmissingterms.py\n")
         fcomb.write('# Generate GROMACS *.top file \n')
         fcomb.write('mol new $name.psf\n')
         fcomb.write('mol addfile $name.pdb\n')
         fcomb.write('%s %s %s %s %s %s\n' %('topo','writegmxtop'\
                                             ,gmx_out,'[list ',\
-                                            input_lbd,']'))
+                                            input_lbd,' extraparameters.prm ]'))
 
 
     fcomb.write('exit\n')
     fcomb.close()
     
     if flbdflag == 1: #step3.tcl
-        fextra = open(tcldir + '/extraparameters.prm','w')
-        fextra.write('! Extra parameters')
-        fextra.close()
         fminim = open(tcldir + '/step3.tcl','w')
         fminim.write('# Remove overlapping/pathological structures\n')
         fminim.write('# Use source step3.tcl from Tk console to run\n')
-        fminim.write('package require ligninbuilder')
+        fminim.write('package require ligninbuilder\n')
         fminim.write('::ligninbuilder::minimizestructure . namd2 +p8'\
-                     + '   "parameters extraparameters.prm" \n')
+                     + '   "parameters extraparameters.prm \n parameters ../par_all36_cgenff.prm \n" \n')
         fminim.write('exit\n')
         fminim.close()
     
