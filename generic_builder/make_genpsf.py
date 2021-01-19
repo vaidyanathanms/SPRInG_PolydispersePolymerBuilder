@@ -1326,7 +1326,7 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
         fminim = open(tcldir + '/step3.tcl','w')
         fminim.write('# Remove overlapping/pathological structures\n')
         fminim.write('# Use source step3.tcl from Tk console to run\n')
-        fminim.write('package require ligninbuilder')
+        fminim.write('package require ligninbuilder\n')
         fminim.write('::ligninbuilder::minimizestructure . namd2 +p8'\
                      + '   "parameters extraparameters.prm" \n')
         fminim.write('exit\n')
