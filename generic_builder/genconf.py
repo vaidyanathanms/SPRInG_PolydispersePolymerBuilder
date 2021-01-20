@@ -179,7 +179,7 @@ gencpy(srcdir,head_outdir,patinpfyle)
 gencpy(srcdir,head_outdir,input_top)
 if fpres_constraint == 1:
     gencpy(srcdir,head_outdir,input_pres)
-if fpp_constraint == 2:
+if fpp_constraint == 1:
     gencpy(srcdir,head_outdir,input_pp)
 if flbdflag == 1:
     gencpy(srcdir,head_outdir,input_lbd)
