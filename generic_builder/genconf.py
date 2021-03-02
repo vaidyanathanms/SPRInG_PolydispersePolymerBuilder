@@ -5,7 +5,6 @@
 # To generate the initial configuration file for polydisperse chains
 # Use NAMD and LigninBuilder to run the script
 # Auxiliary functions are given in make_genpsf.py
-
 # 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames.
 #------------------------------------------------------------------
 
@@ -28,7 +27,7 @@ if len(sys.argv) != 2:
           str(sys.argv))
     exit()
 print('*****************SPRInG_V1.0****************************')
-print(' Version: ', ver)
+print('Version: ', ver)
 print('Input file name: ', sys.argv[1])
 #------------------------------------------------------------------
 
@@ -64,6 +63,8 @@ with open(sys.argv[1]) as farg:
                 if len(words) < 5:
                     exit('Not enough arguments for PDI: '+line)
                 inp_pdival = float(words[2])
+                if inp_pdival <= 1.0:
+                    exit('PDI for polydisperse cases should be > 1.0')
                 disper_fyle = words[3]
                 npdiatt = int(words[4])
                 pditolval = 0
