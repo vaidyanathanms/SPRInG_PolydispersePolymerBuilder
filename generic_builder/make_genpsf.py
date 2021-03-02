@@ -776,7 +776,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                             cflag4 = is_forbid_patch(patchname,\
                                                      gr_patname,patforbid)
 
-                            
+
                     # Update list if conditions are met
                     if aflag == 1 and cflag == 0 and cflag4 == 0:
                         out_list[chcnt].append(patchname)
@@ -1015,10 +1015,10 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
                 if fpresflag:
                     appendflag = check_constraints(presctrfyle,patchname,\
                                                    resname_L,resname_R)
-                    if resname1 == 'SYR' and patchname == '55':
-                        if appendflag != 0:
-                            print("appendflag", appendflag, patincnt,\
-                                  fpresflag, resname_L)
+#                    if resname1 == 'SYR' and patchname == '55':
+#                        if appendflag != 0:
+#                            print("appendflag", appendflag, patincnt,\
+#                                  fpresflag, resname_L)
                 if fppflag:
                     consecpatflag =is_forbid_patch(patchname_L,\
                                                    patchname,ppctrlist)
@@ -1044,7 +1044,7 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
 
     if patchname_L == 'B5' and patchname == '55' and \
        consecpatflag == 0:
-        print("ERRORRRR",fpresflag,fppflag)
+        print("ERROR",fpresflag,fppflag)
     
     return patchname,appendflag,consecpatflag
 #---------------------------------------------------------------------
@@ -1057,7 +1057,8 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
     flag = 0 # default not forbidden
     for i in range(len(patforbid)):
         if patforbid[i][0] == patchname1:
-            if any(patchname2 in st for st in patforbid[i]):
+            if any(patchname2 in st \
+                   for st in patforbid[i][1:len(patforbid[i])]):
                 flag = 1
         
     return flag
