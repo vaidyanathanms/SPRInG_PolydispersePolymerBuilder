@@ -9,6 +9,8 @@
 # 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames.
 #------------------------------------------------------------------
 
+ver = 'Dec_07_2020'
+
 # Import modules
 import os
 import sys
@@ -26,6 +28,7 @@ if len(sys.argv) != 2:
           str(sys.argv))
     exit()
 print('*****************SPRInG_V1.0****************************')
+print(' Version: ', ver)
 print('Input file name: ', sys.argv[1])
 #------------------------------------------------------------------
 
