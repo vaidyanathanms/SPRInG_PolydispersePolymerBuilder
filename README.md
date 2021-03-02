@@ -501,17 +501,17 @@ generate a polydisperse input structure.
       `single`.
 
 
-1.  grafting (*Optional*)
+1.  branching (*Optional*)
 
     To define branching of main chain. Branches are single monomer
     long in the current mode. The program can manage multiple types of
     branches. Usage:
 
     ```
-    grafting 1 branch1 patch1 branch2 patch2 ...
+    branching 1 branch1 patch1 branch2 patch2 ...
     ```
 
-    The keyword `grafting` should be followed by an integer 1 or 0. 1
+    The keyword `branching` should be followed by an integer 1 or 0. 1
     corresponds to turning on the branch and 0 corresponds to no
     branch. This gives the user to toggle between branched and
     non-branched system easily. 
@@ -525,7 +525,7 @@ generate a polydisperse input structure.
     Example:
     
     ```
-    grafting 1 PCA GOG FERUT GOG
+    branching 1 PCA GOG FERUT GOG
     ```
 
     **NOTE**: Since, by construction, the number of patches equal to
@@ -645,15 +645,36 @@ generate a polydisperse input structure.
     sample example of this file will be as follows:
 
     ```
-    B5L	55	5BR	5BL
-    B5R	55	5BR	5BL
-    55	55	B5L	B5R	5BR	5BL
+    55	55	5B
+    BB	BB	GOG	B5	BO4
+    B5	55
+    GOG BB
+    BO4 O4B 4O5
     ```
 
     The first entry of each row should be the first of the two
     consecutive patches. Next 'n' entries of the row should contain
     all the patches that are incompatible with the first
     entry. 
+
+    Rules of making a new row is as follows: first element in every
+    row corresponds to the patch between residues `i` and `i+1`
+    whereas the other elements in the rows correspond to the EXCLUDED
+    patch values between residue `i+1` and residue `i+2`. For
+    instance, let us say that a `BO4` patch between residues 1 and 2,
+    this DOES NOT preclude having the patch BO4 between 2 and
+    3. Therefore, for the row of `BO4`, there should not be BO4 in the
+    EXCLUDED values. In other words, the number of occurences of `BO4`
+    for the row of `BO4` should be exactly 1. Now, for a different
+    case, let us say that a patch `BB` is present between residues 1
+    and 2. Therefore, the $\beta$ position of residue 2 is filled and
+    we CANNOT have a patch which starts with "\beta" such as "BB" or
+    "B5" or "BO4". In this case BB should be repeated twice (including
+    the first column of that row). 
+
+    Finally, if there are branches (grafts) present, one needs to take
+    extra care to include the exclusions.
+
 
     **NOTES**
 
