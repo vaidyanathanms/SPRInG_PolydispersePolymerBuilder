@@ -124,7 +124,7 @@ def residue_ratios(inpfyle):
 #---------------------------------------------------------------------
 
 # Define patch ratios from input file
-def patch_ratios(opt_graft,resdict,inpfyle):
+def patch_ratios(opt_branch,resdict,inpfyle):
 
     frac_patch = collections.OrderedDict()
 
@@ -140,42 +140,42 @@ def patch_ratios(opt_graft,resdict,inpfyle):
             (key, val) = line.split()
             frac_patch[key] = float(val)
 
-    # check for grafts and rearrange dictionary
-    if opt_graft[0] != 1:
+    # check for branches and rearrange dictionary
+    if opt_branch[0] != 1:
         return frac_patch
 
-    elif opt_graft[0] == 1:
+    elif opt_branch[0] == 1:
         sumrestot = 0
         for rescnt in range(len(resdict)):
             sumrestot += list(resdict.values())[rescnt]
         newfrac_patch = collections.OrderedDict() #create new dict
-        grcnt = 1; graft_prob = 0
-        while grcnt < len(opt_graft):
-            gr_resname = opt_graft[grcnt]
-            gr_patname = opt_graft[grcnt+1]
+        grcnt = 1; branch_prob = 0
+        while grcnt < len(opt_branch):
+            gr_resname = opt_branch[grcnt]
+            gr_patname = opt_branch[grcnt+1]
             resflag = 0
             for rescnt in range(len(resdict)):
                 if list(resdict.keys())[rescnt] == gr_resname:
                     resflag = 1
-                    graft_prob += list(resdict.values())[rescnt]
-                    frac_patch[gr_patname] = graft_prob
-                    newfrac_patch[gr_patname] = graft_prob
+                    branch_prob += list(resdict.values())[rescnt]
+                    frac_patch[gr_patname] = branch_prob
+                    newfrac_patch[gr_patname] = branch_prob
             grcnt = grcnt + 2 
             if resflag == 0:
                 print('ERROR: Could not find ', str(gr_resname))
                 return 0
-        #sum of norm graft res prob = sum of norm graft patch prob
-        graft_prob = graft_prob/sumrestot # normalize graft probs
-        # Renormalize if grafts are present and create new dict
+        #sum of norm branch res prob = sum of norm branch patch prob
+        branch_prob = branch_prob/sumrestot # normalize branch probs
+        # Renormalize if branches are present and create new dict
         sumprob = 0
         for patcnt in range(len(frac_patch)):
-            if list(frac_patch.keys())[patcnt] not in opt_graft:
+            if list(frac_patch.keys())[patcnt] not in opt_branch:
                 sumprob += list(frac_patch.values())[patcnt]
 
-        normval = sumprob/(1-graft_prob)
+        normval = sumprob/(1-branch_prob)
 
         for patcnt in range(len(frac_patch)):
-            if list(frac_patch.keys())[patcnt] not in opt_graft:
+            if list(frac_patch.keys())[patcnt] not in opt_branch:
                 newprob = list(frac_patch.values())[patcnt]/normval
                 keyval = list(frac_patch.keys())[patcnt]
                 newfrac_patch[keyval] = newprob
@@ -183,7 +183,7 @@ def patch_ratios(opt_graft,resdict,inpfyle):
         return newfrac_patch
 
     else:
-        print('Unknown option', graft_opt[0])
+        print('Unknown option', branch_opt[0])
         return 0
 
 #---------------------------------------------------------------------
@@ -410,7 +410,7 @@ def check_pdb_defaults(inpfyle,defa_res,seginp):
     
 # Create entire list in one go so that cumulative distribution holds true
 def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
-                    ,tol,maxattmpt,flog,graftopt,defa_res,res_terminator):
+                    ,tol,maxattmpt,flog,branchopt,defa_res,res_terminator):
 
     # Write list to a separate file
     flist.write(';#  Entire segment list\n')
@@ -463,8 +463,8 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                 findflag = 0
                 consecresflag = 0 #default: consecutive res are NOT found
                 initres_flag = 0 #def: no initiator res present
-                endgraftflag = 0 #def: if last is graft, two prior
-                #residues are NOT graft
+                endbranchflag = 0 #def: if last is branch, two prior
+                #residues are NOT branch
                 for arrcnt in range(len(cumulprobarr)):
         
                     #Only need to check the less than value because
@@ -481,40 +481,40 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                         if rescnt != 0: 
                             resname2 = out_list[chcnt][rescnt-1]
                             consecresflag = is_res_cons(resname1,resname2\
-                                                        ,graftopt)
+                                                        ,branchopt)
 
                         #terminator condition if present
                         if resname1 == res_terminator:
                             if rescnt != deg_poly_chain-1:
                                 initres_flag = 1 #can only be at end
                             elif rescnt == deg_poly_chain-1 and \
-                               (resname2 in graftopt):
-                                #if end, previous cannot be graft
+                               (resname2 in branchopt):
+                                #if end, previous cannot be branch
                                 #(this condition is already met by
                                 #following if statement. Just to
                                 #be extra safe)
                                 initres_flag = 1 
 
                         # Last residue and second last residue cannot
-                        # be grafts
+                        # be branches
                         if rescnt == deg_poly_chain-2 or \
                            rescnt == deg_poly_chain-1:
-                            if (resname1 in graftopt):
-                                endgraftflag = 1                           
+                            if (resname1 in branchopt):
+                                endbranchflag = 1                           
 
 #----------------------old version in master branch-----------------------
-#+                        # If the last residue is a graft, the previous
-#+                        # TWO resiudes cannot be graft
+#+                        # If the last residue is a branch, the previous
+#+                        # TWO resiudes cannot be branch
 #+                        if rescnt == deg_poly_chain-1 and \
-#+                           (resname1 in graftopt):
+#+                           (resname1 in branchopt):
 #+                            resname3 = out_list[chcnt][rescnt-1]
-#+                            endgraftflag = is_res_cons(resname1,\
-#+                                                       resname3,graftopt)
+#+                            endbranchflag = is_res_cons(resname1,\
+#+                                                       resname3,branchopt)
 #---------------------------------------------------------------------------
 
 
                         if consecresflag == 0 and initres_flag == 0 \
-                           and endgraftflag == 0:
+                           and endbranchflag == 0:
 
                             flist.write(' residue\t%d\t%s\n' \
                                         %(rescnt+1,resname1))
@@ -631,12 +631,12 @@ def ret_segname(seginp,chval):
     return segout
 #---------------------------------------------------------------------
 
-# check consecutive residues - cannot have graft residue in
+# check consecutive residues - cannot have branch residue in
 # consecutive positions
-def is_res_cons(resname1,resname2,graftopt):
+def is_res_cons(resname1,resname2,branchopt):
     sameflag = 0
-    if graftopt[0] == 1:
-        if (resname1 in graftopt) and (resname2 in graftopt):
+    if branchopt[0] == 1:
+        if (resname1 in branchopt) and (resname2 in branchopt):
             sameflag = 1
     return sameflag
 #---------------------------------------------------------------------
@@ -652,20 +652,20 @@ def read_patch_incomp(fname):
 # Structure: RESn-PATm-RESn+1-PATm+1...
 # Rule 1: (a)patch "m" between resids n/n+1; check is_forbid_pat(m,m-1)
 # (b) check constraints for m between n/n+1
-# Rule 2: res_n = graft; (a) graft_patch m between n/(n+1); check
+# Rule 2: res_n = branch; (a) branch_patch m between n/(n+1); check
 # is_forbid_pat(m-1,m+1); 
-# Rule 3: if res_n+1 = graft, patch m between n/n+2; check
+# Rule 3: if res_n+1 = branch, patch m between n/n+2; check
 # is_forbid_pat(m, m-1) => same as rule 1 (VERY IMP); check constrants
 # between n and n+2 (VERY IMP); and is_forbid_pat(m-1,m). Josh
-# suggested that GOG-BB (graft-normalpatch) is not compatible.
-# Rule 4: if last resiudue is a graft. graft_patch m between n/n-1; no
+# suggested that GOG-BB (branch-normalpatch) is not compatible.
+# Rule 4: if last resiudue is a branch. branch_patch m between n/n-1; no
 # checks required
 # For left and right residues, reference "n" corresponds to left
 # residue. For examples in comments, S/G/H are normal resids, F/PCA
 # are branch residue. 
 def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                    ,tol,maxattmpt,flog,fpresflag,fppflag,pres_fyle,\
-                   residlist,patforbid,graft_opt):
+                   residlist,patforbid,branch_opt):
 
     # Write list to a separate file
     flist.write(';# Entire patch list\n')
@@ -715,7 +715,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
             # aflag: for checking res-pat-res constraints
             # cflag: for checking pat1-pat2 adjancency
-            # cflag2/cflag3/cflag4: for checking graftpat-backbonepat
+            # cflag2/cflag3/cflag4: for checking branchpat-backbonepat
             # Need to check both the monomers a patch connects
             # patch_n between res_n and res_n+1
             innerpatattempt = 0
@@ -730,8 +730,8 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                 resname2 = residlist[chcnt][patcnt+1]
                 
                 # Normal case: resname1 and resname2 are "normal" RES
-                if (resname1 not in graft_opt) and (resname2 not in\
-                   graft_opt):
+                if (resname1 not in branch_opt) and (resname2 not in\
+                   branch_opt):
                     patchname,aflag,cflag = write_normal_patch(cumulprobarr,\
                                                                inp_dict,\
                                                                resname1,\
@@ -741,7 +741,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                                                                patcnt,\
                                                                pres_fyle,\
                                                                patforbid,\
-                                                               graft_opt,\
+                                                               branch_opt,\
                                                                out_list,\
                                                                chcnt,\
                                                                patname_L)
@@ -752,27 +752,27 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                     # Some of the following conditions maybe redundant
                     # but it is OK.
                     # Two extra conditions to identify: 1) if resname1
-                    # is connected to a graft, then the graft-resname1
+                    # is connected to a branch, then the branch-resname1
                     # patch should be compatabile with
                     # resname1-resname2 patch. 2) if resname2 is
-                    # connected to a graft, then the graft-resname2
+                    # connected to a branch, then the branch-resname2
                     # patch should be compatible with
                     # resname1-resname2 patch. Feed patchname from
                     # first condition.
                     #Condition 1 and 2 cannot be simultaneously true
                     cflag4 = 0
                     if patcnt > 0: # Condition 1
-                        if (residlist[chcnt][patcnt-1] in graft_opt):
+                        if (residlist[chcnt][patcnt-1] in branch_opt):
                             resname0  = residlist[chcnt][patcnt-1]
-                            resindex  = graft_opt.index(resname0)
-                            gr_patname = graft_opt[resindex+1]
+                            resindex  = branch_opt.index(resname0)
+                            gr_patname = branch_opt[resindex+1]
                             cflag4 = is_forbid_patch(gr_patname,\
                                                      patchname,patforbid)
                     if (patcnt+2) <= deg_poly_chain - 1: #Condition 2
-                        if (residlist[chcnt][patcnt+2] in graft_opt):
+                        if (residlist[chcnt][patcnt+2] in branch_opt):
                             resname3  = residlist[chcnt][patcnt+2]
-                            resindex  = graft_opt.index(resname3)
-                            gr_patname = graft_opt[resindex+1]
+                            resindex  = branch_opt.index(resname3)
+                            gr_patname = branch_opt[resindex+1]
                             cflag4 = is_forbid_patch(patchname,\
                                                      gr_patname,patforbid)
 
@@ -800,8 +800,8 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
                     continue # continue to while loop
                         
-                # Special Case 1: "left RES" of the patch is a graft
-                # monomer. Graft patch between left side (res_n) and
+                # Special Case 1: "left RES" of the patch is a branch
+                # monomer. Branch patch between left side (res_n) and
                 # right side (res_n+1). Patches are assigned to the
                 # next residue. But rule 2 written above the function
                 # defintion needs to be checked. Therefore don't
@@ -809,9 +809,9 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                 # compared alongside patchname_L. Check for cflag
                 # between patch m and m-1 to make sure that certain
                 # branch-backbone patches are not allowed (for eg: GOG-BB)
-                elif resname1 in graft_opt:
-                    resindex   = graft_opt.index(resname1)
-                    patchname  = graft_opt[resindex+1]
+                elif resname1 in branch_opt:
+                    resindex   = branch_opt.index(resname1)
+                    patchname  = branch_opt[resindex+1]
                     flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                 %(patcnt+1,patchname,\
                                   segname,patcnt+1,segname,patcnt+2))
@@ -820,23 +820,23 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                     continue #continue to next residue                    
 
 
-                # Special Case 2: "right RES" of the patch is a graft
+                # Special Case 2: "right RES" of the patch is a branch
                 # monomer. 
-                elif resname2 in graft_opt:
+                elif resname2 in branch_opt:
                     if patcnt > 0:
                         resname0 = residlist[chcnt][patcnt-1]
                     else:
                         resname0 = 'None'
-                    # Case 2a: last RES is graft. Patch graft between
-                    # n and n+1. graft_at_n is irrelevant here,
+                    # Case 2a: last RES is branch. Patch branch between
+                    # n and n+1. branch_at_n is irrelevant here,
                     # because resname1 and resname2 cannot be
-                    # simultaneously grafts. Again dont update
+                    # simultaneously branches. Again dont update
                     # patchname_L. It is irrelevant
                     # UPDATE: This condition cannot happen for the
                     # current system.
                     if patcnt == deg_poly_chain-2: 
-                        resindex  = graft_opt.index(resname2)
-                        patchname = graft_opt[resindex+1]
+                        resindex  = branch_opt.index(resname2)
+                        patchname = branch_opt[resindex+1]
                         flist.write(' patch\t%d\t%s\t%s:%d\t%s:%d\n' \
                                     %(patcnt+1,patchname,\
                                       segname,patcnt+1,segname,patcnt+2))
@@ -846,18 +846,18 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
                     #Case 2b: (a) patch normal between n and n+2. But
                     #check patch constraints with the previous
-                    #"normal" patch. (b) Also check graft-backbone
+                    #"normal" patch. (b) Also check branch-backbone
                     #patch incompatibility like Josh suggested - for
                     #instance BB-GOG.
                     #Ex ref: S1-P1-G2-P2-F3-P3-G4-P4-F5-P5-G6...;
                     #Consider G4-F5 as reference. P3 and P5 are fixed
-                    #because of grafts. patname_L will take care of
+                    #because of branches. patname_L will take care of
                     #case (a) whether it has to be P2 or P3 depending
                     #upon residue on the left
                     # (b1) check is_forbid_pat(P4,P5) or (Pn,Pn+1)
                     # if res(n-1) == normal 
                       #(a)  Check is_forbid_pat(P4,P3)  
-                    # else res(n-1) == graft
+                    # else res(n-1) == branch
                       #(a) Check is_forbid_pat(P4,P2) 
                       #(b2) Check is_forbid_pat(P4,P3)  or (Pn,Pn-1)
                     else: 
@@ -872,7 +872,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                                                                    patcnt,\
                                                                    pres_fyle,\
                                                                    patforbid,\
-                                                                   graft_opt,\
+                                                                   branch_opt,\
                                                                    out_list,\
                                                                    chcnt,\
                                                                    patname_L)
@@ -885,16 +885,16 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
                         # patch to condition (b1)/(b2)
                         if aflag == 1 and cflag == 0:
                             #check (Pn,Pn+1)
-                            resindex  = graft_opt.index(resname2)
-                            gr_patname = graft_opt[resindex+1]
+                            resindex  = branch_opt.index(resname2)
+                            gr_patname = branch_opt[resindex+1]
                             cflag2 = is_forbid_patch(patchname,\
                                                      gr_patname,patforbid)
 
-                            #check (Pn,Pn-1) if n-1 is graft
+                            #check (Pn,Pn-1) if n-1 is branch
                             cflag3 = 0
-                            if resname0 in graft_opt:
-                                resindex = graft_opt.index(resname0)
-                                gr_patname = graft_opt[resindex+1]
+                            if resname0 in branch_opt:
+                                resindex = branch_opt.index(resname0)
+                                gr_patname = branch_opt[resindex+1]
                                 cflag3 = is_forbid_patch(patchname,\
                                                          gr_patname,patforbid)
 
@@ -981,7 +981,7 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 # Find patch for Case 1: when RES1 and RES2 are normal residues.
 def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
                        fpresflag,fppflag,patincnt,presctrfyle,ppctrlist\
-                       ,graft_opt,curpat_list,chcnt,patchname_L):
+                       ,branch_opt,curpat_list,chcnt,patchname_L):
 
     ranval = random.random() #seed is current system time by default    
     findflag = 0
@@ -996,7 +996,7 @@ def write_normal_patch(cumulprobarr,pat_dict,resname1,resname2,\
         if ranval < cumulprobarr[arrcnt]:
 
             patchname = list(pat_dict.keys())[arrcnt]
-            if patchname in graft_opt: 
+            if patchname in branch_opt: 
                 ranval = random.random() #generate new random number
                 arrcnt = 0 #reset while loop
                 continue # iterate until normal patch
@@ -1066,7 +1066,7 @@ def is_forbid_patch(patchname1,patchname2,patforbid):
 # Write residues/patches in one go -- OBSOLETE. 
 # Added in write_multi_segments
 def write_segments_onego(fin,nresarr,nch,chnum,segname,res_list,\
-                         patch_list,graft_opt):
+                         patch_list,branch_opt):
 
     fin.write(';# ------Begin main code -----\n')
     fin.write(';# Writing % segments' %(sum(nresarr)))
@@ -1090,20 +1090,20 @@ def write_segments_onego(fin,nresarr,nch,chnum,segname,res_list,\
         patchname = patch_list[chnum-1][patcnt]
 
         # Normal Case: (see create_patches)
-        if resname1 not in graft_opt and resname2 not in graft_opt:
+        if resname1 not in branch_opt and resname2 not in branch_opt:
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
 
 
         # Special Case 1: (see create_patches)
-        elif resname1 in graft_opt:
+        elif resname1 in branch_opt:
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                           %(patchname,segname,patcnt+1,segname,patcnt+2))
 
         # Special Case 2: (see create_patches)
-        elif resname2 in graft_opt:
+        elif resname2 in branch_opt:
 
-            # Case 2a: last RES is graft. Patch graft between
+            # Case 2a: last RES is branch. Patch branch between
             # n and n+1
             if patcnt == max(nresarr)-2: 
                 fin.write('patch  %s  %s:%d  %s:%d\n' \
@@ -1126,17 +1126,17 @@ def write_segments_onego(fin,nresarr,nch,chnum,segname,res_list,\
 
 # Write residues/patches iteration by iteration
 def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
-                         segpref,res_list,patch_list,graft_opt,\
+                         segpref,res_list,patch_list,branch_opt,\
                          maxnummons):
 
-    # Extra condition to account for the graft monomer happening at
-    # the end of a PARTIAL segment. Since mth graft is attached to
+    # Extra condition to account for the branch monomer happening at
+    # the end of a PARTIAL segment. Since mth branch is attached to
     # n+1th residue (except when it is at the end of a FULL segment),
-    # the n+1th residue has to be a normal residue. Since two graft
+    # the n+1th residue has to be a normal residue. Since two branch
     # residues cannot be adjacent, it suffices to add n+1th residue to
     # that iteration.
     if nresthisiter != maxnummons:
-        if res_list[chnum-1][nresthisiter-1] in graft_opt:
+        if res_list[chnum-1][nresthisiter-1] in branch_opt:
             nresthisiter += 1
 
     if iter_num == -1 or iter_num == 1:
@@ -1170,7 +1170,7 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
         patchname = patch_list[chnum-1][patcnt]
 
         # Normal Case: (see create_patches)
-        if (resname1 not in graft_opt) and (resname2 not in graft_opt):
+        if (resname1 not in branch_opt) and (resname2 not in branch_opt):
             # Add extra letter to patches for consistency with top file
             # Only for B5 residues. May want to write it as an extra
             # wrapper later for generic cases
@@ -1184,14 +1184,14 @@ def write_multi_segments(fin,iter_num,nresthisiter,nch,chnum,\
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
 
         # Special Case 1: (see create_patches)
-        elif resname1 in graft_opt:
+        elif resname1 in branch_opt:
             fin.write('patch  %s  %s:%d  %s:%d\n' \
                       %(patchname,segname,patcnt+1,segname,patcnt+2))
             
         # Special Case 2: (see create_patches)
-        elif resname2 in graft_opt:
+        elif resname2 in branch_opt:
 
-            # Case 2a: last RES is graft. Patch graft between
+            # Case 2a: last RES is branch. Patch branch between
             # n and n+1
             if patcnt == nresthisiter-2: 
                 fin.write('patch  %s  %s:%d  %s:%d\n' \

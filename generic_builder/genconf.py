@@ -30,7 +30,7 @@ print('Input file name: ', sys.argv[1])
 #------------------------------------------------------------------
 
 # Set defaults
-graft_opt = [0]; 
+branch_opt = [0]; 
 input_pdb = 'none'; input_namd = 'none'; input_prm = 'none'
 input_pres = 'none'; input_pp = 'none'; input_lbd = 'none'
 itertype = 'single'
@@ -74,13 +74,13 @@ with open(sys.argv[1]) as farg:
             num_chains = int(words[1])
         elif words[0] == 'seg_name':
             seg_name = words[1]
-        elif words[0] == 'grafting':
+        elif words[0] == 'branching':
             if len(words) < 4 or (len(words)-2)%2 != 0:
-                exit('Unknown number of graft options: ' + line)
+                exit('Unknown number of branch options: ' + line)
             else:
-                graft_opt[0] = int(words[1])
+                branch_opt[0] = int(words[1])
                 for wcnt in range(len(words)-2):
-                    graft_opt.append(words[wcnt+2])
+                    branch_opt.append(words[wcnt+2])
         elif words[0] == 'tol':
             conftol = float(words[1])
         elif words[0] == 'nattempts':
@@ -235,14 +235,14 @@ if fpdbflag and fnamdflag: # if initial pdb file is present
 resperc_dict = residue_ratios(resinpfyle) 
 if not bool(resperc_dict):
     exit('ERROR: Check input residue file \n')
-if graft_opt[0] == 1:
+if branch_opt[0] == 1:
     flog.write('Building branched chains...\n')
 else:
     flog.write('Building linear chains...\n')
 #------------------------------------------------------------------
 
 # patches %dict mode
-patchperc_dict = patch_ratios(graft_opt,resperc_dict,patinpfyle) 
+patchperc_dict = patch_ratios(branch_opt,resperc_dict,patinpfyle) 
 if not bool(patchperc_dict):
     exit('ERROR: Check input patch file \n')
 #------------------------------------------------------------------
@@ -276,7 +276,7 @@ print('Generating residues..')
 flog.write('Creating residue list..\n')
 res_list = create_residues(fresin,deg_poly_all,num_chains,seg_name,\
                            resperc_dict,cumul_resarr,conftol,maxatt,\
-                           flog,graft_opt,def_res,res_terminator)
+                           flog,branch_opt,def_res,res_terminator)
 if res_list == -1:
     exit()
 #------------------------------------------------------------------
@@ -299,7 +299,7 @@ flog.write('Creating patches list..\n')
 patch_list = create_patches(fpatchin,deg_poly_all,num_chains,seg_name,\
                             patchperc_dict,cumul_patcharr,conftol,\
                             maxatt,flog,fpres_constraint,fpp_constraint,\
-                            input_pres,res_list,ppctr_list,graft_opt)
+                            input_pres,res_list,ppctr_list,branch_opt)
 
 if patch_list == -1:
     exit()
@@ -361,7 +361,7 @@ for chcnt in range(num_chains):
         
         flog.write('Writing config for  %d chains\n' %(num_chains))
         write_multi_segments(fbund,-1,deg_poly_this_chain,num_chains,chnum,\
-                             seg_name,res_list,patch_list,graft_opt,\
+                             seg_name,res_list,patch_list,branch_opt,\
                              deg_poly_this_chain)
         psfgen_postprocess(fbund,itertype,0,seg_name,fnamdflag,input_pdb)
 
@@ -376,7 +376,7 @@ for chcnt in range(num_chains):
             flog.write('Writing config for n-segments: %d\n' %(nmonsthisiter))
             write_multi_segments(fbund,iter_num,nmonsthisiter,num_chains,\
                                  chnum,seg_name,res_list,patch_list,\
-                                 graft_opt,deg_poly_this_chain)
+                                 branch_opt,deg_poly_this_chain)
             psfgen_postprocess(fbund,itertype,iter_num,seg_name,\
                                fnamdflag,input_pdb)
             if fnamdflag == 1:
@@ -393,7 +393,7 @@ for chcnt in range(num_chains):
             iter_num += 1
             write_multi_segments(fbund,iter_num,deg_poly_this_chain,\
                                  num_chains,chnum,seg_name,res_list,\
-                                 patch_list,graft_opt,deg_poly_this_chain)
+                                 patch_list,branch_opt,deg_poly_this_chain)
             psfgen_postprocess(fbund,itertype,iter_num,seg_name,\
                                fnamdflag,input_pdb)
 
