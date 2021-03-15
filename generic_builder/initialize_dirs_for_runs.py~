@@ -1,0 +1,89 @@
+# To generate initial directories and fill with initial files for
+# lignin systems. Will run LigninBuilder and generate initial
+# pdb/top/psf files
+
+# Version: Mar-14-2021
+#------------------------------------------------------------------
+
+# Import modules
+import os
+import sys
+import numpy
+import re
+import shutil
+import glob
+import math
+import fileinput
+import supp_initdirs import *
+#------------------------------------------------------------------
+
+# Version Info and # of input args for parsing Lignin Builder
+print("Generating GROMACS run-time inputs")
+print("Version: Mar-03-2021")
+if len(sys.argv) == 2:
+    coeff_fyle = str(sys.argv[1])
+else:
+    print('Unknown number of arguments: ', len(sys.argv),\
+          str(sys.argv))
+    exit()
+#------------------------------------------------------------------
+
+# Input Data
+inp_type  = 'cosolvents'       # melts, solvents, cosolvents
+biomass   = 'WT' # name of the biomass type
+disperse  = 'mono' # mono/poly; only for melts
+o_sol_typ = 'EOH'  # prefix for solvent file for solvents/cosolvents
+wat_type  = 'tip3p' # prefix for water file for coslvents
+solv_name = o_sol_typ # change if prefix is different from name in PDB
+wat_name  = 'TIP3_' # diff from prefix
+run_arr   = [1] # run number
+nchains   = 1     # number of polymer chains
+npoly_res = 22  # number of polymer residues
+n_orgsolv = 1000 # number of organic solvents
+nwater    = 4000 # number of water molecules (for cosolvents)
+box_dim   = 15 # box size for solvent only. cosolvent=+3
+#------------------------------------------------------------------
+
+# Directory Paths
+main_dir  = os.getcwd() # current dir
+scr_dir   = '/lustre/or-hydra/cades-bsd/v0e' # scratch dir
+
+if not os.path.isdir(scr_dir):
+    print("FATAL ERROR: ", scr_dir, " not found")
+    exit("Check scratch directory path")
+scr_dir  = scr_dir + '/lignin'
+if not os.path.isdir(scr_dir):
+    os.mkdir(scr_dir)
+#------------------------------------------------------------------
+
+# Required GMX/sh Files
+lig_fyles = ['make_genpsf.py','genconf.py','findmissingterms.py']
+#------------------------------------------------------------------
+
+#Main Code
+for casenum in range(len(run_arr)):
+    
+    print( "Run number: ", run_arr[casenum])
+      
+    # Make directories
+    head_dir = scr_dir + '/' + inp_type
+    if not os.path.isdir(head_dir):
+        os.mkdir(head_dir)
+
+    poly_dir = head_dir + '/' + biomass
+    if not os.path.isdir(poly_dir):
+        os.mkdir(poly_dir)
+
+    if inp_type == 'melts':
+        poly_dir = poly_dir + '/' + disperse
+        if not os.path.isdir(poly_dir):
+            os.mkdir(poly_dir)
+    
+    rundir = poly_dir + '/run_' + str(run_arr[casenum])
+    if not os.path.isdir(rundir):
+        os.mkdir(rundir)
+
+    # Run genconf.py
+    # R
+    workdir1 = set_working_dir(rundir,inp_type,o_sol_typ)
+

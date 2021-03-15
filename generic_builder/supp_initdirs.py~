@@ -1,0 +1,18 @@
+# Supplementary python files for initialize_dirs_for_runs.py
+# Version: Mar-14-2021
+#------------------------------------------------------------------
+
+# Import modules
+import os
+import sys
+import numpy
+import re
+import shutil
+import glob
+import math
+import fileinput
+#------------------------------------------------------------------
+
+
+
+
