@@ -22,3 +22,4 @@ hemicellulose/
 /generic_builder/diff.txt
 /generic_builder/polydisp*
 /pure_melts
+/generic_builder/initialize_dirs_for_runs.py
