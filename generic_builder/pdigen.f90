@@ -395,7 +395,7 @@ SUBROUTINE WRITE_STATS(chval,m1,m2,pdival)
   REAL :: mn, mw
 
   mn = REAL(m1)/REAL(nchain_list(chval))
-  mw = m2/m1
+  mw = REAL(m2)/REAL(m1)
  
   WRITE(log_fid,*) "Chain details"
   WRITE(log_fid,*) "-------------"
