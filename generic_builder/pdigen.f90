@@ -140,6 +140,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   ! PDI is within the tolerance, then set to 0
   INTEGER:: init_index,nextmw ! for systems with nchains < 8
   INTEGER:: twntyfiveperc ! For user output
+  REAL :: wavg_mw, navg_mw ! To compute PDI for large MW systems
 
   twntyfiveperc = INT(0.25*maxiteration) ! For user output
 
@@ -286,7 +287,10 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
            Mi = Mi + Molwt_arr(chcnt)
         END DO
         
-        PDIgen = REAL(Mi2*nchain_list(chain_id))/real(Mi**2)
+        ! Major change: VMS -- to account for large MW chains
+        wavg_mw = REAL(Mi2)/REAL(Mi)
+        navg_mw = REAL(Mi)/REAL(nchain_list(chain_id))
+        PDIgen  = REAL(wavg_mw)/REAL(navg_mw) !REAL(Mi2*nchain_list(chain_id))/real(Mi**2)
         
         ! Checks if generated PDI is within tolerance of desired PDI
         ! and  does  not have an Mi smaller than 2
