@@ -33,7 +33,7 @@ def gencpy(dum_maindir,dum_destdir,fylname):
 
 # Set defaults
 def def_vals():
-    return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.0, 50, 0.1
+    return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,3,2.0,50,0.1
 #---------------------------------------------------------------------
 
 # Check all flags 
@@ -198,9 +198,14 @@ def init_pdi_write(pdival,avgmw,nch,op_file,npdiatt,pditolval):
     finit.write('%g\t %g\t %g\n' %(pdival,avgmw,nch))
     finit.write('max_attempts\n')
     finit.write('%d\n' %(npdiatt))
+    finit.write('min_size\n')
+    finit.write('%d\n' %(min_polysize))
     if pditolval != 0:
         finit.write('tolerance\n')
         finit.write('%g\n' %(pditolval))
+    if max_polysize != 0:
+        finit.write('max_size')
+        finit.write('%d\n' %(max_polysize))
     finit.write('pdi_op_file\n')
     finit.write('%s\n' %(op_file))
     finit.close()
@@ -248,8 +253,8 @@ def make_polydisp_resids(inpfyle, nch):
                 chflag = 1
                 resmw_data = []
             else:
-                if int(line[0]) < 3:
-                    print('ERR: Minimum 3 residues should be present')
+                if int(line[0]) < min_polysize:
+                    print('ERR: Minimum', min_polysize, 'residues should be present')
                     return -1, 0
                 resmw_data.append(int(line[0]))
 

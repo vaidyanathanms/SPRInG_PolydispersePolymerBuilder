@@ -82,6 +82,10 @@ SUBROUTINE READ_PDIINP_FILE()
         READ(pdi_fid,*) maxiteration       
      ELSEIF(trim(adjustl(dumchar)) == 'tolerance') THEN
         READ(pdi_fid,*) tol        
+     ELSEIF(trim(adjustl(dumchar)) == 'min_size') THEN
+        READ(pdi_fid,*) min_polysize
+     ELSEIF(trim(adjustl(dumchar)) == 'max_size') THEN
+        READ(pdi_fid,*) range
      ELSEIF(trim(adjustl(dumchar)) == 'pdi_op_file') THEN
         READ(pdi_fid,*) out_fname
         outflag = 1
@@ -115,6 +119,7 @@ SUBROUTINE INIT_LOGWRITE()
   WRITE(log_fid,*) "Number of chain types: ", nch_types
   WRITE(log_fid,*) "Tolerance (0,1): ", tol
   WRITE(log_fid,*) "Maximum attempts: " , maxiteration
+  WRITE(log_fid,*) 'Min/Max polymer size: ',min_polysize,max_polysize
   WRITE(log_fid,*) "************************************************"
   WRITE(log_fid,*) 
 
@@ -296,7 +301,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         ! and  does  not have an Mi smaller than 2
         IF (ABS(PDIgen - PDI_arr(chain_id)) .LE. (PDI_arr(chain_id)&
              &*tol)) THEN
-           IF(MINVAL(MolWt_arr) .GE. 3) THEN !minimum trimer
+           IF(MINVAL(MolWt_arr) .GE. min_polysize) THEN !min polysize
               loop = 0 ! Conditions met
            END IF
         END IF
@@ -306,7 +311,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      IF(loop == 1) THEN
         PRINT *, "WARNING: Not converged before maximum iteration.."
         PRINT *, "WARNING: Using the last generated configuration.."
-        IF(MINVAL(MolWt_arr) .LT. 3) THEN
+        IF(MINVAL(MolWt_arr) .LT. min_polysize) THEN
            PRINT *, "Smallest molecular weight of the chain from the l&
                 &ast iteration is ", MINVAL(MolWt_arr), "; this value &
                 & may be incompatabile with SPRInG."

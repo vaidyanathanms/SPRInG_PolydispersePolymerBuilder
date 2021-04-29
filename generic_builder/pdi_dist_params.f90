@@ -7,10 +7,11 @@ MODULE PDI_PARAMS
 
   !--------Input parameters------------------------------------------
   INTEGER,PARAMETER::maxsteps = 100000 ! Integration steps
-  REAL,PARAMETER::range = 5 ! Max value of Sigma
+  REAL ::range = 15 ! Max value of Sigma
   INTEGER::maxiteration = 10000 ! Iteration counts
   REAL :: tol = 5 ! Tolerance value for PDI(%). Value between 1-100
   INTEGER :: nch_types = 1 ! Number of chain types
+  INTEGER :: min_polysize = 3 ! Minimum polymer size
 
   !---------File names------------------------------------------------
   CHARACTER(len=256) :: pdi_fname, out_fname

@@ -39,7 +39,8 @@ itertype = 'single'
 def_res = 'none'; seg_name = 'S'; res_terminator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
 fpres_constraint,fpp_constraint,disperflag,makepdifile,fnamdflag,\
-pmolflag,cleanslate,flbdflag,packtol,maxatt,conftol = def_vals()
+pmolflag,cleanslate,flbdflag,max_polysize,min_polysize,packtol,\
+maxatt,conftol = def_vals()
 #------------------------------------------------------------------
 
 # Read from file
@@ -70,6 +71,8 @@ with open(sys.argv[1]) as farg:
                 pditolval = 0
                 if len(words) == 6:
                     pditolval = float(words[5])
+                if len(words) == 7:
+                    max_polysize = int(words[6])
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0] == 'num_resids':
@@ -114,6 +117,8 @@ with open(sys.argv[1]) as farg:
             patinpfyle = words[1]; fpatflag = 1
         elif words[0] == 'LigninBuilder':
             input_lbd = words[1]; flbdflag = 1
+        elif words[0] == 'min_polysize':
+            min_polysize = int(words[1])
         elif words[0] == 'namd_inp':
             if len(words) != 3:
                 exit('Unknown number of arguments: ' + line)
