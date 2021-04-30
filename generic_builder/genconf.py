@@ -39,7 +39,7 @@ itertype = 'single'
 def_res = 'none'; seg_name = 'S'; res_terminator = 'none'
 casenum,mono_deg_poly,num_chains,fpdbflag,ftopflag,fresflag,fpatflag,\
 fpres_constraint,fpp_constraint,disperflag,makepdifile,fnamdflag,\
-pmolflag,cleanslate,flbdflag,max_polysize,min_polysize,packtol,\
+pmolflag,cleanslate,flbdflag,distrange,min_polysize,packtol,\
 maxatt,conftol = def_vals()
 #------------------------------------------------------------------
 
@@ -67,14 +67,19 @@ with open(sys.argv[1]) as farg:
                     exit('Not enough arguments for PDI: '+line)
                 inp_pdival = float(words[2])
                 if inp_pdival <= 1.0:
-                    exit('PDI for polydisperse cases should be > 1.0')
+                    exit('ERR: PDI for polydisperse cases should be > 1.0')
                 disper_fyle = words[3]
                 npdiatt = int(words[4])
                 pditolval = 0
-                if len(words) == 6:
-                    pditolval = float(words[5])
-                if len(words) == 7:
-                    max_polysize = int(words[6])
+                if (len(words)-5)%2 != 0:
+                    exit('ERR: Unknown number of args for disperse')
+                for wcnt in range(int(0.5*(len(words)-5))):
+                    if words[2*wcnt+5].lower() == 'pditol'.lower():
+                        pditolval = float(words[2*wcnt+6])
+                    elif words[2*wcnt+5].lower() == 'mwrange'.lower():
+                        distrange = int(words[2*wcnt+6])
+                    else:
+                        exit('ERR: Unknown keyword' + words[2*wcnt+5])
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0].lower() == 'num_resids'.lower():
@@ -201,13 +206,15 @@ if disperflag:
     if makepdifile == 1:
         print("Making chains with target polydispersity...")
         init_pdi_write(inp_pdival,mono_deg_poly,num_chains,disper_fyle\
-                       ,npdiatt,pditolval)
+                       ,npdiatt,pditolval,min_polysize,distrange)
         pdigenflag = compile_and_run_pdi(head_outdir)
         if pdigenflag == -1:
             exit()
 
     print('Polydispersity file: ', disper_fyle)
-    deg_poly_all,pdival = make_polydisp_resids(disper_fyle,num_chains)
+    deg_poly_all,pdival = make_polydisp_resids(disper_fyle,\
+                                               num_chains,
+                                               min_polysize)
     if pdival == 0:
         exit()
     gencpy(srcdir,head_outdir,disper_fyle) # copy files to headdir

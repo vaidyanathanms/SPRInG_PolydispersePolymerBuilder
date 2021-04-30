@@ -189,7 +189,8 @@ def patch_ratios(opt_branch,resdict,inpfyle):
 #---------------------------------------------------------------------
 
 # Initial PDI details if polydisperse chains are to be generated
-def init_pdi_write(pdival,avgmw,nch,op_file,npdiatt,pditolval):
+def init_pdi_write(pdival,avgmw,nch,op_file,npdiatt,pditolval,\
+                   min_polysize,distrange):
     pdi_fyl = 'inp_genpdi.txt'
     finit   = open(pdi_fyl,'w')
     finit.write('chain_types\n')
@@ -203,9 +204,9 @@ def init_pdi_write(pdival,avgmw,nch,op_file,npdiatt,pditolval):
     if pditolval != 0:
         finit.write('tolerance\n')
         finit.write('%g\n' %(pditolval))
-    if max_polysize != 0:
-        finit.write('max_size')
-        finit.write('%d\n' %(max_polysize))
+    if distrange != 0:
+        finit.write('distrange\n')
+        finit.write('%d\n' %(distrange))
     finit.write('pdi_op_file\n')
     finit.write('%s\n' %(op_file))
     finit.close()
@@ -236,7 +237,7 @@ def compile_and_run_pdi(destdir):
 #---------------------------------------------------------------------
 
 # Assign MW for polydisperse cases
-def make_polydisp_resids(inpfyle, nch):
+def make_polydisp_resids(inpfyle, nch, min_polysize):
     if not os.path.exists(inpfyle):
         print('ERR: PDI file: ', inpfyle, 'not found')
         return -1, 0
