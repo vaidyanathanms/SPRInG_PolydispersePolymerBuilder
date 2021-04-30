@@ -1,5 +1,7 @@
 # Simple Polydisperse Residue Input Generator (SPRInG)
 
+ver_1.1: Apr-29-2021
+
 This code will generate polydisperse residues according to Schulz-Zimm
 distribution. The generated `.psf` files can be used directly with
 [LigninBuilder](https://github.com/jvermaas/LigninBuilder/tree/master/LigninBuilderPlugin)
