@@ -21,6 +21,7 @@ MODULE PDI_PARAMS
   INTEGER,ALLOCATABLE,DIMENSION(:)::avg_mw_arr !i/p Avg MW of chain types
   INTEGER,ALLOCATABLE,DIMENSION(:)::nchain_list !i/p list of num chains
   INTEGER,ALLOCATABLE,DIMENSION(:)::MolWt_arr ! Molecular wt o/p list
+  INTEGER,ALLOCATABLE,DIMENSION(:)::BestMolWt_arr ! Best Mol wt o/p list
   REAL,ALLOCATABLE,DIMENSION(:) :: PDI_arr !i/p PDI of each type
 
   REAL,DIMENSION(1:maxsteps)::Prob_SZ !Probability of SZ distribution 

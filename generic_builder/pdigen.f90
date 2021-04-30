@@ -84,7 +84,7 @@ SUBROUTINE READ_PDIINP_FILE()
         READ(pdi_fid,*) tol        
      ELSEIF(trim(adjustl(dumchar)) == 'min_size') THEN
         READ(pdi_fid,*) min_polysize
-     ELSEIF(trim(adjustl(dumchar)) == 'max_size') THEN
+     ELSEIF(trim(adjustl(dumchar)) == 'distrange') THEN
         READ(pdi_fid,*) range
      ELSEIF(trim(adjustl(dumchar)) == 'pdi_op_file') THEN
         READ(pdi_fid,*) out_fname
@@ -96,8 +96,8 @@ SUBROUTINE READ_PDIINP_FILE()
   END DO
   CLOSE(pdi_fid)
 
-  tol = real(tol)/100.0 !convert tolerance to fraction
-  step = range/maxsteps 
+  tol = real(tol)/real(100.0) !convert tolerance to fraction
+  step = real(range)/real(maxsteps) 
 
   IF(outflag == 0) out_fname = "polydisp.inp"
   OPEN(unit = out_fid,file=trim(adjustl(out_fname)),action="write"&
@@ -119,7 +119,8 @@ SUBROUTINE INIT_LOGWRITE()
   WRITE(log_fid,*) "Number of chain types: ", nch_types
   WRITE(log_fid,*) "Tolerance (0,1): ", tol
   WRITE(log_fid,*) "Maximum attempts: " , maxiteration
-  WRITE(log_fid,*) 'Min/Max polymer size: ',min_polysize,max_polysize
+  WRITE(log_fid,*) "Distribution range: ", range
+  WRITE(log_fid,*) 'Mininum polymer size: ',min_polysize
   WRITE(log_fid,*) "************************************************"
   WRITE(log_fid,*) 
 
@@ -146,7 +147,10 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   INTEGER:: init_index,nextmw ! for systems with nchains < 8
   INTEGER:: twntyfiveperc ! For user output
   REAL :: wavg_mw, navg_mw ! To compute PDI for large MW systems
+  REAL :: simpdi_best ! To save best configuration
+  INTEGER :: mi_best,mi2_best ! To save best configuration
 
+  simpdi_best = 0; mi_best = 0; mi2_best = 0 ! To save best configuration
   twntyfiveperc = INT(0.25*maxiteration) ! For user output
 
   ! Compute inverse of pdi
@@ -163,6 +167,8 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
   ! Allocate MW list for each chain type
   ALLOCATE(MolWt_arr(1:nchain_list(chain_id)), stat=AllocateStatus)
   IF(AllocateStatus /= 0) STOP "ERR: Did not allocate MolWt_arr" 
+  ALLOCATE(BestMolWt_arr(1:nchain_list(chain_id)), stat=AllocateStatus)
+  IF(AllocateStatus /= 0) STOP "ERR: Did not allocate BestMolWt_arr" 
 
   IF(PDI_arr(chain_id) .GT. 1.0) THEN
 
@@ -176,7 +182,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
      ! Calculate probability function
      DO i=1,maxsteps
-        Prob_SZ(i) = (inv_pdi**inv_pdi)*(GAMMA(rat_arr(i))**-1.0)&
+        Prob_SZ(i) = (inv_pdi**inv_pdi)*(GAMMA(inv_pdi)**-1.0)&
              &*(rat_arr(i)**(inv_pdi-1))*(EXP(-1.0*inv_pdi*rat_arr(i)))
      END DO
 
@@ -229,7 +235,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      ! Calculate PDI of list
      DO i=1,nchain_list(chain_id)
         Mi2 = Mi2 + (MolWt_arr(chain_id)**2)
-        Mi = Mi + Molwt_arr(chain_id)
+        Mi = Mi + MolWt_arr(chain_id)
      END DO
      
      PDIgen = (Mi2*nchain_list(chain_id))/(Mi**2)
@@ -270,7 +276,9 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
               !MW of ith chain in nchain_list(chain_id)
               IF (randnum .LE.  0) THEN
                  subtract = 0
-                 MolWt_arr(i) = INT(rat_arr(j-1)*avg_mw_arr(chain_id))
+                 ! To avoid drawing with 0 value. This is kind of
+                 ! arbitrary
+                 MolWt_arr(i) = CEILING(rat_arr(j-1)*avg_mw_arr(chain_id))
               ELSE  
                  j = j + 1
                  IF(j == maxsteps+1) then
@@ -289,7 +297,7 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
         ! Calculate PDI of generated list
         DO chcnt=1,nchain_list(chain_id)
            Mi2 = Mi2 + (MolWt_arr(chcnt)**2)
-           Mi = Mi + Molwt_arr(chcnt)
+           Mi = Mi + MolWt_arr(chcnt)
         END DO
         
         ! Major change: VMS -- to account for large MW chains
@@ -303,18 +311,31 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
              &*tol)) THEN
            IF(MINVAL(MolWt_arr) .GE. min_polysize) THEN !min polysize
               loop = 0 ! Conditions met
+              PRINT *, "Current best PDI: ", PDIgen
+              simpdi_best = PDIgen
+              mi_best = Mi
+              mi2_best = Mi2
+              CALL SAVE_CONFIG(nchain_list(chain_id))
+           END IF
+        ELSEIF (ABS(PDIgen - PDI_arr(chain_id)) .LE. ABS(simpdi_best-&
+             & PDI_arr(chain_id))) THEN
+           IF(MINVAL(MolWt_arr) .GE. min_polysize) THEN
+              PRINT *, "Current best PDI: ", PDIgen
+              simpdi_best = PDIgen
+              mi_best = Mi
+              mi2_best = Mi2
+              CALL SAVE_CONFIG(nchain_list(chain_id))
            END IF
         END IF
-
      END DO
 
      IF(loop == 1) THEN
         PRINT *, "WARNING: Not converged before maximum iteration.."
-        PRINT *, "WARNING: Using the last generated configuration.."
-        IF(MINVAL(MolWt_arr) .LT. min_polysize) THEN
+        PRINT *, "WARNING: Using the best generated configuration.."
+        IF(MINVAL(BestMolWt_arr) .LT. min_polysize) THEN
            PRINT *, "Smallest molecular weight of the chain from the l&
-                &ast iteration is ", MINVAL(MolWt_arr), "; this value &
-                & may be incompatabile with SPRInG."
+                &ast iteration is ", MINVAL(BestMolWt_arr), "; this va&
+                &lue may be incompatabile with SPRInG."
            PRINT *, "Try increasing the number of attempts for PDI gen&
                 &eration or the number of chains/avg_mw_wt"
         END IF
@@ -333,19 +354,20 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
      nextmw = INT(avg_mw_arr(chain_id)/8.0)
      IF(nextmw < 1) nextmw = 1
      DO i = 1,nchain_list(chain_id)
-        MolWt_arr(i) = avg_mw_arr(chain_id) + INT(i/2)*INT((-1)**i)&
-             &*nextmw
+        BestMolWt_arr(i) = avg_mw_arr(chain_id) + INT(i/2)*INT((-1)&
+             &**i)*nextmw
      END DO
      
      ! Assign MW of 3 for MWs lesser than 3
      DO i = 1,nchain_list(chain_id)
-        IF(MolWt_arr(i) < 3) MolWt_arr(i) = 3
+        IF(BestMolWt_arr(i) < min_polysize) MolWt_arr(i) =&
+             & min_polysize
      END DO
 
      ! Calculate PDI of list
      DO chcnt=1,nchain_list(chain_id)
-        Mi2 = Mi2 + (MolWt_arr(chcnt)**2)
-        Mi = Mi + Molwt_arr(chcnt)
+        Mi2 = Mi2 + (BestMolWt_arr(chcnt)**2)
+        Mi = Mi + BestMolWt_arr(chcnt)
      END DO
      PDIgen = REAL(Mi2*nchain_list(chain_id))/real(Mi**2)
 
@@ -357,16 +379,32 @@ SUBROUTINE GENERATE_MWVALS(chain_id)
 
   END IF
 
-  CALL WRITE_STATS(chain_id,Mi,Mi2,PDIgen)
+  CALL WRITE_STATS(chain_id,mi_best,mi2_best,PDIgen)
 
   WRITE(out_fid,*) "num_chains", nchain_list(chain_id)
   DO chcnt=1,nchain_list(chain_id)
-     WRITE(out_fid,'(I0)') MolWt_arr(chcnt)
+     WRITE(out_fid,'(I0)') BestMolWt_arr(chcnt)
   END DO
 
   DEALLOCATE(MolWt_arr) ! Deallocate for new chain system
+  DEALLOCATE(BestMolWt_arr) ! Deallocate for new chain system
 
 END SUBROUTINE GENERATE_MWVALS
+!---------------------------------------------------------------------
+
+SUBROUTINE SAVE_CONFIG(numch)
+
+  USE PDI_PARAMS
+  IMPLICIT NONE
+  INTEGER, INTENT(IN)::numch
+  INTEGER :: tid
+
+  BestMolWt_arr = 0
+  DO tid = 1,numch
+     BestMolWt_arr(tid) = MolWt_arr(tid)
+  END DO
+
+END SUBROUTINE SAVE_CONFIG
 !---------------------------------------------------------------------
 
 SUBROUTINE INIT_WARNINGS(chid)
