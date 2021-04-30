@@ -51,15 +51,15 @@ with open(sys.argv[1]) as farg:
             continue
         words = line.split()
         # call all functions
-        if words[0] == 'case_num': 
+        if words[0].lower() == 'case_num'.lower(): 
             casenum = int(words[1])
-        elif words[0] == 'biomass_type': 
+        elif words[0].lower() == 'biomass_type'.lower(): 
             biomas_typ = words[1]
-        elif words[0] == 'disperse':
+        elif words[0].lower() == 'disperse'.lower():
             disperflag = 1
-            if words[1] == 'READ':
+            if words[1].lower() == 'READ'.lower():
                 disper_fyle = words[2]; 
-            elif words[1] == 'CREATE':
+            elif words[1].lower() == 'CREATE'.lower():
                 makepdifile = 1; 
                 if len(words) < 5:
                     exit('Not enough arguments for PDI: '+line)
@@ -75,61 +75,61 @@ with open(sys.argv[1]) as farg:
                     max_polysize = int(words[6])
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
-        elif words[0] == 'num_resids':
+        elif words[0].lower() == 'num_resids'.lower():
             mono_deg_poly = int(words[1])
-        elif words[0] == 'num_chains':
+        elif words[0].lower() == 'num_chains'.lower():
             num_chains = int(words[1])
-        elif words[0] == 'seg_name':
+        elif words[0].lower() == 'seg_name'.lower():
             seg_name = words[1]
-        elif words[0] == 'branching':
+        elif words[0].lower() == 'branching'.lower():
             if len(words) < 4 or (len(words)-2)%2 != 0:
                 exit('Unknown number of branch options: ' + line)
             else:
                 branch_opt[0] = int(words[1])
                 for wcnt in range(len(words)-2):
                     branch_opt.append(words[wcnt+2])
-        elif words[0] == 'tol':
+        elif words[0].lower() == 'tol'.lower():
             conftol = float(words[1])
         elif words[0] == 'nattempts':
             maxatt = int(words[1])
-        elif words[0] == 'op_style':
+        elif words[0].lower() == 'op_style'.lower():
             itertype  = words[1]
-            if itertype == 'multi':
+            if itertype.lower() == 'multi'.lower():
                 iterinc = int(words[2]) if len(words) == 3 \
                           else exit('Args for multi not found: '+line)
-        elif words[0] == 'patch_res_constraint':
+        elif words[0].lower() == 'patch_res_constraint'.lower():
             fpres_constraint = 1
             input_pres = words[1] 
-        elif words[0] == 'patch_patch_constraint':
+        elif words[0].lower() == 'patch_patch_constraint'.lower():
             fpp_constraint = 1
             input_pp = words[1] 
-        elif words[0] == 'pdb_ipfile':
+        elif words[0].lower() == 'pdb_ipfile'.lower():
             if len(words) != 3:
                 exit('Unknown number of args: ' + line)
             else:
                 input_pdb = words[1]; def_res = words[2]
                 fpdbflag = 1
-        elif words[0] == 'top_ipfile':
+        elif words[0].lower() == 'top_ipfile'.lower():
             input_top = words[1]; ftopflag = 1
-        elif words[0] == 'resid_inp':
+        elif words[0].lower() == 'resid_inp'.lower():
             resinpfyle = words[1]; fresflag = 1
-        elif words[0] == 'patch_inp':
+        elif words[0].lower() == 'patch_inp'.lower():
             patinpfyle = words[1]; fpatflag = 1
-        elif words[0] == 'LigninBuilder':
+        elif words[0].lower() == 'LigninBuilder'.lower():
             input_lbd = words[1]; flbdflag = 1
-        elif words[0] == 'min_polysize':
+        elif words[0].lower() == 'min_polysize'.lower():
             min_polysize = int(words[1])
-        elif words[0] == 'namd_inp':
+        elif words[0].lower() == 'namd_inp'.lower():
             if len(words) != 3:
                 exit('Unknown number of arguments: ' + line)
             else:
                 input_namd = words[1]; input_prm = words[2]
                 fnamdflag = 1
-        elif words[0] == 'clean_directories':
+        elif words[0].lower() == 'clean_directories'.lower():
             cleanslate = 1 if words[1] == 'Y' \
                       else 0 if words [1] == 'N' \
                            else exit('Unknown args: '+line)
-        elif words[0] == 'gen_packmol':
+        elif words[0].lower() == 'gen_packmol'.lower():
             pmolflag = 1
             if len(words) != 3 and len(words) != 9:
                 exit('Unknown number of arguments: '+ line)
@@ -139,7 +139,7 @@ with open(sys.argv[1]) as farg:
             if len(words) > 3:
                 for k in range(6):
                     trans_list.append(words[3+k])            
-        elif words[0] == 'terminator':
+        elif words[0].lower() == 'terminator'.lower():
             res_terminator = words[1]
         else:
             exit('Unknown keyword ' + str(words[0]))
