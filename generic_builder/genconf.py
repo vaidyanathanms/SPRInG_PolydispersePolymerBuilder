@@ -8,7 +8,7 @@
 # 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames.
 #------------------------------------------------------------------
 
-ver = 'Dec_07_2020'
+ver = 'Apr_29_2021'
 
 # Import modules
 import os
@@ -47,8 +47,10 @@ maxatt,conftol = def_vals()
 with open(sys.argv[1]) as farg:
     for line in farg:
         line = line.rstrip('\n')
-        if line.startswith('#'):
+        if line.startswith('#'): # skip lines starting with #
             continue
+        if not line: # skip empty lines
+            continue 
         words = line.split()
         # call all functions
         if words[0].lower() == 'case_num'.lower(): 
