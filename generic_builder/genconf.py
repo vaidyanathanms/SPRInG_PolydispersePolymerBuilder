@@ -8,6 +8,7 @@
 # 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames.
 #------------------------------------------------------------------
 
+print('*****************SPRInG_V1.1****************************')
 ver = 'Apr_29_2021'
 
 # Import modules
@@ -26,7 +27,7 @@ if len(sys.argv) != 2:
     print('Unknown number of arguments: ', len(sys.argv),\
           str(sys.argv))
     exit()
-print('*****************SPRInG_V1.0****************************')
+
 print('Version: ', ver)
 print('Input file name: ', sys.argv[1])
 #------------------------------------------------------------------
