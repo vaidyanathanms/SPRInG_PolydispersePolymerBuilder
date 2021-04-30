@@ -282,7 +282,7 @@ generate a polydisperse input structure.
     for this case. Usage:
 
     ```
-    disperse maketype optarg1 optarg2
+    disperse maketype optkeywords optargs
     ```
 
     `maketype` can be either `CREATE` or `READ`. `CREATE` corresponds
@@ -299,7 +299,7 @@ generate a polydisperse input structure.
       is as follows:
 
       ```
-      disperse CREATE PDIval Outputfile ntrials tolerance
+      disperse CREATE PDIval Outputfile ntrials pditol tolerance distrange rangeval
       ```
 
       `PDIval` and `Outputfile` corresponds to the target
@@ -314,20 +314,27 @@ generate a polydisperse input structure.
       to generate the polymer chains within the PDI tolerance limit.
       Values between 1000-10000 should be enough for most cases.
 
-      User can also specify an optional tolerance value (0-100). This
-      corresponds to the maximum relative error (in %) between the
-      target PDI  value and the simulated PDI. Different combinations
+      With the pditol keyword, user can also specify an optional 
+      tolerance value (0-100). This corresponds to the maximum 
+      relative error (in %) between the target PDI  value and the 
+      simulated PDI. Different combinations
       will be tried to obtain either the target PDI value of the
-      system exits after 50000 trials. Default value is 10. For all
-      practical purposes values between 5 and 15 yield good output
-      distribution if the number of chains in the system is less than
-      20. This argument is optional.
+      system. Default value is 5. For all practical purposes values 
+      between 5 and 15 yield good output distribution if the number 
+      of chains in the system is less than 20. 
+      This keyword and the corresponding argument is optional.
+
+      With the distrange keyword, user can specify the maximum range of 
+      molecular weights that will be used to create the Schulz-Zimmm
+      distribution. Plot the theoretical curve to see where the distribution
+      tapers to zero. Most likely the default value of 5 would suffice.
+      This keyword and the corresponding argument is optional.
   
       Examples:
 
       ```
       disperse CREATE 1.50 polydisp.inp 10000
-      disperse CREATE 1.50 polydisp.inp 1000 8.0
+      disperse CREATE 1.50 polydisp.inp 1000 pditol 8.0 distrange 20
       ```
 
       If this option is used, after running the program, a file with the
