@@ -186,8 +186,6 @@ generate a polydisperse input structure.
    introducing the keyword. 
 -  A space/tab should be present between the keywords and arguments or
    between arguments. 
--  All keywords are case-sensitive. 
--  A line **cannot** be left empty (blank). 
 -  A new line can start with an optional `#`. These lines will be
    ignored. However, `#` *cannot* be used in the middle of a line.
 -  The input file name (and file names used as arguments) cannot be
