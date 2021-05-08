@@ -134,8 +134,8 @@ with open(sys.argv[1]) as farg:
                 input_namd = words[1]; input_prm = words[2]
                 fnamdflag = 1
         elif words[0].lower() == 'clean_directories'.lower():
-            cleanslate = 1 if words[1] == 'Y' \
-                      else 0 if words [1] == 'N' \
+            cleanslate = 1 if words[1].lower() == 'y' \
+                      else 0 if words [1].lower() == 'n' \
                            else exit('Unknown args: '+line)
         elif words[0].lower() == 'gen_packmol'.lower():
             pmolflag = 1
