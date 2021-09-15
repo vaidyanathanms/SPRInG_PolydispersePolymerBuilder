@@ -1,6 +1,6 @@
 #------------------------------------------------------------------
 # SPRInG-Simple Polydisperse Residue Input Generator
-# Ver: Dec-07-2020
+# First Ver: Dec-07-2020
 # Author: Vaidyanathan Sethuraman
 # To generate the initial configuration file for polydisperse chains
 # Use NAMD and LigninBuilder to run the script
@@ -135,7 +135,7 @@ with open(sys.argv[1]) as farg:
                 fnamdflag = 1
         elif words[0].lower() == 'clean_directories'.lower():
             cleanslate = 1 if words[1].lower() == 'y' \
-                      else 0 if words [1].lower() == 'n' \
+                      else 0 if words[1].lower() == 'n' \
                            else exit('Unknown args: '+line)
         elif words[0].lower() == 'gen_packmol'.lower():
             pmolflag = 1
