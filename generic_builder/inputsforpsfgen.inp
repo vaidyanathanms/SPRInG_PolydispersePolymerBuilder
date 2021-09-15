@@ -15,7 +15,7 @@ resid_inp	inpprob_res.dat
 patch_inp	inpprob_pat.dat
 clean_directories	Y
 LigninBuilder	par_lignin.prm
-
+terminator  TRCN
 min_polysize	2
 # optional: namd_inp	mini_pyconf.conf lignin.prm
 # optional: pdb_ipfile	single_G.pdb GUAI
