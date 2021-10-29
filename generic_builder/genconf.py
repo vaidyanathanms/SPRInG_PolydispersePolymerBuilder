@@ -62,28 +62,15 @@ with open(sys.argv[1]) as farg:
         elif words[0].lower() == 'disperse'.lower():
             disperflag = 1
             if words[1].lower() == 'READ_PDI'.lower():
-                disper_fyle = words[2] 
-            elif words[1].lower() == 'READ_EXPTDATA'.lower():
                 disper_fyle = words[2]
+            elif words[1].lower() == 'READ_EXPTDATA'.lower():
+                makepdifile = 2
+                ex_disper_fyle,mon_mwt,expt_mn,expt_mw,\
+                    expt_pdi = read_expt_pdidata(words)
             elif words[1].lower() == 'CREATE_PDI'.lower():
                 makepdifile = 1; 
-                if len(words) < 5:
-                    exit('Not enough arguments for PDI: '+line)
-                inp_pdival = float(words[2])
-                if inp_pdival <= 1.0:
-                    exit('ERR: PDI for polydisperse cases should be > 1.0')
-                disper_fyle = words[3]
-                npdiatt = int(words[4])
-                pditolval = 0
-                if (len(words)-5)%2 != 0:
-                    exit('ERR: Unknown number of args for disperse')
-                for wcnt in range(int(0.5*(len(words)-5))):
-                    if words[2*wcnt+5].lower() == 'pditol'.lower():
-                        pditolval = float(words[2*wcnt+6])
-                    elif words[2*wcnt+5].lower() == 'mwrange'.lower():
-                        distrange = int(words[2*wcnt+6])
-                    else:
-                        exit('ERR: Unknown keyword' + words[2*wcnt+5])
+                inp_pdival,disper_fyle,npdiatt,pditolval,\
+                    distrange = create_new_pdidata(words,line)
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0].lower() == 'num_resids'.lower():
@@ -207,13 +194,18 @@ if flbdflag == 1:
 
 # Make monomer array for all chains
 if disperflag:
-    if makepdifile == 1:
+    if makepdifile == 1: #Create new data set from SZ distribution
         print("Making chains with target polydispersity...")
         init_pdi_write(inp_pdival,mono_deg_poly,num_chains,disper_fyle\
                        ,npdiatt,pditolval,min_polysize,distrange)
         pdigenflag = compile_and_run_pdi(head_outdir)
         if pdigenflag == -1:
             exit()
+    elif makepdifile == 2: # Create data set from exptal distn
+        print("Making chains with experimental polydispersity data ...")
+        make_expt_pdidata(ex_disper_fyle,num_chains,avg_mwwt)
+    else: # Read data set from user inputs
+        print("Reading polydispersity data from user inputs...")
 
     print('Polydispersity file: ', disper_fyle)
     deg_poly_all,pdival = make_polydisp_resids(disper_fyle,\
