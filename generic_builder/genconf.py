@@ -51,8 +51,9 @@ with open(sys.argv[1]) as farg:
         if line.startswith('#'): # skip lines starting with #
             continue
         if not line: # skip empty lines
-            continue 
-        words = line.split()
+            continue
+        head, sep, tail = line.partition('#')
+        words = head.split()
         # call all functions
         if words[0].lower() == 'case_num'.lower(): 
             casenum = int(words[1])
@@ -60,9 +61,11 @@ with open(sys.argv[1]) as farg:
             biomas_typ = words[1]
         elif words[0].lower() == 'disperse'.lower():
             disperflag = 1
-            if words[1].lower() == 'READ'.lower():
-                disper_fyle = words[2]; 
-            elif words[1].lower() == 'CREATE'.lower():
+            if words[1].lower() == 'READ_PDI'.lower():
+                disper_fyle = words[2] 
+            elif words[1].lower() == 'READ_EXPTDATA'.lower():
+                disper_fyle = words[2]
+            elif words[1].lower() == 'CREATE_PDI'.lower():
                 makepdifile = 1; 
                 if len(words) < 5:
                     exit('Not enough arguments for PDI: '+line)
