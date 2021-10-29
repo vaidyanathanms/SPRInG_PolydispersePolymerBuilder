@@ -36,6 +36,50 @@ def def_vals():
     return 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,3,2.0,50,0.1
 #---------------------------------------------------------------------
 
+# Read data for experimental PDI system
+def read_expt_pdidata(words):
+    mon_mwt = 200; expt_mn = 0; expt_mw = 0; expt_pdi = 0
+    if len(words) == 3:
+        ex_disper_fyle = words[2]
+    elif len(words) > 3:
+        for wcnt in range(3,len(words),2):
+            if words[wcnt] == 'avg_monwt'.lower():
+                mon_mwt = float(words[wcnt+1])
+            elif words[wcnt] == 'mn'.lower():
+                expt_mn = float(words[wcnt+1])
+            elif words[wcnt] == 'mw'.lower():
+                expt_mw = float(words[wcnt+1])
+            elif words[wcnt] == 'pdi'.lower():
+                expt_pdi = float(words[wcnt+1])
+    else:
+        raise RuntimeError("Not enough arguments", words,\
+                           len(words))
+
+    return ex_disper_fyle,mon_mwt,expt_mn,expt_mw,expt_pdi
+#---------------------------------------------------------------------
+
+def create_new_pdidata(words,line):
+    if len(words) < 5:
+        raise RuntimeError('Not enough arguments for PDI: '+line)
+    inp_pdival = float(words[2])
+    if inp_pdival <= 1.0:
+        raise RuntimeError('ERR: PDI for polydisperse cases should be > 1.0')
+    disper_fyle = words[3]
+    npdiatt = int(words[4])
+    pditolval = 0; distrange = 0
+    if (len(words)-5)%2 != 0:
+        raise RuntimeError('ERR: Unknown number of args for disperse')
+    for wcnt in range(int(0.5*(len(words)-5))):
+        if words[2*wcnt+5].lower() == 'pditol'.lower():
+            pditolval = float(words[2*wcnt+6])
+        elif words[2*wcnt+5].lower() == 'mwrange'.lower():
+            distrange = int(words[2*wcnt+6])
+        else:
+            exit('ERR: Unknown keyword' + words[2*wcnt+5])
+            
+    return inp_pdival, disper_fyle, npdiatt, pditolval, distrange
+#----------------------------------------------------------------------
+
 # Check all flags 
 def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
                     fnamd,fpdbflag,ftopflag):
