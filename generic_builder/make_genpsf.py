@@ -40,6 +40,7 @@ def def_vals():
 # Read data for experimental PDI system
 def read_expt_pdidata(words):
     mon_mwt = 200; expt_mn = 0; expt_mw = 0; expt_pdi = 0
+    npdiatt = 100000; pditol = 0.05
     if len(words) == 3:
         ex_disper_fyle = words[2]
     elif len(words) > 3:
@@ -52,11 +53,16 @@ def read_expt_pdidata(words):
                 expt_mw = float(words[wcnt+1])
             elif words[wcnt] == 'pdi'.lower():
                 expt_pdi = float(words[wcnt+1])
+            elif words[wcnt] == 'ntrials'.lower():
+                npdiatt = float(words[wcnt+1])
+            elif words[wcnt] == 'pditol'.lower():
+                pditol = float(words[wcnt+1])/100
     else:
         raise RuntimeError("Not enough arguments", words,\
                            len(words))
 
-    return ex_disper_fyle,mon_mwt,expt_mn,expt_mw,expt_pdi
+    return ex_disper_fyle,mon_mwt,expt_mn,expt_mw,expt_pdi,\
+        npdiatt,pditol
 #---------------------------------------------------------------------
 
 def create_new_pdidata(words,line):
@@ -233,7 +239,7 @@ def patch_ratios(opt_branch,resdict,inpfyle):
 #---------------------------------------------------------------------
 
 # Develop probability distribution for experimental data
-def make_expt_pdidata(einp_fyle,nchains,avgmonwt,emn,emw,epdi):
+def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
 
     expinp_fmt ='NULL'; exptkey = 0
     # Check file existence
@@ -259,40 +265,127 @@ def make_expt_pdidata(einp_fyle,nchains,avgmonwt,emn,emw,epdi):
     # Remove duplicates
     df.drop_duplicates(inplace = True)
 
+    # Check for strictly increasing
+    xdata = np.array(df['molwt'])
+    if not np.all(np.diff(xdata)>0):
+        raise RuntimeError('X-data should be monotonically increasing')
+
     # Convert w(m)/w(logm) to p(m)
-    ydata = convert_to_pofm(np.array(df['molwt']),\
-                            np.array(df[expinp_fmt]),\
+    ydata = convert_to_pofm(xdata,np.array(df[expinp_fmt]),\
                             expinp_fmt)
 
     # Compute Mn, Mw, Mz
-    mn, mw, mz = comp_avgs(np.array(df['molwt']),ydata)
+    intsum,emn,emw,emz = comp_avgs(xdata,ydata)
+    epdi = emw/emn
 
-    
+    # Generate output distributions
+    cmn,cmw,cmz,cpdi,eout_file = gen_exptdist(xdata,ydata,intsum,\
+                                              nchains,emn,emw,\
+                                              emz,epdi,nattempts,\
+                                              pditol,einp_file)
+
+    # Output to log file
+    expout_log(flog,einp_file,expinp_fmt,emn,emw,emz,epdi,\
+               cmn,cmw,cmz,cpdi,eout_file)
+
+    return eout_file
 #---------------------------------------------------------------------
 
 # Convert inputs to probability distribution
 def convert_to_pofm(xinp,yinp,inpfmt):
     if inpfmt == 'WLOGMW':
-        return numpy.multiply(np.power(xinp,-2),yinp))
+        return np.multiply(np.power(xinp,-2),yinp))
     elif inpfmt == 'WMW':
-        return numpy.multiply(np.power(xinp,-1),yinp))
+        return np.multiply(np.power(xinp,-1),yinp))
     elif inpfmt == 'PMW':
         return yinp
 #---------------------------------------------------------------------
 
 # Compute averages
 def comp_avgs(xinp,yinp):
-    mn_num=0;mn_den=0; mw_num=0;mw_den=0; mz_num=0;mz_den=0
-    for indx in range(0,len(xdata)):
-        ydx=0.5*(yinp[indx]+yinp[indx+1])*(xinp[indx]-xinp[indx+1])
-        mn_num += mn_num + ydx*xdata[indx]
-        mn_den += mn_den + ydx
-        mw_num += mw_num + ydx*(xdata[indx]**2)
-        mw_den += mw_num + ydx*xdata[indx]
-        mz_num += mw_num + ydx*(xdata[indx]**3)
-        mz_den += mw_num + ydx*(xdata[indx]**2)
+    mu0 = trapz(xinp,yinp)
+    mu1 = trapz(xinp,np.multiply(xinp,yinp))
+    mu2 = trapz(xinp,np.multiply(xinp**2,yinp))
+    mu3 = trapz(xinp,np.multiply(xinp**3,yinp))
+    return mu0, mu1/mu0, mu2/mu1, mu3/mu2
+#---------------------------------------------------------------------
 
-    return mn_num/mn_den, mw_num/mw_den, mz_num/mz_den
+# Trapezoidal rule
+def trapz(xinp,yinp):
+    sval = 0
+    for indx in range(0,len(xinp)-1)):
+        sval += 0.5*(yinp[indx]+yinp[indx+1])*(xinp[indx]-xinp[indx+1])
+    return sval
+#---------------------------------------------------------------------
+
+# Generate MW distribution and write to output
+def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
+                 pditol,inpfyle):
+
+    # Normalize distribution
+    normy = pdfy/intsum
+    #Generate cumulative distribution
+    cdf[0] = normy[0]
+    for indx in range(1,len(xinp))):
+        cdf.append(trapz(xinp[0:indx],normy[0:indx]))
+
+    if abs(cdf[len(cdf)-1]-1) > 10**-6:
+        raise RuntimeError('CDF not adding to one: ',cdf[len(cdf)=1])
+    # Generate chains
+    print('Generating chains according to expt distribution..')
+
+    for trials in range(natt):
+        if trials%1000 == 0:
+            print('Trial number: ', trials+1)
+        mw_vals = [np.interp(random.random,normy,xinp) \
+                   for j in range(nch))]
+        comp_mn  = sum(mw_vals)/nch
+        comp_mw  = sum(mw_vals**2)/sum(mw_vals)
+        comp_pdi = comp_mw/comp_mn
+        if abs((comp_pdi-epdi)/epdi) < pditol:
+            print('Found chain configuration!..')
+            print('Computed Mn: %g, Mw: %g, PDI: %g' \
+                  %(comp_mn,comp_mw,comp_pdi))
+            comp_mz = sum(mw_vals**3)/sum(mw_vals**2)
+            break
+    
+    if trails > natt:
+        raise RuntimeError('Could not find molecular weights of chains correspond to experimental distribution. Try increasing the number of chains or the tolerance')
+
+    # Write output distributions file
+    edist_fyle = "pdidistribution_"+inpfyle
+    with open(edist_fyle,'w') as fdist:
+        fdist.write('# Computed/Experimental Mn: %g, %g\n' %(comp_mn,emn))
+        fdist.write('# Computed/Experimental Mw: %g, %g\n' %(comp_mw,emw))
+        fdist.write('# Computed/Experimental Mz: %g, %g\n' %(comp_mz,emz))
+        fdist.write('# Computed/Experimental PDI: %g, %g\n' %(comp_pdi,epdi))
+        fdist.write('%s\t%s\t%s\t%s\t%s\n' %('molwt, pMW, cMW, wMW, wlogMW'))
+
+        for indx in range(0,len(xinp)-1)):
+            fdist.write('%g\t%g\t%g\t%g\t%g\n' \
+                        %(xinp[indx],pdfy[indx],cdf[indx],\
+                          xinp[indx]*pdfy[indx],\
+                          xinp[indx]*xinp[indx]*pdfy[indx]))
+
+    # Write output MW file
+    eout_fyle = "polydisp_"+inpfyle
+    with open(eout_fyle,'w') as fmwvals:
+        fmwvals.write('num_chains\t%d\n' %(nch))
+        for j in range(nch):
+            fmwvals.write('%d\n',mwvals[j]))
+    return comp_mn, comp_mw, comp_mz, comp_pdi, eout_fyle
+#---------------------------------------------------------------------
+
+def expout_log(flog,einp_file,expinp_fmt,emn,emw,emz,epdi,\
+               cmn,cmw,cmz,cpdi,eout_file):
+    # Write to log file 
+    flog.write('Experimental input data file: %s\n' %(einp_file))
+    flog.write('Input prob distribution type: %s\n'%(expinp_fmt))
+    flog.write('***********From user input distribution****\n')
+    flog.write('Mn: %g; Mw: %g; Mz: %g; PDI: %g\n' %(emn,emw,emz,epdi))
+    flog.write('Computed PDI distribution file: %g\n' %(eout_file))
+    flog.write('***********From computed distribution******\n'))
+    flog.write('Mn: %g; Mw: %g; Mz: %g; PDI: %g\n' %(cmn,cmw,cmz,cpdi))
 #---------------------------------------------------------------------
 
 # Initial PDI details if polydisperse chains are to be generated
@@ -351,6 +444,10 @@ def make_polydisp_resids(inpfyle, nch, min_polysize):
     chflag = 0
     with open(inpfyle) as fyle_pdi:
         for line in fyle_pdi:
+            if line.startswith('#'): # skip lines starting with #
+                continue
+            if not line: # skip empty lines
+                continue
             line = re.split('\W+',line.strip())
             if chflag == 0:
                 if len(line) != 2 or line[0] != 'num_chains':

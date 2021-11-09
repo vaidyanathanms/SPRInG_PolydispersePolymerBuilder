@@ -65,8 +65,8 @@ with open(sys.argv[1]) as farg:
                 disper_fyle = words[2]
             elif words[1].lower() == 'READ_EXPTDATA'.lower():
                 makepdifile = 2
-                ex_disper_fyle,mon_mwt,expt_mn,expt_mw,\
-                    expt_pdi = read_expt_pdidata(words)
+                ex_disper_fyle,mon_mwt,expt_mn,expt_mw,expt_pdi\
+                    ,npdiatt,pditolval = read_expt_pdidata(words)
             elif words[1].lower() == 'CREATE_PDI'.lower():
                 makepdifile = 1; 
                 inp_pdival,disper_fyle,npdiatt,pditolval,\
@@ -204,11 +204,13 @@ if disperflag:
         pdigenflag = compile_and_run_pdi(head_outdir)
         if pdigenflag == -1:
             exit()
+
     elif makepdifile == 2: # Create data set from exptal distn
         print("Making chains with experimental polydispersity data ...")
         flog.write("Creating chains from user input experimental data ...")
-        disper_fyle = make_expt_pdidata(ex_disper_fyle,num_chains,mon_mwt,\
-                                        expt_mn,expt_mw,expt_pdi)
+        disper_fyle = make_expt_pdidata(ex_disper_fyle,num_chains,\
+                                        npdiatt,pditolval)
+
     else: # Read data set from user inputs
         print("Reading polydispersity data from user inputs...")
         flog.write("Reading polydispersity data from user inputs ...")
