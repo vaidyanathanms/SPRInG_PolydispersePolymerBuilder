@@ -16,6 +16,7 @@ import random
 import collections
 import math
 import subprocess
+import pandas as pd
 #---------------------------------------------------------------------------
 
 # General copy script
@@ -229,7 +230,69 @@ def patch_ratios(opt_branch,resdict,inpfyle):
     else:
         print('Unknown option', branch_opt[0])
         return 0
+#---------------------------------------------------------------------
 
+# Develop probability distribution for experimental data
+def make_expt_pdidata(einp_fyle,nchains,avgmonwt,emn,emw,epdi):
+
+    expinp_fmt ='NULL'; exptkey = 0
+    # Check file existence
+    if not os.path.exists(einp_fyle):
+        raise RuntimeError('Expt MW distribution file not found \n', inpfyle)
+
+    # Read headers
+    df = pd.read_csv(einp_fyle)
+    if 'molwt'.lower() not in df.columns:
+        raise RuntimeError("Keyword molwt is missing in the header")
+    for col in df.columns:
+        if 'wlogmw'.lower() == col.lower():
+            expinp_fmt = 'WLOGMW'; exptkey +=1
+        elif 'wmw'.lower()  == col.lower():
+            expinp_fmt = 'WMW'; exptkey += 1
+        elif 'pmw'.lower()  == col.lower():
+            expinp_fmt = 'PMW'; exptkey += 1
+        else:
+            raise RuntimeError("Unknown keyword: " + col)
+    if exptkey > 1:
+        raise RuntimeError("Multiple distribution values cannot be given")
+
+    # Remove duplicates
+    df.drop_duplicates(inplace = True)
+
+    # Convert w(m)/w(logm) to p(m)
+    ydata = convert_to_pofm(np.array(df['molwt']),\
+                            np.array(df[expinp_fmt]),\
+                            expinp_fmt)
+
+    # Compute Mn, Mw, Mz
+    mn, mw, mz = comp_avgs(np.array(df['molwt']),ydata)
+
+    
+#---------------------------------------------------------------------
+
+# Convert inputs to probability distribution
+def convert_to_pofm(xinp,yinp,inpfmt):
+    if inpfmt == 'WLOGMW':
+        return numpy.multiply(np.power(xinp,-2),yinp))
+    elif inpfmt == 'WMW':
+        return numpy.multiply(np.power(xinp,-1),yinp))
+    elif inpfmt == 'PMW':
+        return yinp
+#---------------------------------------------------------------------
+
+# Compute averages
+def comp_avgs(xinp,yinp):
+    mn_num=0;mn_den=0; mw_num=0;mw_den=0; mz_num=0;mz_den=0
+    for indx in range(0,len(xdata)):
+        ydx=0.5*(yinp[indx]+yinp[indx+1])*(xinp[indx]-xinp[indx+1])
+        mn_num += mn_num + ydx*xdata[indx]
+        mn_den += mn_den + ydx
+        mw_num += mw_num + ydx*(xdata[indx]**2)
+        mw_den += mw_num + ydx*xdata[indx]
+        mz_num += mw_num + ydx*(xdata[indx]**3)
+        mz_den += mw_num + ydx*(xdata[indx]**2)
+
+    return mn_num/mn_den, mw_num/mw_den, mz_num/mz_den
 #---------------------------------------------------------------------
 
 # Initial PDI details if polydisperse chains are to be generated

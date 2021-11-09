@@ -8,8 +8,8 @@
 # 'None' is a reserved keyword- DONT USE IT for PDB/PSF filenames.
 #------------------------------------------------------------------
 
-print('*****************SPRInG_V1.1****************************')
-ver = 'Apr_29_2021'
+print('*****************SPRInG_V1.2****************************')
+ver = 'Nov_05_2021'
 
 # Import modules
 import os
@@ -191,11 +191,14 @@ if fpp_constraint == 1:
 if flbdflag == 1:
     gencpy(srcdir,head_outdir,input_lbd)
 #------------------------------------------------------------------
+# Open log file before computing polydispersity
+flog = open(head_outdir + '/' + log_fname,'w')
 
 # Make monomer array for all chains
 if disperflag:
     if makepdifile == 1: #Create new data set from SZ distribution
         print("Making chains with target polydispersity...")
+        flog.write("Creating chains from SZ distribution ...")
         init_pdi_write(inp_pdival,mono_deg_poly,num_chains,disper_fyle\
                        ,npdiatt,pditolval,min_polysize,distrange)
         pdigenflag = compile_and_run_pdi(head_outdir)
@@ -203,28 +206,30 @@ if disperflag:
             exit()
     elif makepdifile == 2: # Create data set from exptal distn
         print("Making chains with experimental polydispersity data ...")
-        make_expt_pdidata(ex_disper_fyle,num_chains,avg_mwwt)
+        flog.write("Creating chains from user input experimental data ...")
+        disper_fyle = make_expt_pdidata(ex_disper_fyle,num_chains,mon_mwt,\
+                                        expt_mn,expt_mw,expt_pdi)
     else: # Read data set from user inputs
         print("Reading polydispersity data from user inputs...")
-
-    print('Polydispersity file: ', disper_fyle)
+        flog.write("Reading polydispersity data from user inputs ...")
+    print('Polydispersity data file: ', disper_fyle)
     deg_poly_all,pdival = make_polydisp_resids(disper_fyle,\
                                                num_chains,
                                                min_polysize)
     if pdival == 0:
-        exit()
+        raise RuntimeError("pdi_value is: ", 0)
     gencpy(srcdir,head_outdir,disper_fyle) # copy files to headdir
 
 else:
     deg_poly_all = [mono_deg_poly]*num_chains
     pdival = 1.0
     print('Monodispersed case')
+
 print('Tot ch/res/pat/pdi',num_chains,sum(deg_poly_all),\
       sum(deg_poly_all)-num_chains,pdival)
 #------------------------------------------------------------------
 
-# Open log file
-flog = open(head_outdir + '/' + log_fname,'w')
+# Write initial details to log file
 init_logwrite(flog,casenum,biomas_typ,deg_poly_all,input_top,\
               seg_name,num_chains,maxatt,conftol,itertype,\
               fpres_constraint,fpp_constraint,resinpfyle,patinpfyle\
