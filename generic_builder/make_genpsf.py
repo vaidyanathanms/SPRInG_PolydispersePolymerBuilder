@@ -47,7 +47,7 @@ def read_expt_pdidata(words):
                 if words[wcnt] == 'mwmonomer'.lower():
                     mon_mwt = float(words[wcnt+1])
                 elif words[wcnt] == 'ntrials'.lower():
-                    npdiatt = float(words[wcnt+1])
+                    npdiatt = int(words[wcnt+1])
                 elif words[wcnt] == 'pditol'.lower():
                     pditol = float(words[wcnt+1])/100
     else:
