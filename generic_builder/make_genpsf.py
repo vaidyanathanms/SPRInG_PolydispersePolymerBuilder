@@ -337,8 +337,8 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
         if trials%1000 == 0:
             print('Trial number: ', trials+1)
         # Heart of the analysis (interpolating cdf)
-        mw_vals = np.asarray([np.interp(random.random(),\
-                                        cdf,xinp) \
+        mw_vals = np.asarray([int(np.interp(random.random(),\
+                                        cdf,xinp)) \
                               for j in range(int(nch))])
 
         comp_mn  = np.sum(mw_vals)/nch
