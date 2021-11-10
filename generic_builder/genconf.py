@@ -61,16 +61,16 @@ with open(sys.argv[1]) as farg:
             biomas_typ = words[1]
         elif words[0].lower() == 'disperse'.lower():
             disperflag = 1
-            if words[1].lower() == 'READ_PDI'.lower():
+            if words[1].lower() == 'readdata'.lower():
                 disper_fyle = words[2]
-            elif words[1].lower() == 'READ_EXPTDATA'.lower():
+            elif words[1].lower() == 'exptdata'.lower():
                 makepdifile = 2
-                ex_disper_fyle,mon_mwt,expt_mn,expt_mw,expt_pdi\
-                    ,npdiatt,pditolval = read_expt_pdidata(words)
-            elif words[1].lower() == 'CREATE_PDI'.lower():
+                ex_disper_fyle,mon_mwt,npdiatt,\
+                    pditolval = read_expt_pdidata(words)
+            elif words[1].lower() == 'sztheory'.lower():
                 makepdifile = 1; 
                 inp_pdival,disper_fyle,npdiatt,pditolval,\
-                    distrange = create_new_pdidata(words,line)
+                    distrange = inp_create_sz(words,line)
             else:
                 exit('ERR: Unknown PDI option: ' + str(line))
         elif words[0].lower() == 'num_resids'.lower():
@@ -143,11 +143,9 @@ with open(sys.argv[1]) as farg:
             exit('Unknown keyword ' + str(words[0]))
 #----------------------------------------------------------------------
 # Basic flag checks
-outflag = check_all_flags(casenum,fresflag,fpatflag,disperflag,\
-                          mono_deg_poly,num_chains,fnamdflag,fpdbflag,\
-                          ftopflag)
-if outflag == -1:
-    exit()
+check_all_flags(casenum,fresflag,fpatflag,disperflag,\
+                mono_deg_poly,num_chains,fnamdflag,fpdbflag,\
+                ftopflag)
 #------------------------------------------------------------------
 
 # Output file names (will be generated automatically)
@@ -428,6 +426,8 @@ for chcnt in range(num_chains):
     if pmolflag:
         make_packmol(fpack,pdbpsf_name,1,trans_list)
 #------------------------------------------------------------------
+
+# Write LigninBuilder commands
 if flbdflag == 1:
     fbund.write(';# Using LigninBuilder to generate init config\n')
     fbund.write('package require ligninbuilder\n')

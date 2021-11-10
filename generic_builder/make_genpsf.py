@@ -39,33 +39,25 @@ def def_vals():
 
 # Read data for experimental PDI system
 def read_expt_pdidata(words):
-    mon_mwt = 200; expt_mn = 0; expt_mw = 0; expt_pdi = 0
-    npdiatt = 100000; pditol = 0.05
-    if len(words) == 3:
+    mon_mwt = 200; npdiatt = 100000; pditol = 0.05
+    if len(words) >= 3:
         ex_disper_fyle = words[2]
-    elif len(words) > 3:
-        for wcnt in range(3,len(words),2):
-            if words[wcnt] == 'avg_monwt'.lower():
-                mon_mwt = float(words[wcnt+1])
-            elif words[wcnt] == 'mn'.lower():
-                expt_mn = float(words[wcnt+1])
-            elif words[wcnt] == 'mw'.lower():
-                expt_mw = float(words[wcnt+1])
-            elif words[wcnt] == 'pdi'.lower():
-                expt_pdi = float(words[wcnt+1])
-            elif words[wcnt] == 'ntrials'.lower():
-                npdiatt = float(words[wcnt+1])
-            elif words[wcnt] == 'pditol'.lower():
-                pditol = float(words[wcnt+1])/100
+        if len(words) > 3:
+            for wcnt in range(3,len(words),2):
+                if words[wcnt] == 'mwmonomer'.lower():
+                    mon_mwt = float(words[wcnt+1])
+                elif words[wcnt] == 'ntrials'.lower():
+                    npdiatt = float(words[wcnt+1])
+                elif words[wcnt] == 'pditol'.lower():
+                    pditol = float(words[wcnt+1])/100
     else:
         raise RuntimeError("Not enough arguments", words,\
                            len(words))
 
-    return ex_disper_fyle,mon_mwt,expt_mn,expt_mw,expt_pdi,\
-        npdiatt,pditol
+    return ex_disper_fyle,mon_mwt,npdiatt,pditol
 #---------------------------------------------------------------------
 
-def create_new_pdidata(words,line):
+def inp_create_sz(words,line):
     if len(words) < 5:
         raise RuntimeError('Not enough arguments for PDI: '+line)
     inp_pdival = float(words[2])
@@ -92,21 +84,21 @@ def check_all_flags(casenum,fresflag,fpatflag,disflag,M,N,\
                     fnamd,fpdbflag,ftopflag):
     outflag = 1
     if casenum < 0:
-        print('ERR: Case number not input'); outflag = -1
+        raise RuntimeError('Case number not input')
     elif N == 0:
-        print('ERR: No chains found in input'); outflag = -1
+        raise RuntimeError('No #of chains input found')
+    elif M == 0:
+        raise RuntimeError('Monomer/segment MW cannot be zero')
     elif disflag == 0 and M == 0:
-        print('ERR: Monodisperse systems with no MW'); outflag = -1
+        raise RuntimeError('PDI = 0 with zero segment MW')
     elif fresflag == 0:
-        print('ERR: Residue input not entered'); outflag = -1
+        raise RuntimeError('Residue input not entered')
     elif fpatflag == 0:
-        print('ERR: Patch not entered'); outflag = -1
+        raise RuntimeError('Patch input not entered')
     elif ftopflag == 0:
-        print('ERR: Topology file not found'); outflag = -1
+        raise RuntimeError('Topology file not found')
     elif fnamd != 0 and fpdbflag == 0:
-        print('ERR: To run NAMD, input PDB/top files are required')
-        outflag = -1
-    return outflag
+        raise RuntimeError('To run NAMD, PDB/top files are required')
 #---------------------------------------------------------------------
 
 # Define headers for psf files
@@ -117,6 +109,7 @@ def psfgen_headers(fin,topname,outname):
     topinp = topname
     fin.write('%s\t %s\n' %('topology',topinp))
 #---------------------------------------------------------------------              
+
 # Details for closing input files
 def psfgen_postprocess(fin,writetype,iter_num,segname,fnamdflag,\
                        basic_pdb):
@@ -294,9 +287,9 @@ def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
 # Convert inputs to probability distribution
 def convert_to_pofm(xinp,yinp,inpfmt):
     if inpfmt == 'WLOGMW':
-        return np.multiply(np.power(xinp,-2),yinp))
+        return np.multiply(np.power(xinp,-2),yinp)
     elif inpfmt == 'WMW':
-        return np.multiply(np.power(xinp,-1),yinp))
+        return np.multiply(np.power(xinp,-1),yinp)
     elif inpfmt == 'PMW':
         return yinp
 #---------------------------------------------------------------------
@@ -313,7 +306,7 @@ def comp_avgs(xinp,yinp):
 # Trapezoidal rule
 def trapz(xinp,yinp):
     sval = 0
-    for indx in range(0,len(xinp)-1)):
+    for indx in range(0,len(xinp)-1):
         sval += 0.5*(yinp[indx]+yinp[indx+1])*(xinp[indx]-xinp[indx+1])
     return sval
 #---------------------------------------------------------------------
@@ -326,11 +319,11 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
     normy = pdfy/intsum
     #Generate cumulative distribution
     cdf[0] = normy[0]
-    for indx in range(1,len(xinp))):
+    for indx in range(1,len(xinp)):
         cdf.append(trapz(xinp[0:indx],normy[0:indx]))
 
     if abs(cdf[len(cdf)-1]-1) > 10**-6:
-        raise RuntimeError('CDF not adding to one: ',cdf[len(cdf)=1])
+        raise RuntimeError('CDF not adding to one: ',cdf[len(cdf)-1])
     # Generate chains
     print('Generating chains according to expt distribution..')
 
@@ -338,7 +331,7 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
         if trials%1000 == 0:
             print('Trial number: ', trials+1)
         mw_vals = [np.interp(random.random,normy,xinp) \
-                   for j in range(nch))]
+                   for j in range(nch)]
         comp_mn  = sum(mw_vals)/nch
         comp_mw  = sum(mw_vals**2)/sum(mw_vals)
         comp_pdi = comp_mw/comp_mn
@@ -361,7 +354,7 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
         fdist.write('# Computed/Experimental PDI: %g, %g\n' %(comp_pdi,epdi))
         fdist.write('%s\t%s\t%s\t%s\t%s\n' %('molwt, pMW, cMW, wMW, wlogMW'))
 
-        for indx in range(0,len(xinp)-1)):
+        for indx in range(0,len(xinp)-1):
             fdist.write('%g\t%g\t%g\t%g\t%g\n' \
                         %(xinp[indx],pdfy[indx],cdf[indx],\
                           xinp[indx]*pdfy[indx],\
@@ -372,7 +365,7 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
     with open(eout_fyle,'w') as fmwvals:
         fmwvals.write('num_chains\t%d\n' %(nch))
         for j in range(nch):
-            fmwvals.write('%d\n',mwvals[j]))
+            fmwvals.write('%d\n',mwvals[j])
     return comp_mn, comp_mw, comp_mz, comp_pdi, eout_fyle
 #---------------------------------------------------------------------
 
@@ -384,7 +377,7 @@ def expout_log(flog,einp_file,expinp_fmt,emn,emw,emz,epdi,\
     flog.write('***********From user input distribution****\n')
     flog.write('Mn: %g; Mw: %g; Mz: %g; PDI: %g\n' %(emn,emw,emz,epdi))
     flog.write('Computed PDI distribution file: %g\n' %(eout_file))
-    flog.write('***********From computed distribution******\n'))
+    flog.write('***********From computed distribution******\n')
     flog.write('Mn: %g; Mw: %g; Mz: %g; PDI: %g\n' %(cmn,cmw,cmz,cpdi))
 #---------------------------------------------------------------------
 
