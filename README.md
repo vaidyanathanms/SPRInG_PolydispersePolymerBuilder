@@ -309,6 +309,7 @@ generate a polydisperse input structure.
       disperse sztheory 1.50 polydisp.inp 1000 pditol 8.0 distrange 20
       disperse readdata molwtdata.dat
       disperse exptdata exptdata.dat mwmonomer 180 ntrials 20
+      disperse EXPTDATA WTdata.dat mwmonomer 200 ntrials 1000 pditol 0.05
       ```
 
     * `SZTHEORY` 
@@ -380,6 +381,13 @@ generate a polydisperse input structure.
       Users should input **only** one of the above three options for the distribution.
       Most likely, experimental data are reported in w(logM), wheras other options
       are more common in theory/computation literature.
+
+      Keywords `mwmonomer`, `ntrials` and `pditol` are optional. `mwmonomer` corresponds
+      to the average molecular weight of one monomer in g/mol. Default value is 200 g/mol.
+      `ntrials` corresponds to the number of attempts drawing the distribution is performed
+      before converging to a tolerance of `pditol` of the experimental data. `pditol` is
+      the relative tolerance in % (between 0 and 100%). Default values for `ntrials` and
+      `pditol` are 100000 and 5%, respectively.
 
     * `READDATA`
       Users can also specify a file where the degree of polymerization
