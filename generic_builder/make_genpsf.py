@@ -280,7 +280,8 @@ def make_expt_pdidata(einp_fyle,nchains,mon_mwt,nattempts,\
     cmn,cmw,cmz,cpdi,eout_file = gen_exptdist(xdata,ydata,intsum,\
                                               nchains,emn,emw,\
                                               emz,epdi,nattempts,\
-                                              pditol,einp_fyle)
+                                              pditol,einp_fyle,\
+                                              mon_mwt)
     # Output to log file
     expout_log(flog,einp_fyle,expinp_fmt,emn,emw,emz,epdi,\
                cmn,cmw,cmz,cpdi,eout_file)
@@ -317,7 +318,7 @@ def trapz(xinp,yinp):
 
 # Generate MW distribution and write to output
 def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
-                 pditol,inpfyle):
+                 pditol,inpfyle,mon_mwt):
 
     # Normalize distribution
     normy = pdfy/intsum
