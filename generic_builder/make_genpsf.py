@@ -8,7 +8,7 @@
 # Import modules
 import os
 import sys
-import numpy
+import numpy as np
 import re
 import shutil
 import glob
@@ -232,7 +232,8 @@ def patch_ratios(opt_branch,resdict,inpfyle):
 #---------------------------------------------------------------------
 
 # Develop probability distribution for experimental data
-def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
+def make_expt_pdidata(einp_fyle,nchains,mon_mwt,nattempts,\
+                      pditol,flog):
 
     expinp_fmt ='NULL'; exptkey = 0
     # Check file existence
@@ -240,18 +241,21 @@ def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
         raise RuntimeError('Expt MW distribution file not found \n', inpfyle)
 
     # Read headers
-    df = pd.read_csv(einp_fyle)
-    if 'molwt'.lower() not in df.columns:
+    df = pd.read_table(einp_fyle)
+    df_cols = df.columns
+    if 'molwt'.lower() not in df_cols:
         raise RuntimeError("Keyword molwt is missing in the header")
-    for col in df.columns:
+    for col in df_cols:
         if 'wlogmw'.lower() == col.lower():
-            expinp_fmt = 'WLOGMW'; exptkey +=1
+            expinp_fmt = col; exptkey +=1
         elif 'wmw'.lower()  == col.lower():
-            expinp_fmt = 'WMW'; exptkey += 1
+            expinp_fmt = col; exptkey += 1
         elif 'pmw'.lower()  == col.lower():
-            expinp_fmt = 'PMW'; exptkey += 1
+            expinp_fmt = col; exptkey += 1
+        elif 'molwt'.lower() == col.lower():
+            continue
         else:
-            raise RuntimeError("Unknown keyword: " + col)
+            raise RuntimeError("Unknown keyword: " + str(col))
     if exptkey > 1:
         raise RuntimeError("Multiple distribution values cannot be given")
 
@@ -259,7 +263,8 @@ def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
     df.drop_duplicates(inplace = True)
 
     # Check for strictly increasing
-    xdata = np.array(df['molwt'])
+    xdata = np.array(df['molwt'])/mon_mwt
+
     if not np.all(np.diff(xdata)>0):
         raise RuntimeError('X-data should be monotonically increasing')
 
@@ -275,10 +280,9 @@ def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
     cmn,cmw,cmz,cpdi,eout_file = gen_exptdist(xdata,ydata,intsum,\
                                               nchains,emn,emw,\
                                               emz,epdi,nattempts,\
-                                              pditol,einp_file)
-
+                                              pditol,einp_fyle)
     # Output to log file
-    expout_log(flog,einp_file,expinp_fmt,emn,emw,emz,epdi,\
+    expout_log(flog,einp_fyle,expinp_fmt,emn,emw,emz,epdi,\
                cmn,cmw,cmz,cpdi,eout_file)
 
     return eout_file
@@ -286,11 +290,11 @@ def make_expt_pdidata(einp_fyle,nchains,nattempts,pditol):
 
 # Convert inputs to probability distribution
 def convert_to_pofm(xinp,yinp,inpfmt):
-    if inpfmt == 'WLOGMW':
+    if inpfmt.lower() == 'WLOGMW'.lower():
         return np.multiply(np.power(xinp,-2),yinp)
-    elif inpfmt == 'WMW':
+    elif inpfmt.lower() == 'WMW'.lower():
         return np.multiply(np.power(xinp,-1),yinp)
-    elif inpfmt == 'PMW':
+    elif inpfmt.lower() == 'PMW'.lower():
         return yinp
 #---------------------------------------------------------------------
 
@@ -312,13 +316,14 @@ def trapz(xinp,yinp):
 #---------------------------------------------------------------------
 
 # Generate MW distribution and write to output
-def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
+def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
                  pditol,inpfyle):
 
     # Normalize distribution
     normy = pdfy/intsum
     #Generate cumulative distribution
-    cdf[0] = normy[0]
+    cdf = []
+    cdf.append(normy[0])
     for indx in range(1,len(xinp)):
         cdf.append(trapz(xinp[0:indx],normy[0:indx]))
 
@@ -330,10 +335,13 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
     for trials in range(natt):
         if trials%1000 == 0:
             print('Trial number: ', trials+1)
-        mw_vals = [np.interp(random.random,normy,xinp) \
-                   for j in range(nch)]
-        comp_mn  = sum(mw_vals)/nch
-        comp_mw  = sum(mw_vals**2)/sum(mw_vals)
+        # Heart of the analysis (interpolating cdf)
+        mw_vals = np.asarray([np.interp(random.random(),\
+                                        cdf,xinp) \
+                              for j in range(int(nch))])
+
+        comp_mn  = np.sum(mw_vals)/nch
+        comp_mw  = np.sum(mw_vals**2)/np.sum(mw_vals)
         comp_pdi = comp_mw/comp_mn
         if abs((comp_pdi-epdi)/epdi) < pditol:
             print('Found chain configuration!..')
@@ -342,17 +350,21 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
             comp_mz = sum(mw_vals**3)/sum(mw_vals**2)
             break
     
-    if trails > natt:
+    if trials > natt:
         raise RuntimeError('Could not find molecular weights of chains correspond to experimental distribution. Try increasing the number of chains or the tolerance')
 
     # Write output distributions file
     edist_fyle = "pdidistribution_"+inpfyle
     with open(edist_fyle,'w') as fdist:
-        fdist.write('# Computed/Experimental Mn: %g, %g\n' %(comp_mn,emn))
-        fdist.write('# Computed/Experimental Mw: %g, %g\n' %(comp_mw,emw))
-        fdist.write('# Computed/Experimental Mz: %g, %g\n' %(comp_mz,emz))
-        fdist.write('# Computed/Experimental PDI: %g, %g\n' %(comp_pdi,epdi))
-        fdist.write('%s\t%s\t%s\t%s\t%s\n' %('molwt, pMW, cMW, wMW, wlogMW'))
+        fdist.write('# Average monomer weight %g ' %(mon_mwt))
+        fdist.write('# Computed Mn: %g, %g (g/mol)\n' %(comp_mn,comp_mn*mon_mwt))
+        fdist.write('# Experimental Mn: %g, %g (g/mol)\n' %(emn,emn*mon_mwt))
+        fdist.write('# Computed Mw: %g, %g (g/mol)\n' %(comp_mw,comp_mw*mon_mwt))
+        fdist.write('# Experimental Mw: %g, %g (g/mol)\n' %(emw,emw*mon_mwt))
+        fdist.write('# Computed Mz: %g, %g (g/mol)\n' %(comp_mz,comp_mz*mon_mwt))
+        fdist.write('# Experimental Mz: %g, %g (g/mol)\n' %(emz,emz*mon_mwt))
+        fdist.write('%s\t%s\t%s\t%s\t%s\n' \
+                    %('molwt', 'pMW', 'cMW', 'wMW', 'wlogMW'))
 
         for indx in range(0,len(xinp)-1):
             fdist.write('%g\t%g\t%g\t%g\t%g\n' \
@@ -365,7 +377,7 @@ def gen_exptdist(xinp,pdfy,intsum,emn,emw,emz,epdi,nch,natt,\
     with open(eout_fyle,'w') as fmwvals:
         fmwvals.write('num_chains\t%d\n' %(nch))
         for j in range(nch):
-            fmwvals.write('%d\n',mwvals[j])
+            fmwvals.write('%d\n' %(mw_vals[j]))
     return comp_mn, comp_mw, comp_mz, comp_pdi, eout_fyle
 #---------------------------------------------------------------------
 
@@ -376,7 +388,7 @@ def expout_log(flog,einp_file,expinp_fmt,emn,emw,emz,epdi,\
     flog.write('Input prob distribution type: %s\n'%(expinp_fmt))
     flog.write('***********From user input distribution****\n')
     flog.write('Mn: %g; Mw: %g; Mz: %g; PDI: %g\n' %(emn,emw,emz,epdi))
-    flog.write('Computed PDI distribution file: %g\n' %(eout_file))
+    flog.write('Computed PDI distribution file: %s\n' %(eout_file))
     flog.write('***********From computed distribution******\n')
     flog.write('Mn: %g; Mw: %g; Mz: %g; PDI: %g\n' %(cmn,cmw,cmz,cpdi))
 #---------------------------------------------------------------------
@@ -746,8 +758,8 @@ def create_residues(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
         # Extract target probabilities and compare
         targ_probs = list(inp_dict.values())
-        normval = numpy.linalg.norm(numpy.array(normlist) \
-                                    - numpy.array(targ_probs))
+        normval = np.linalg.norm(np.array(normlist) \
+                                 - np.array(targ_probs))
     
         # Write to log file
         for wout in range(len(outdist)):
@@ -1141,8 +1153,8 @@ def create_patches(flist,nresarr,nch,segpref,inp_dict,cumulprobarr\
 
             #extract target probabilities and compare
             targ_probs = list(inp_dict.values())
-            normval = numpy.linalg.norm(numpy.array(normlist) \
-                                        - numpy.array(targ_probs))
+            normval = np.linalg.norm(np.array(normlist) \
+                                     - np.array(targ_probs))
 
             # Write to log file
             for wout in range(len(outdist)):
