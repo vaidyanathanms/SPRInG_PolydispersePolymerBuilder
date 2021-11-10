@@ -1,17 +1,19 @@
 # Simple Polydisperse Residue Input Generator (SPRInG)
 
-ver_1.1: Apr-29-2021
+ver_1.2: Nov-05-2021
 
-This code will generate polydisperse residues according to Schulz-Zimm
-distribution. The generated `.psf` files can be used directly with
-[LigninBuilder](https://github.com/jvermaas/LigninBuilder/tree/master/LigninBuilderPlugin)
-to generate starting `.psf`, `.pdb` and `.prm` files for 
+A Python/FORTRAN-90 based code to generate random initial structures for
+polydisperse monomers/residues according to Schulz-Zimm distribution
+or from an experimental molecular weight distribution. 
+
+In conjunction with [LigninBuilder](https://github.com/jvermaas/LigninBuilder/tree/master/LigninBuilderPlugin), users can generate
+generate starting `.psf`, `.pdb` and `.top` files for 
 running with [NAMD](https://www.ks.uiuc.edu/Research/namd/) or
 [GROMACS](http://www.gromacs.org/) software. 
 
 Although this code was primarily designed to generate input files for
-various types of biomass, it can be used with any protein or polymer
-complex. 
+various types of biomass (Lignin/Carbohydrates), it can be used with
+any protein or polymer complex with the forcefield files. 
 
 ## Input Requirements
 
@@ -247,7 +249,7 @@ generate a polydisperse input structure.
     ```
 
     where `nres` corresponds to the average number of residues per chain
-    (segment). Should be an integer value.
+    (segments or monomers per chain). Should be an integer value.
 
 
     Example:
@@ -287,21 +289,36 @@ generate a polydisperse input structure.
     disperse maketype optkeywords optargs
     ```
 
-    `maketype` can be either `CREATE` or `READ`. `CREATE` corresponds
-    to generating a set of polydisperse chains from scratch. `READ`
-    corresponds to the molecular weights (degree of polymerization) of
-    all the chains from a file. Arguments for each option are
-    elaborated below.
+    `maketype` can be either `SZTHEORY`, `EXPTDATA` or `READDATA`. 
 
-    * `CREATE` 
+    `SZTHEORY` generates a set of polydisperse chains using theoretical 
+    Schulz-Zimm distribution (see below for options). 
+
+    `EXPTDATA` generates a set of polydisperse chains according
+     to the experimental data (curves) for the molecular weight distribution
+      of chains (see below).
+
+     `READDATA` reads a file containing the molecular weights (degree of polymerization) of
+     all the chains from a file (see below for format). Arguments for each option are
+     elaborated below.
+
+      Examples:
+
+      ```
+      disperse SZTHEORY 1.50 polydisp.inp 10000
+      disperse sztheory 1.50 polydisp.inp 1000 pditol 8.0 distrange 20
+      disperse readdata molwtdata.dat
+      disperse exptdata exptdata.dat mwmonomer 180 ntrials 20
+      ```
+
+    * `SZTHEORY` 
       For this case a new file will be generated according to the
       polydispersity value and the number of chains/number of residues
-      per chain. If the option is `CREATE`, it should come *after*
-      specifying `num_chains` and `num_resids`. Usage for this option
+      per chain using a Schulz-Zimm distribution. Usage for this option
       is as follows:
 
       ```
-      disperse CREATE PDIval Outputfile ntrials pditol tolerance distrange rangeval
+      disperse sztheory PDIval Outputfile ntrials pditol tolerance distrange rangeval
       ```
 
       `PDIval` and `Outputfile` corresponds to the target
@@ -332,13 +349,6 @@ generate a polydisperse input structure.
       tapers to zero. Most likely the default value of 5 would suffice.
       This keyword and the corresponding argument is optional.
   
-      Examples:
-
-      ```
-      disperse CREATE 1.50 polydisp.inp 10000
-      disperse CREATE 1.50 polydisp.inp 1000 pditol 8.0 distrange 20
-      ```
-
       If this option is used, after running the program, a file with the
       name 'geninp_pdistruct.txt' will be generated and it will contain
       the details of the inputs.
