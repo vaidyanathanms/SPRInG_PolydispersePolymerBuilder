@@ -21,6 +21,7 @@ hemicellulose/
 /generic_builder/yunyan*
 /generic_builder/diff.txt
 /generic_builder/polydisp*
+generic_builder/*~
 pure_melts
 generic_builder/initialize_dirs_for_runs.py
 v1.1_SPRInG
