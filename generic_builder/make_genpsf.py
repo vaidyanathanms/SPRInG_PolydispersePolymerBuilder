@@ -233,7 +233,7 @@ def patch_ratios(opt_branch,resdict,inpfyle):
 
 # Develop probability distribution for experimental data
 def make_expt_pdidata(einp_fyle,nchains,mon_mwt,nattempts,\
-                      pditol,flog):
+                      pditol,flog,opdir):
 
     expinp_fmt ='NULL'; exptkey = 0
     # Check file existence
@@ -263,25 +263,28 @@ def make_expt_pdidata(einp_fyle,nchains,mon_mwt,nattempts,\
     df.drop_duplicates(inplace = True)
 
     # Check for strictly increasing
-    xdata = np.array(df['molwt'])/mon_mwt
+    xdata = np.array(df['molwt']) #in g/mol
 
     if not np.all(np.diff(xdata)>0):
         raise RuntimeError('X-data should be monotonically increasing')
 
     # Convert w(m)/w(logm) to p(m)
     ydata = convert_to_pofm(xdata,np.array(df[expinp_fmt]),\
-                            expinp_fmt)
+                            expinp_fmt) #x in g/mol
 
     # Compute Mn, Mw, Mz
     intsum,emn,emw,emz = comp_avgs(xdata,ydata)
     epdi = emw/emn
 
-    # Generate output distributions
+    # Generate input distributions for simulation
+    # Note, the input for simulation requires NUMBER of 
+    # monomers and not MW in g/mol
     cmn,cmw,cmz,cpdi,eout_file = gen_exptdist(xdata,ydata,intsum,\
                                               nchains,emn,emw,\
                                               emz,epdi,nattempts,\
                                               pditol,einp_fyle,\
-                                              mon_mwt)
+                                              mon_mwt,opdir)
+
     # Output to log file
     expout_log(flog,einp_fyle,expinp_fmt,emn,emw,emz,epdi,\
                cmn,cmw,cmz,cpdi,eout_file)
@@ -318,7 +321,7 @@ def trapz(xinp,yinp):
 
 # Generate MW distribution and write to output
 def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
-                 pditol,inpfyle,mon_mwt):
+                 pditol,inpfyle,mon_mwt,opdir):
 
     # Normalize distribution
     normy = pdfy/intsum
@@ -334,20 +337,24 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
     print('Generating chains according to expt distribution..')
 
     for trials in range(natt):
+
         if trials%1000 == 0:
             print('Trial number: ', trials+1)
+
         # Heart of the analysis (interpolating cdf)
+        # Divide by mon_mwt to convert to degree of polymerization
         mw_vals = np.asarray([int(np.interp(random.random(),\
-                                        cdf,xinp)) \
-                              for j in range(int(nch))])
+                                            cdf,xinp)/mon_mwt)\
+                              for j in range(nch)])
 
         comp_mn  = np.sum(mw_vals)/nch
         comp_mw  = np.sum(mw_vals**2)/np.sum(mw_vals)
         comp_pdi = comp_mw/comp_mn
         if abs((comp_pdi-epdi)/epdi) < pditol:
             print('Found chain configuration!..')
+            print('Using average molecular weight: %g' %(mon_mwt))
             print('Computed Mn: %g, Mw: %g, PDI: %g' \
-                  %(comp_mn,comp_mw,comp_pdi))
+                  %(comp_mn*mon_mwt,comp_mw*mon_mwt,comp_pdi))
             comp_mz = sum(mw_vals**3)/sum(mw_vals**2)
             break
     
@@ -357,13 +364,16 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
     # Write output distributions file
     edist_fyle = "pdidistribution_"+inpfyle
     with open(edist_fyle,'w') as fdist:
-        fdist.write('# Average monomer weight %g ' %(mon_mwt))
-        fdist.write('# Computed Mn: %g, %g (g/mol)\n' %(comp_mn,comp_mn*mon_mwt))
-        fdist.write('# Experimental Mn: %g, %g (g/mol)\n' %(emn,emn*mon_mwt))
-        fdist.write('# Computed Mw: %g, %g (g/mol)\n' %(comp_mw,comp_mw*mon_mwt))
-        fdist.write('# Experimental Mw: %g, %g (g/mol)\n' %(emw,emw*mon_mwt))
-        fdist.write('# Computed Mz: %g, %g (g/mol)\n' %(comp_mz,comp_mz*mon_mwt))
-        fdist.write('# Experimental Mz: %g, %g (g/mol)\n' %(emz,emz*mon_mwt))
+        fdist.write('# Average monomer weight: %g\n' %(mon_mwt))
+        fdist.write('# Computed avg degree of polymerization %g\n'\
+                    %(comp_mn))
+        fdist.write('# All outputs are in units of monomer wt units\n')
+        fdist.write('# Simulated/Experimental Mn: %g, %g\n'\
+                    %(comp_mn*mon_mwt,emn))
+        fdist.write('# Simulated/Experimental Mw: %g, %g\n'\
+                    %(comp_mw*mon_mwt,emw))
+        fdist.write('# Simulated/Experimental Mz: %g, %g\n'\
+                    %(comp_mz*mon_mwt,emz))
         fdist.write('%s\t%s\t%s\t%s\t%s\n' \
                     %('molwt', 'pMW', 'cMW', 'wMW', 'wlogMW'))
 
@@ -379,6 +389,11 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
         fmwvals.write('num_chains\t%d\n' %(nch))
         for j in range(nch):
             fmwvals.write('%d\n' %(mw_vals[j]))
+
+    # Copy files to working directory
+    gencpy(os.getcwd(),opdir,edist_fyle)
+    gencpy(os.getcwd(),opdir,eout_fyle)
+
     return comp_mn, comp_mw, comp_mz, comp_pdi, eout_fyle
 #---------------------------------------------------------------------
 

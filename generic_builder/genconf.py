@@ -206,9 +206,10 @@ if disperflag:
     elif makepdifile == 2: # Create data set from exptal distn
         print("Making chains with experimental polydispersity data ...")
         flog.write("Creating chains from user input experimental data ...")
+      
         disper_fyle = make_expt_pdidata(ex_disper_fyle,num_chains,\
                                         mon_mwt,npdiatt,pditolval,\
-                                        flog)
+                                        flog,head_outdir)
 
     else: # Read data set from user inputs
         print("Reading polydispersity data from user inputs...")
