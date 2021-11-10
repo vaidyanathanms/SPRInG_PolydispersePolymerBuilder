@@ -296,10 +296,10 @@ generate a polydisperse input structure.
 
     `EXPTDATA` generates a set of polydisperse chains according
      to the experimental data (curves) for the molecular weight distribution
-      of chains (see below).
+     of chains (see below).
 
-     `READDATA` reads a file containing the molecular weights (degree of polymerization) of
-     all the chains from a file (see below for format). Arguments for each option are
+     `READDATA` reads a file containing the molecular weights (degree of polymerization) 
+     of all the chains from a file (see below for format). Arguments for each option are
      elaborated below.
 
       Examples:
@@ -353,13 +353,41 @@ generate a polydisperse input structure.
       name 'geninp_pdistruct.txt' will be generated and it will contain
       the details of the inputs.
 
-    * `READ`
+    * `EXPTDATA`
+      With this option, users can input the molecular weight distribution
+      obtained from experiments. The program then uses this molecular weight
+      distribution data to generate chains for simulations. Usage:
+
+      ```
+      disperse EXPTDATA inpfilename mwmonomer 200 ntrials 1000 pditol 0.05
+      ```
+
+      where `inpfilename` corresponds to the molecular weight distribution data file.
+      The `inpfilename` should contain **only** two columns of data. Further,
+      one of the columns should have a header `molwt` which corresponds to the
+      molecular weights of the sample distribution. 
+
+      For the second column, the code accepts one of the following three options:
+       `wlogmw`, `wmw`, or `pmw`.
+
+      `wlogmw` corresponds to the distribution data (w(logM) = dm/dlog(M)); where
+      m is the total mass and M is the molecular weight of the chains. 
+      `wmw` corresponds to the distribution data (w(M) = dm/dM = dm/(M*dlog(M)) = w(logM)/M).
+      `wmw` is the weight averaged probability distribution.
+      `pmw` corresponds to the number averaged probability distribution and is related
+      to the other quantities through, p(M) = w(M)/M = w(logM)/$M^2$
+
+      Users should input **only** one of the above three options for the distribution.
+      Most likely, experimental data are reported in w(logM), wheras other options
+      are more common in theory/computation literature.
+
+    * `READDATA`
       Users can also specify a file where the degree of polymerization
       of each chain is specified. In this case, the program will
       directly read this file and create the segments. Usage:
 
       ```
-      disperse READ  inpfilename
+      disperse READDATA inpfilename
       ```
 
       where `inpfilename` is the name of the file. The `inpfilename`
