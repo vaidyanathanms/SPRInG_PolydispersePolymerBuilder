@@ -360,7 +360,7 @@ generate a polydisperse input structure.
       distribution data to generate chains for simulations. Usage:
 
       ```
-      disperse EXPTDATA inpfilename mwmonomer 200 ntrials 1000 pditol 0.05
+      disperse EXPTDATA inpfilename mwmonomer 200 ntrials 1000 pditol 3
       ```
 
       where `inpfilename` corresponds to the molecular weight distribution data file.
@@ -384,8 +384,9 @@ generate a polydisperse input structure.
 
       Keywords `mwmonomer`, `ntrials` and `pditol` are optional. `mwmonomer` corresponds
       to the average molecular weight of one monomer in g/mol. Default value is 200 g/mol.
-      `ntrials` corresponds to the number of attempts drawing the distribution is performed
-      before converging to a tolerance of `pditol` of the experimental data. `pditol` is
+      `ntrials` corresponds to the number of attempts, random samples are drawn from the
+      experimental distribution before both the average number molecular mass and the PDI
+      converges to a tolerance of `pditol` of the experimental distribution. `pditol` is
       the relative tolerance in % (between 0 and 100%). Default values for `ntrials` and
       `pditol` are 100000 and 5%, respectively.
 
