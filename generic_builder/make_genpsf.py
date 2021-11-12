@@ -350,7 +350,9 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
         comp_mn  = np.sum(mw_vals)/nch
         comp_mw  = np.sum(mw_vals**2)/np.sum(mw_vals)
         comp_pdi = comp_mw/comp_mn
-        if abs((comp_pdi-epdi)/epdi) < pditol:
+        tol_pdi  = abs((comp_pdi-epdi)/epdi)
+        tol_mn   = abs((comp_mn*mon_mwt-emn)/emn)
+        if tol_pdi < pditol and tol_mn < pditol:
             print('Found chain configuration!..')
             print('Using average molecular weight: %g' %(mon_mwt))
             print('Computed Mn: %g, Mw: %g, PDI: %g' \
