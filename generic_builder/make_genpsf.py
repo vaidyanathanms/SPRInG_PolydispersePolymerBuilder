@@ -367,6 +367,8 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
         fdist.write('# Average monomer weight: %g\n' %(mon_mwt))
         fdist.write('# Computed avg degree of polymerization %g\n'\
                     %(comp_mn))
+        fdist.write('# Found config with %g rel. tol. in %d steps\n'\
+                    %((comp_pdi-epdi)/epdi, trials))
         fdist.write('# All outputs are in units of monomer wt units\n')
         fdist.write('# Simulated/Experimental Mn: %g, %g\n'\
                     %(comp_mn*mon_mwt,emn))
@@ -374,9 +376,10 @@ def gen_exptdist(xinp,pdfy,intsum,nch,emn,emw,emz,epdi,natt,\
                     %(comp_mw*mon_mwt,emw))
         fdist.write('# Simulated/Experimental Mz: %g, %g\n'\
                     %(comp_mz*mon_mwt,emz))
+        fdist.write('# Simulated/Experimental PDI: %g, %g\n'\
+                    %(comp_pdi,epdi))
         fdist.write('%s\t%s\t%s\t%s\t%s\n' \
                     %('molwt', 'pMW', 'cMW', 'wMW', 'wlogMW'))
-
         for indx in range(0,len(xinp)-1):
             fdist.write('%g\t%g\t%g\t%g\t%g\n' \
                         %(xinp[indx],pdfy[indx],cdf[indx],\
@@ -1540,7 +1543,7 @@ def make_auxiliary_files(tcldir,pref_pdbpsf,nch,topname,flbdflag,\
     if flbdflag == 1:
         gmx_out = outname + '.top'
         fcomb.write('\n')
-        fcomb.write("# Generate extraparameters.prm\nexec python3 ../findmissingterms.py\n")
+        fcomb.write("# Generate extraparameters.prm\nexec python ../findmissingterms.py\n")
         fcomb.write('# Generate GROMACS *.top file \n')
         fcomb.write('mol new $name.psf\n')
         fcomb.write('mol addfile $name.pdb\n')
