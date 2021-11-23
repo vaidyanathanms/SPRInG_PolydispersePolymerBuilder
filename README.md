@@ -306,7 +306,7 @@ generate a polydisperse input structure.
 
       ```
       disperse SZTHEORY 1.50 polydisp.inp 10000
-      disperse sztheory 1.50 polydisp.inp 1000 pditol 8.0 distrange 20
+      disperse sztheory 1.50 polydisp.inp 1000 pditol 8.0 mwrange 20
       disperse readdata molwtdata.dat
       disperse exptdata exptdata.dat mwmonomer 180 ntrials 20
       disperse EXPTDATA WTdata.dat mwmonomer 200 ntrials 1000 pditol 3
