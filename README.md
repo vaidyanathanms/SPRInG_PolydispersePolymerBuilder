@@ -1,6 +1,7 @@
 # Simple Polydisperse Residue Input Generator (SPRInG)
 
 Author: [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
+
 ver_1.2: Nov-05-2021
 
 A Python/FORTRAN-90 based code to generate random initial structures for
