@@ -315,7 +315,7 @@ def comp_avgs(xinp,yinp):
 def trapz(xinp,yinp):
     sval = 0
     for indx in range(0,len(xinp)-1):
-        sval += 0.5*(yinp[indx]+yinp[indx+1])*(xinp[indx]-xinp[indx+1])
+        sval += 0.5*(yinp[indx]+yinp[indx+1])*(xinp[indx+1]-xinp[indx])
     return sval
 #---------------------------------------------------------------------
 
