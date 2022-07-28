@@ -1,11 +1,13 @@
 # Average monomer weight: 200
-# Computed avg degree of polymerization 18.7
+# Computed avg degree of polymerization 19.5
+# Found config with 0.0370043 rel. tol. in 446 steps
 # All outputs are in units of monomer wt units
-# Simulated/Experimental Mn: 3740, 3919.73
-# Simulated/Experimental Mw: 14128.7, 14517.4
-# Simulated/Experimental Mz: 29300, 63143.4
+# Simulated/Experimental Mn: 3900, 3919.73
+# Simulated/Experimental Mw: 14978.8, 14517.4
+# Simulated/Experimental Mz: 30746.4, 63143.4
+# Simulated/Experimental PDI: 3.84072, 3.70367
 molwt	pMW	cMW	wMW	wlogMW
-409	0	-0	0	0
+409	0	0	0	0
 417	0	0	0	0
 425	0	0	0	0
 433	0	0	0	0
