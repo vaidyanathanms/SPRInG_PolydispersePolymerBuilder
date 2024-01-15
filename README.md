@@ -4,7 +4,7 @@ Author: [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
 
 ver_1.2: Nov-05-2021
 
-If you use this software useful, please cite it in your work as
+If you find this software useful, please cite it in your work as
 Sethuraman _et al_., Atomistic Simulations of Polydisperse Lignin Melts Using Simple Polydisperse Residue Input Generator,
 Biomacromolecules (2023) [Citation](https://doi.org/10.1021/acs.biomac.3c00951).
 
