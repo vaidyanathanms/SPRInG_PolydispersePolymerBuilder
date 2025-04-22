@@ -326,7 +326,7 @@ generate a polydisperse input structure.
       is as follows:
 
       ```
-      disperse sztheory PDIval Outputfile ntrials pditol tolerance distrange rangeval
+      disperse sztheory PDIval Outputfile ntrials pditol tolerance mwrange rangeval
       ```
 
       `PDIval` and `Outputfile` corresponds to the target
@@ -351,7 +351,7 @@ generate a polydisperse input structure.
       of chains in the system is less than 20. 
       This keyword and the corresponding argument is optional.
 
-      With the distrange keyword, user can specify the maximum range of 
+      With the `mwrange` keyword, user can specify the maximum range of 
       molecular weights that will be used to create the Schulz-Zimmm
       distribution. Plot the theoretical curve to see where the distribution
       tapers to zero. Most likely the default value of 5 would suffice.
