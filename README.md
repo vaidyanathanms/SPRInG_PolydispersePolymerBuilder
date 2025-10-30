@@ -1,6 +1,7 @@
 # Simple Polydisperse Residue Input Generator (SPRIG)
 
-Author: [Vaidyanathan M. Sethuraman](v0e@ornl.gov).
+Author: [Vaidyanathan M. Sethuraman](vm5@ornl.gov).
+Email: vm5@ornl.gov
 
 ver_1.2: Nov-05-2021
 
